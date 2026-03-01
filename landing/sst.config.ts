@@ -31,12 +31,20 @@ export default $config({
         }
       } catch (e: any) {
         // If aws cli returns non-zero, assume identity not found and create via SST
-        const stderr = e && e.stderr ? String(e.stderr) : String(e || '');
+        const output = [
+          e.stdout ? String(e.stdout) : '',
+          e.stderr ? String(e.stderr) : '',
+          String(e),
+        ].join('\n');
+
         if (
-          stderr.includes('NotFoundException') ||
-          stderr.includes('not found') ||
-          stderr.includes('Not Found')
+          output.includes('NotFoundException') ||
+          output.includes('not exist') ||
+          output.includes('not found')
         ) {
+          console.log(
+            `SES identity for ${domainName} not found; creating via SST.`
+          );
           emailDomain = new sst.aws.Email('NotificationEmail', {
             sender: domainName,
             dns: sst.cloudflare.dns({
@@ -45,6 +53,7 @@ export default $config({
           });
         } else {
           // Unknown error - rethrow so deploy fails visibly
+          console.error(`Unexpected error checking SES identity: ${output}`);
           throw e;
         }
       }

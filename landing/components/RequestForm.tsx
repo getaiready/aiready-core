@@ -29,17 +29,22 @@ export default function RequestForm() {
       });
 
       if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || 'Failed to submit request');
+        let errorMessage = 'Failed to submit request';
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          const txt = await res.text();
+          errorMessage = txt || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       setStatus('success');
       setMessage(
-        "🎉 Thanks! Your audit request has been received. We'll analyze your codebase and email the detailed report within 24-48 hours."
+        "🎉 Thanks! Your audit request has been received. We'll analyze your codebase and email the detailed report within 24-48 hours. Expect to hear from us soon!"
       );
-      setEmail('');
-      setRepoUrl('');
-      setNotes('');
+      // We don't clear inputs here anymore because we'll hide the form
     } catch (err: any) {
       setStatus('error');
       setMessage(err?.message || 'Something went wrong. Please try again.');
@@ -129,110 +134,145 @@ export default function RequestForm() {
           </div>
         </motion.div>
 
-        <form onSubmit={onSubmit} className="space-y-6">
+        {status === 'success' ? (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            viewport={{ once: true }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-12 px-4"
           >
-            <label className="block text-sm font-bold text-slate-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            viewport={{ once: true }}
-          >
-            <label className="block text-sm font-bold text-slate-700 mb-2">
-              GitHub Repo URL
-            </label>
-            <input
-              type="url"
-              required
-              value={repoUrl}
-              onChange={(e) => setRepoUrl(e.target.value)}
-              placeholder="https://github.com/owner/repo"
-              className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-            viewport={{ once: true }}
-          >
-            <label className="block text-sm font-bold text-slate-700 mb-2">
-              Notes (optional)
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Anything specific you'd like us to focus on"
-              className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 h-32 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-            viewport={{ once: true }}
-            className="flex items-center gap-4"
-          >
-            <motion.button
-              type="submit"
-              disabled={status === 'loading'}
-              whileHover={{ scale: status === 'loading' ? 1 : 1.02 }}
-              whileTap={{ scale: status === 'loading' ? 1 : 0.98 }}
-              className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              {status === 'loading' ? (
-                <span className="flex items-center justify-center gap-2">
-                  <motion.span
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      ease: 'linear',
-                    }}
-                  >
-                    ⏳
-                  </motion.span>
-                  Submitting...
-                </span>
-              ) : (
-                'Request Free Audit'
-              )}
-            </motion.button>
-          </motion.div>
-
-          {message && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`p-4 rounded-xl border-2 ${
-                status === 'success'
-                  ? 'bg-green-50 border-green-500 text-green-800'
-                  : 'bg-red-50 border-red-500 text-red-800'
-              }`}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: 'spring' }}
+              className="text-7xl mb-6"
             >
-              <p className="text-sm font-medium">{message}</p>
+              🚀
             </motion.div>
-          )}
-        </form>
+            <h3 className="text-3xl font-black text-slate-900 mb-4">
+              Request Received!
+            </h3>
+            <div className="bg-green-50 border-2 border-green-500 rounded-2xl p-6 text-green-800 mb-8 max-w-md mx-auto">
+              <p className="text-lg font-medium leading-relaxed">
+                {message}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setStatus('idle');
+                setMessage('');
+                setEmail('');
+                setRepoUrl('');
+                setNotes('');
+              }}
+              className="text-blue-600 font-bold hover:text-blue-800 transition-colors flex items-center justify-center gap-2 mx-auto"
+            >
+              <span>←</span> Submit another request
+            </button>
+          </motion.div>
+        ) : (
+          <>
+            <form onSubmit={onSubmit} className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                viewport={{ once: true }}
+              >
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                viewport={{ once: true }}
+              >
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  GitHub Repo URL
+                </label>
+                <input
+                  type="url"
+                  required
+                  value={repoUrl}
+                  onChange={(e) => setRepoUrl(e.target.value)}
+                  placeholder="https://github.com/owner/repo"
+                  className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+                viewport={{ once: true }}
+              >
+                <label className="block text-sm font-bold text-slate-700 mb-2">
+                  Notes (optional)
+                </label>
+                <textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Anything specific you'd like us to focus on"
+                  className="w-full rounded-xl border-2 border-slate-200 px-4 py-3 h-32 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                viewport={{ once: true }}
+                className="flex items-center gap-4"
+              >
+                <motion.button
+                  type="submit"
+                  disabled={status === 'loading'}
+                  whileHover={{ scale: status === 'loading' ? 1 : 1.02 }}
+                  whileTap={{ scale: status === 'loading' ? 1 : 0.98 }}
+                  className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-xl shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                >
+                  {status === 'loading' ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <motion.span
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: 'linear',
+                        }}
+                      >
+                        ⏳
+                      </motion.span>
+                      Submitting...
+                    </span>
+                  ) : (
+                    'Request Free Audit'
+                  )}
+                </motion.button>
+              </motion.div>
+
+              {message && status === 'error' && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="p-4 rounded-xl border-2 bg-red-50 border-red-500 text-red-800"
+                >
+                  <p className="text-sm font-medium">{message}</p>
+                </motion.div>
+              )}
+            </form>
+          </>
+        )}
         <p className="text-xs text-slate-500 text-center mt-6">
           We'll never share your data. We'll email from the address on the site
           footer.

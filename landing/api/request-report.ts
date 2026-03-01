@@ -92,14 +92,13 @@ export async function handler(event: Event) {
         <td style="padding: 10px 0; font-weight: bold; color: #555;">📦 Repository:</td>
         <td style="padding: 10px 0;"><a href="${repoUrl}" style="color: #667eea; text-decoration: none;">${repoUrl}</a></td>
       </tr>
-      ${
-        notes
-          ? `<tr>
+      ${notes
+            ? `<tr>
         <td style="padding: 10px 0; font-weight: bold; color: #555; vertical-align: top;">📝 Notes:</td>
         <td style="padding: 10px 0; white-space: pre-wrap;">${notes}</td>
       </tr>`
-          : ''
-      }
+            : ''
+          }
       <tr>
         <td style="padding: 10px 0; font-weight: bold; color: #555;">🕐 Received:</td>
         <td style="padding: 10px 0;">${new Date(now).toLocaleString('en-US', { dateStyle: 'full', timeStyle: 'short' })}</td>
@@ -144,10 +143,10 @@ https://getaiready.dev`;
                 Text: { Data: textBody },
               },
             },
-            Source: sesToEmail,
+            Source: 'notifications@getaiready.dev',
           })
         );
-      } catch {}
+      } catch { }
     }
 
     return json(200, { ok: true });
