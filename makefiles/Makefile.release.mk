@@ -282,9 +282,14 @@ release-dev: ## Full dev deploy workflow: Build + Unit test + Deploy dev + Plawr
 	$(MAKE) -C $(ROOT_DIR) build || exit 1
 	$(MAKE) -C $(ROOT_DIR) test || exit 1
 	$(MAKE) -C $(ROOT_DIR) deploy-platform || exit 1
-	@$(call log_step,Running E2E tests against Dev endpoint...)
-	cd platform && PLAYWRIGHT_TEST_BASE_URL=https://dev.platform.getaiready.dev pnpm test:e2e || { \
-		$(call log_error,E2E tests failed on dev endpoint); \
+	@$(call log_step,Running Platform E2E tests against Dev endpoint...)
+	$(MAKE) -C $(ROOT_DIR) test-platform-e2e || { \
+		$(call log_error,Platform E2E tests failed on dev endpoint); \
+		exit 1; \
+	}
+	@$(call log_step,Running Landing E2E tests...)
+	$(MAKE) -C $(ROOT_DIR) test-landing-e2e || { \
+		$(call log_error,Landing E2E tests failed); \
 		exit 1; \
 	}
 	@$(call log_success,Dev release pipeline completed successfully!)

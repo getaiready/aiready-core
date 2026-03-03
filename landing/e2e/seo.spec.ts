@@ -31,7 +31,7 @@ test.describe('SEO Metadata', () => {
     const description = await page
       .locator('meta[name="description"]')
       .getAttribute('content');
-    expect(description).toContain('Blog');
+    expect(description).toContain('AI-assisted development');
   });
 
   test('blog post has correct SEO tags and schema', async ({ page }) => {

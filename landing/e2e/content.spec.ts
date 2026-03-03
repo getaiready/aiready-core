@@ -4,12 +4,14 @@ test.describe('Page Content', () => {
   test('homepage displays key sections', async ({ page }) => {
     await page.goto('/');
 
-    // Hero section
-    await expect(page.getByText('Make Your Codebase')).toBeVisible();
+    // Hero section - using specific heading locator to avoid ambiguity
+    await expect(
+      page.getByRole('heading', { name: /Make Your Codebase AI-Ready/i })
+    ).toBeVisible();
 
     // Agent Prompt (default tab)
     await expect(
-      page.getByText('agent prompt', { exact: false })
+      page.getByText('agent prompt', { exact: false }).first()
     ).toBeVisible();
 
     // Navigation links
@@ -30,7 +32,8 @@ test.describe('Page Content', () => {
     // Click Blog
     await page.getByRole('link', { name: 'Blog', exact: true }).click();
     await expect(page).toHaveURL(/\/blog/);
-    await expect(page.getByText('Latest Insights')).toBeVisible();
+    // Updated text to match BlogPageClient.tsx
+    await expect(page.getByText('Practical insights on making')).toBeVisible();
 
     // Click a post
     await page.getByText('The Agentic Wall').first().click();
