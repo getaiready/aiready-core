@@ -52,11 +52,11 @@ export function Header() {
             <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 group-hover:w-full transition-all duration-300"></span>
           </Link>
           <Link
-            href="https://www.npmjs.com/package/@aiready/cli"
+            href="https://marketplace.visualstudio.com/items?itemName=pengcao.aiready"
             target="_blank"
             className="hidden sm:block text-sm md:text-base font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white relative group transition-colors"
           >
-            <span>NPM</span>
+            <span>VS Code</span>
             <span className="absolute left-0 bottom-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 to-cyan-600 group-hover:w-full transition-all duration-300"></span>
           </Link>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>

@@ -75,6 +75,13 @@ export function CTA() {
                 >
                   🤖 AI Agent Prompt
                 </button>
+                <a
+                  href="https://marketplace.visualstudio.com/items?itemName=pengcao.aiready"
+                  target="_blank"
+                  className="px-4 py-2 rounded-lg font-semibold text-sm transition-all bg-blue-600/20 text-blue-300 border border-blue-500/30 hover:bg-blue-600/30"
+                >
+                  🧩 VS Code Extension
+                </a>
               </motion.div>
 
               {/* CLI Command */}

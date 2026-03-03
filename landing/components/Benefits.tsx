@@ -7,27 +7,27 @@ import AnimatedStats from './AnimatedStats';
 export function Benefits() {
   const items = [
     {
-      icon: '💸',
-      title: 'Reduce Context Cost',
-      desc: 'Cut token usage by eliminating redundant context and optimizing prompts.',
+      icon: '🧠',
+      title: 'Stop AI Hallucinations',
+      desc: 'Improve AI signal clarity to prevent models from generating incorrect or risky code.',
       color: 'from-blue-600 to-cyan-600',
     },
     {
-      icon: '🎯',
-      title: 'Boost AI Accuracy',
-      desc: 'Improve model understanding with consistent naming and fewer duplicates.',
+      icon: '💰',
+      title: 'Predictive ROI',
+      desc: 'Quantify exactly how much technical debt is costing your team in AI efficiency.',
       color: 'from-purple-600 to-pink-600',
     },
     {
-      icon: '⚡',
-      title: 'Speed Up Reviews',
-      desc: 'Surface hidden issues fast so humans and AI collaborate smoothly.',
+      icon: '🛰️',
+      title: 'Agentic Navigation',
+      desc: 'Ensure your codebase is structured so autonomous agents can work independently.',
       color: 'from-orange-500 to-red-500',
     },
     {
       icon: '🔥',
-      title: 'Stop Burning Tokens',
-      desc: "Don't let AI waste your budget. Find code that confuses AI and burns through tokens fast.",
+      title: 'Cut Context Waste',
+      desc: 'Stop burning tokens on redundant context. Optimize your repo for the 1M+ token era.',
       color: 'from-red-500 to-pink-600',
     },
   ];

@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import AgentPrompt from './AgentPrompt';
 
-const words = ['AI-Ready', 'Optimized', 'Consistent', 'Efficient'];
+const words = ['AI-Ready', 'Model-Aware', 'Agentic', 'ROI-Driven'];
 
 export default function AnimatedHero() {
   const [currentWord, setCurrentWord] = useState(0);
@@ -87,11 +87,11 @@ export default function AnimatedHero() {
           Your AI tools aren't broken. Your codebase confuses them.
         </span>
         <br />
-        See why Coding Agent struggles and where small changes unlock outsized
+        See why Coding Agents struggle and where small changes unlock outsized
         AI leverage—in 5 minutes.
         <br />
-        <span className="text-blue-600 font-medium">
-          Perfect for vibe coders & non-technical founders building with AI.
+        <span className="text-blue-600 font-medium whitespace-normal">
+          Optimized for frontier models: GPT-5, Claude 4.6, & Gemini 3.1 Pro.
         </span>
       </motion.p>
 

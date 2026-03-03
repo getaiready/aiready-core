@@ -10,18 +10,18 @@ export default function AnimatedStats() {
 
   const stats = [
     {
-      value: '<3s',
-      label: 'Analysis Time',
+      value: '15+',
+      label: 'Frontier Models',
       color: 'from-blue-600 to-cyan-500',
     },
     {
-      value: '95%',
-      label: 'Detection Accuracy',
+      value: '92%',
+      label: 'ROI Accuracy',
       color: 'from-purple-600 to-pink-500',
     },
     {
-      value: '40%',
-      label: 'Context Token Savings',
+      value: '45%',
+      label: 'Context Savings',
       color: 'from-orange-600 to-red-500',
     },
   ];
