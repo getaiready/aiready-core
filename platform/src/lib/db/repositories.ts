@@ -5,11 +5,12 @@ import {
   UpdateCommand,
   DeleteCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { doc, TABLE_NAME } from './client';
+import { doc, getTableName } from './client';
 import type { Repository } from './types';
 
 export async function createRepository(repo: Repository): Promise<Repository> {
   const now = new Date().toISOString();
+  const TABLE_NAME = getTableName();
   const item = {
     PK: `REPO#${repo.id}`,
     SK: '#METADATA',
@@ -26,6 +27,7 @@ export async function createRepository(repo: Repository): Promise<Repository> {
 export async function getRepository(
   repoId: string
 ): Promise<Repository | null> {
+  const TABLE_NAME = getTableName();
   const result = await doc.send(
     new GetCommand({
       TableName: TABLE_NAME,
@@ -38,6 +40,7 @@ export async function getRepository(
 export async function listUserRepositories(
   userId: string
 ): Promise<Repository[]> {
+  const TABLE_NAME = getTableName();
   const result = await doc.send(
     new QueryCommand({
       TableName: TABLE_NAME,
@@ -56,6 +59,7 @@ export async function listUserRepositories(
 export async function listTeamRepositories(
   teamId: string
 ): Promise<Repository[]> {
+  const TABLE_NAME = getTableName();
   const result = await doc.send(
     new QueryCommand({
       TableName: TABLE_NAME,
@@ -72,6 +76,7 @@ export async function listTeamRepositories(
 }
 
 export async function deleteRepository(repoId: string): Promise<void> {
+  const TABLE_NAME = getTableName();
   await doc.send(
     new DeleteCommand({
       TableName: TABLE_NAME,
@@ -84,6 +89,7 @@ export async function updateRepositoryScore(
   repoId: string,
   score: number
 ): Promise<void> {
+  const TABLE_NAME = getTableName();
   await doc.send(
     new UpdateCommand({
       TableName: TABLE_NAME,

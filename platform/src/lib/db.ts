@@ -17,7 +17,7 @@ export * from './db/auth-utils';
 // Re-export specific common helpers if needed
 import { createHash } from 'node:crypto';
 import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { doc, TABLE_NAME } from './db/client';
+import { doc, getTableName } from './db/client';
 
 /**
  * Update API key lastUsedAt
@@ -26,6 +26,7 @@ export async function updateApiKeyLastUsed(
   userId: string,
   apiKeyId: string
 ): Promise<void> {
+  const TABLE_NAME = getTableName();
   await doc
     .send(
       new UpdateCommand({
@@ -46,6 +47,7 @@ export async function validateApiKey(
 ): Promise<{ userId: string; apiKeyId: string } | null> {
   const keyHash = createHash('sha256').update(rawKey).digest('hex');
   const { QueryCommand } = await import('@aws-sdk/lib-dynamodb');
+  const TABLE_NAME = getTableName();
 
   const result = await doc.send(
     new QueryCommand({

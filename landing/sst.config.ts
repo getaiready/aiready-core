@@ -1,5 +1,15 @@
 /// <reference path="./.sst/platform/config.d.ts" />
 
+// Suppress AWS SDK warning when both profile and static keys are set
+// by prioritizing the profile (which is the project standard)
+if (
+  process.env.AWS_PROFILE &&
+  (process.env.AWS_ACCESS_KEY_ID || process.env.AWS_SECRET_ACCESS_KEY)
+) {
+  delete process.env.AWS_ACCESS_KEY_ID;
+  delete process.env.AWS_SECRET_ACCESS_KEY;
+}
+
 export default $config({
   app(input) {
     return {
@@ -105,13 +115,19 @@ export default $config({
     });
 
     // VS Code Marketplace publisher verification
-    sst.cloudflare.dns({
-      zone: '50eb7dcadc84c58ab34583742db0b671',
-    }).createRecord('VSCodeMarketplaceVerification', {
-      type: 'TXT',
-      name: '_visual-studio-marketplace-pengcao',
-      value: 'e5370864-bedf-4b65-9ef4-a99596a60d7d',
-    }, {});
+    sst.cloudflare
+      .dns({
+        zone: '50eb7dcadc84c58ab34583742db0b671',
+      })
+      .createRecord(
+        'VSCodeMarketplaceVerification',
+        {
+          type: 'TXT',
+          name: '_visual-studio-marketplace-pengcao',
+          value: 'e5370864-bedf-4b65-9ef4-a99596a60d7d',
+        },
+        {}
+      );
 
     return {
       site: site.url,

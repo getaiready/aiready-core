@@ -1,5 +1,5 @@
 import { PutCommand, QueryCommand, UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { doc, TABLE_NAME } from './client';
+import { doc, getTableName } from './client';
 import type { RemediationRequest } from './types';
 
 /**
@@ -20,6 +20,7 @@ import type { RemediationRequest } from './types';
 export async function createRemediation(
   remediation: RemediationRequest
 ): Promise<RemediationRequest> {
+  const TABLE_NAME = getTableName();
   const item = {
     PK: `REPO#${remediation.repoId}`,
     SK: `REMEDIATION#${remediation.id}`,
@@ -49,6 +50,7 @@ export async function createRemediations(
 export async function getRemediation(
   id: string
 ): Promise<RemediationRequest | null> {
+  const TABLE_NAME = getTableName();
   const result = await doc.send(
     new QueryCommand({
       TableName: TABLE_NAME,
@@ -64,6 +66,7 @@ export async function listRemediations(
   repoId: string,
   limit = 20
 ): Promise<RemediationRequest[]> {
+  const TABLE_NAME = getTableName();
   const result = await doc.send(
     new QueryCommand({
       TableName: TABLE_NAME,
@@ -81,6 +84,7 @@ export async function listTeamRemediations(
   teamId: string,
   limit = 20
 ): Promise<RemediationRequest[]> {
+  const TABLE_NAME = getTableName();
   const result = await doc.send(
     new QueryCommand({
       TableName: TABLE_NAME,
@@ -101,6 +105,7 @@ export async function updateRemediation(
   id: string,
   updates: Partial<RemediationRequest>
 ): Promise<void> {
+  const TABLE_NAME = getTableName();
   const remediation = await getRemediation(id);
   if (!remediation) return;
 

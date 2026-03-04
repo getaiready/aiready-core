@@ -23,7 +23,8 @@ const s3 = new S3Client({ region: process.env.AWS_REGION || 'ap-southeast-2' });
 // Type assertion for getSignedUrl compatibility
 const s3Client = s3 as any;
 
-const BUCKET_NAME = process.env.S3_BUCKET || 'aiready-platform-analysis';
+export const getBucketName = () =>
+  process.env.S3_BUCKET || 'aiready-platform-analysis';
 
 // Types
 export interface AnalysisUpload {
@@ -109,6 +110,7 @@ export interface AnalysisData {
  * Store raw analysis JSON in S3
  */
 export async function storeAnalysis(analysis: AnalysisUpload): Promise<string> {
+  const BUCKET_NAME = getBucketName();
   const key = `analyses/${analysis.userId}/${analysis.repoId}/${analysis.timestamp}.json`;
 
   await s3.send(
@@ -132,6 +134,7 @@ export async function storeAnalysis(analysis: AnalysisUpload): Promise<string> {
  * Retrieve raw analysis JSON from S3
  */
 export async function getAnalysis(key: string): Promise<AnalysisData | null> {
+  const BUCKET_NAME = getBucketName();
   try {
     const result = await s3.send(
       new GetObjectCommand({
@@ -143,7 +146,9 @@ export async function getAnalysis(key: string): Promise<AnalysisData | null> {
     const body = await result.Body?.transformToString();
     if (!body) return null;
 
-    return JSON.parse(body) as AnalysisData;
+    const raw = JSON.parse(body);
+    // Force re-normalization for all S3 retrievals to apply latest mapping rules
+    return normalizeReport(raw, true);
   } catch (error) {
     console.error('Error fetching analysis from S3:', error);
     return null;
@@ -154,6 +159,7 @@ export async function getAnalysis(key: string): Promise<AnalysisData | null> {
  * Delete analysis from S3
  */
 export async function deleteAnalysis(key: string): Promise<void> {
+  const BUCKET_NAME = getBucketName();
   await s3.send(
     new DeleteObjectCommand({
       Bucket: BUCKET_NAME,
@@ -169,6 +175,7 @@ export async function listRepositoryAnalyses(
   userId: string,
   repoId: string
 ): Promise<string[]> {
+  const BUCKET_NAME = getBucketName();
   const prefix = `analyses/${userId}/${repoId}/`;
 
   const result = await s3.send(
@@ -190,6 +197,7 @@ export async function getAnalysisDownloadUrl(
   key: string,
   expiresIn = 3600
 ): Promise<string> {
+  const BUCKET_NAME = getBucketName();
   const command = new GetObjectCommand({
     Bucket: BUCKET_NAME,
     Key: key,
@@ -269,10 +277,24 @@ export function extractBreakdown(data: AnalysisData) {
 /**
  * Normalize raw CLI report data into AnalysisData schema
  */
-export function normalizeReport(raw: any): AnalysisData {
-  // If it's already in the target format, return as is
-  if (raw.metadata && raw.summary && raw.breakdown) {
-    return raw as AnalysisData;
+export function normalizeReport(raw: any, force = false): AnalysisData {
+  // If we are forcing normalization or missing details, and we have rawOutput, use it as the source
+  if (
+    (force || (raw.metadata && raw.summary && raw.breakdown)) &&
+    raw.rawOutput
+  ) {
+    raw = raw.rawOutput;
+  }
+
+  // If it's already in the target format AND has breakdown details, return as is.
+  // We check if at least one tool has details to be sure it's fully normalized.
+  if (!force && raw.metadata && raw.summary && raw.breakdown) {
+    const hasDetails = Object.values(raw.breakdown).some(
+      (tool: any) => Array.isArray(tool.details) && tool.details.length > 0
+    );
+    if (hasDetails) {
+      return raw as AnalysisData;
+    }
   }
 
   const scoring = raw.scoring || {};
@@ -297,58 +319,82 @@ export function normalizeReport(raw: any): AnalysisData {
       const platformKey = toolMappings[item.toolName];
       if (platformKey) {
         // Collect technical issues/details for this tool
-        let details: any[] = item.recommendations || [];
+        // Unified details extraction with robust key mapping
+        let details: any[] = [];
 
-        // Patterns: Add actual duplicates
+        // Manual mappings for hub tools that don't follow generic patterns
         if (
           item.toolName === 'pattern-detect' &&
           Array.isArray(raw.duplicates)
         ) {
-          details = [...details, ...raw.duplicates];
-        }
-
-        // Context: Add context results
-        if (
+          details = raw.duplicates;
+        } else if (
           item.toolName === 'context-analyzer' &&
           Array.isArray(raw.context)
         ) {
-          details = [...details, ...raw.context];
-        }
-
-        // Consistency: Add consistency results
-        if (
+          details = raw.context;
+        } else if (
           item.toolName === 'consistency' &&
-          raw.consistency?.results &&
-          Array.isArray(raw.consistency.results)
+          Array.isArray(raw.consistency?.results)
         ) {
-          const consistencyIssues = raw.consistency.results.flatMap(
+          details = raw.consistency.results.flatMap((r: any) => r.issues || []);
+        } else if (
+          item.toolName === 'ai-signal-clarity' &&
+          Array.isArray(raw.aiSignalClarity?.results)
+        ) {
+          details = raw.aiSignalClarity.results.flatMap(
             (r: any) => r.issues || []
           );
-          details = [...details, ...consistencyIssues];
-        }
-
-        // Other tools: Merge their results if they exist
-        const resultKey =
-          item.toolName === 'doc-drift'
-            ? 'docDrift'
-            : item.toolName === 'deps-health'
-              ? 'deps'
-              : item.toolName === 'change-amplification'
-                ? 'changeAmplification'
-                : item.toolName;
-
-        if (raw[resultKey] && Array.isArray(raw[resultKey].issues)) {
-          details = [...details, ...raw[resultKey].issues];
-        } else if (raw[resultKey] && Array.isArray(raw[resultKey].results)) {
-          const toolResults = raw[resultKey].results.flatMap(
+        } else if (
+          item.toolName === 'agent-grounding' &&
+          Array.isArray(raw.grounding?.issues)
+        ) {
+          details = raw.grounding.issues;
+        } else if (
+          item.toolName === 'testability' &&
+          Array.isArray(raw.testability?.issues)
+        ) {
+          details = raw.testability.issues;
+        } else if (
+          item.toolName === 'doc-drift' &&
+          Array.isArray(raw.docDrift?.issues)
+        ) {
+          details = raw.docDrift.issues;
+        } else if (
+          item.toolName === 'dependency-health' &&
+          Array.isArray(raw.deps?.issues)
+        ) {
+          details = raw.deps.issues;
+        } else if (
+          item.toolName === 'change-amplification' &&
+          Array.isArray(raw.changeAmplification?.results)
+        ) {
+          details = raw.changeAmplification.results.flatMap(
             (r: any) => r.issues || []
           );
-          details = [...details, ...toolResults];
+        } else {
+          // Generic kebab-to-camel mapping for spokes as fallback
+          const resultKey = item.toolName
+            .split('-')
+            .map((word: string, index: number) =>
+              index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
+            )
+            .join('')
+            .replace('depsHealth', 'deps'); // Special case for legacy deps naming
+
+          const toolData = raw[resultKey];
+          if (toolData) {
+            if (Array.isArray(toolData.issues)) {
+              details = toolData.issues;
+            } else if (Array.isArray(toolData.results)) {
+              details = toolData.results.flatMap((r: any) => r.issues || []);
+            }
+          }
         }
 
         breakdown[platformKey] = {
           score: item.score || 0,
-          count: item.rawMetrics?.totalIssues || item.rawMetrics?.count || 0,
+          count: item.rawMetrics?.totalIssues || details.length || 0,
           details,
         };
       }
@@ -375,4 +421,4 @@ export function normalizeReport(raw: any): AnalysisData {
   };
 }
 
-export { s3, BUCKET_NAME };
+export { s3 };

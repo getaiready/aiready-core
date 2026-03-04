@@ -4,11 +4,12 @@ import {
   QueryCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb';
-import { doc, TABLE_NAME } from './client';
+import { doc, getTableName } from './client';
 import type { User } from './types';
 
 export async function createUser(user: User): Promise<User> {
   const now = new Date().toISOString();
+  const TABLE_NAME = getTableName();
   const item = {
     PK: `USER#${user.id}`,
     SK: '#METADATA',
@@ -24,6 +25,7 @@ export async function createUser(user: User): Promise<User> {
 }
 
 export async function getUser(userId: string): Promise<User | null> {
+  const TABLE_NAME = getTableName();
   const result = await doc.send(
     new GetCommand({
       TableName: TABLE_NAME,
@@ -34,6 +36,7 @@ export async function getUser(userId: string): Promise<User | null> {
 }
 
 export async function getUserByEmail(email: string): Promise<User | null> {
+  const TABLE_NAME = getTableName();
   const result = await doc.send(
     new QueryCommand({
       TableName: TABLE_NAME,
@@ -49,6 +52,7 @@ export async function updateUser(
   userId: string,
   updates: Partial<User>
 ): Promise<void> {
+  const TABLE_NAME = getTableName();
   const updateExpressions: string[] = [];
   const expressionAttributeNames: Record<string, string> = {};
   const expressionAttributeValues: Record<string, unknown> = {};

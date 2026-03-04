@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/app/api/auth/[...nextauth]/route';
 import { getRepository, getLatestAnalysis } from '@/lib/db';
-import { getAnalysis } from '@/lib/storage';
+import { getAnalysis, normalizeReport } from '@/lib/storage';
 
 export async function GET(
   request: NextRequest,

@@ -43,6 +43,8 @@ export default function RepoDetailClient({ repo, user }: Props) {
   const [filter, setFilter] = useState<{
     severity?: string;
   }>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 25;
 
   const toggleIssue = (index: number) => {
     const newExpanded = new Set(expandedIssues);
@@ -126,13 +128,25 @@ export default function RepoDetailClient({ repo, user }: Props) {
             }
 
             // Normalize message & action
-            let msg = issue.message || issue.description || 'Unknown issue';
+            let msg = issue.message || issue.description || '';
             let act =
               issue.action ||
               issue.suggestion ||
               (Array.isArray(issue.recommendations)
                 ? issue.recommendations[0]
                 : issue.recommendation);
+
+            // If we have an action but no message, use the action as the message
+            if (!msg && act && typeof act === 'string') {
+              msg = act;
+              act = undefined;
+            }
+
+            // Fallback for string issues or completely missing messages
+            if (!msg) {
+              if (typeof issue === 'string') msg = issue;
+              else msg = 'Unknown issue';
+            }
 
             // Tool-specific overrides for better messages
             if (toolName === 'semanticDuplicates' && issue.similarity) {
@@ -146,12 +160,32 @@ export default function RepoDetailClient({ repo, user }: Props) {
               act = Array.isArray(issue.recommendations)
                 ? issue.recommendations[0]
                 : issue.action;
+            } else if (toolName === 'aiSignalClarity' && issue.category) {
+              // Map categories to readable messages if message is missing
+              const categoryMap: Record<string, string> = {
+                'magic-literal': 'Magic Literal detected',
+                'boolean-trap': 'Boolean Trap parameter',
+                'ambiguous-name': 'Ambiguous Identifier',
+                'undocumented-export': 'Undocumented Public Export',
+                'implicit-side-effect': 'Implicit Side Effect',
+                'deep-callback': 'Deeply Nested Callback',
+                'overloaded-symbol': 'Overloaded Symbol ambiguity',
+              };
+              if (!issue.message || issue.message === 'Unknown issue') {
+                msg = categoryMap[issue.category] || issue.category;
+              }
+            } else if (toolName === 'testabilityIndex' && issue.dimension) {
+              if (!issue.message || issue.message === 'Unknown issue') {
+                msg = `Low testability in ${issue.dimension} dimension`;
+              }
             }
 
             allIssues.push({
               ...issue,
               tool: toolName,
               locations,
+              // Normalize type
+              type: issue.type || issue.category || issue.dimension || 'logic',
               // Normalize severity: mapping recommendations' 'priority' to 'severity'
               severity:
                 issue.severity ||
@@ -171,11 +205,33 @@ export default function RepoDetailClient({ repo, user }: Props) {
     );
   }
 
+  const toolLabels: Record<string, string> = {
+    semanticDuplicates: 'Semantic Duplicates',
+    contextFragmentation: 'Context Budget',
+    namingConsistency: 'Naming & Patterns',
+    aiSignalClarity: 'AI Signal Clarity',
+    agentGrounding: 'Agent Grounding',
+    testabilityIndex: 'Testability Index',
+    documentationHealth: 'Documentation Drift',
+    dependencyHealth: 'Dependency Health',
+    changeAmplification: 'Change Amplification',
+  };
+
   const filteredIssues = allIssues.filter((issue) => {
     if (filter.severity && issue.severity !== filter.severity) return false;
     if (selectedTool && issue.tool !== selectedTool) return false;
     return true;
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredIssues.length / ITEMS_PER_PAGE);
+  const paginatedIssues = filteredIssues.slice(0, currentPage * ITEMS_PER_PAGE);
+  const hasMore = currentPage < totalPages;
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedTool, filter.severity]);
 
   const severityColors: any = {
     critical: 'text-red-400 border-red-500/30 bg-red-500/10',
@@ -360,7 +416,8 @@ export default function RepoDetailClient({ repo, user }: Props) {
                             <span
                               className={`text-[10px] font-bold uppercase tracking-wider transition-colors duration-300 ${selectedTool === key ? 'text-cyan-400' : 'text-slate-400 group-hover:text-white'}`}
                             >
-                              {key.replace(/([A-Z])/g, ' $1')}
+                              {toolLabels[key] ||
+                                key.replace(/([A-Z])/g, ' $1')}
                             </span>
                           </div>
                           <span
@@ -442,183 +499,211 @@ export default function RepoDetailClient({ repo, user }: Props) {
                       </p>
                     </div>
                   ) : (
-                    filteredIssues.map((issue, i) => {
-                      const idx = allIssues.indexOf(issue);
-                      const isExpanded = expandedIssues.has(idx);
-                      const mainFile =
-                        issue.file ||
-                        issue.fileName ||
-                        issue.file1 ||
-                        issue.location?.file;
+                    <>
+                      {paginatedIssues.map((issue, i) => {
+                        const idx = allIssues.indexOf(issue);
+                        const isExpanded = expandedIssues.has(idx);
+                        const mainFile =
+                          issue.file ||
+                          issue.fileName ||
+                          issue.file1 ||
+                          issue.location?.file;
 
-                      return (
-                        <motion.div
-                          key={idx}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: i * 0.02 }}
-                          className={`glass-card rounded-2xl border transition-all overflow-hidden cursor-pointer ${isExpanded ? 'border-cyan-500/30 bg-cyan-500/5' : 'border-white/5 hover:border-white/10 group'}`}
-                          onClick={() => toggleIssue(idx)}
-                        >
-                          <div className="p-5 flex items-start gap-4">
-                            <div
-                              className={`mt-0.5 p-2 rounded-xl border transition-colors ${isExpanded ? severityColors[issue.severity] : 'text-slate-500 border-slate-800'}`}
-                            >
-                              <AlertCircleIcon className="w-5 h-5" />
-                            </div>
-                            <div className="flex-1 space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                                    {issue.tool.replace(/([A-Z])/g, ' $1')} /{' '}
-                                    {issue.type || 'logic'}
-                                  </span>
-                                  {!isExpanded && (
-                                    <div className="flex gap-2">
-                                      {issue.locations.length > 0 && (
-                                        <span className="text-[10px] text-slate-600 font-mono truncate max-w-[150px]">
-                                          {issue.locations[0].path
-                                            .split('/')
-                                            .pop()}
-                                          {issue.locations[0].line &&
-                                            `:L${issue.locations[0].line}`}
-                                        </span>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                                <span
-                                  className={`text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider ${severityColors[issue.severity]}`}
-                                >
-                                  {issue.severity}
-                                </span>
+                        return (
+                          <motion.div
+                            key={idx}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: (i % ITEMS_PER_PAGE) * 0.02 }}
+                            className={`glass-card rounded-2xl border transition-all overflow-hidden cursor-pointer ${isExpanded ? 'border-cyan-500/30 bg-cyan-500/5' : 'border-white/5 hover:border-white/10 group'}`}
+                            onClick={() => toggleIssue(idx)}
+                          >
+                            <div className="p-5 flex items-start gap-4">
+                              <div
+                                className={`mt-0.5 p-2 rounded-xl border transition-colors ${isExpanded ? severityColors[issue.severity] : 'text-slate-500 border-slate-800'}`}
+                              >
+                                <AlertCircleIcon className="w-5 h-5" />
                               </div>
-                              <h4 className="font-bold text-white text-md leading-snug">
-                                {issue.message}
-                              </h4>
-
-                              {!isExpanded && (
-                                <div className="flex flex-wrap gap-2 pt-1 opacity-70">
-                                  {issue.locations
-                                    .slice(0, 3)
-                                    .map(
-                                      (
-                                        loc: { path: string; line?: number },
-                                        idx: number
-                                      ) => (
-                                        <div
-                                          key={idx}
-                                          className="text-[9px] font-mono text-slate-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/5"
-                                        >
-                                          {loc.path.split('/').pop()}
-                                          {loc.line && `:L${loc.line}`}
-                                        </div>
-                                      )
+                              <div className="flex-1 space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                      {toolLabels[issue.tool] ||
+                                        issue.tool.replace(
+                                          /([A-Z])/g,
+                                          ' $1'
+                                        )}{' '}
+                                      / {issue.type || 'logic'}
+                                    </span>
+                                    {!isExpanded && (
+                                      <div className="flex gap-2">
+                                        {issue.locations.length > 0 && (
+                                          <span className="text-[10px] text-slate-600 font-mono truncate max-w-[150px]">
+                                            {issue.locations[0].path
+                                              .split('/')
+                                              .pop()}
+                                            {typeof issue.locations[0].line ===
+                                              'number' &&
+                                              issue.locations[0].line > 0 &&
+                                              `:L${issue.locations[0].line}`}
+                                          </span>
+                                        )}
+                                      </div>
                                     )}
-                                  {issue.locations.length > 3 && (
-                                    <div className="text-[9px] font-mono text-slate-500 py-0.5">
-                                      +{issue.locations.length - 3} more
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
-                              <AnimatePresence>
-                                {isExpanded && (
-                                  <motion.div
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="overflow-hidden"
+                                  </div>
+                                  <span
+                                    className={`text-[10px] px-2 py-0.5 rounded-full border font-bold uppercase tracking-wider ${severityColors[issue.severity]}`}
                                   >
-                                    <div className="pt-4 space-y-4">
-                                      {/* Location & Context Tags */}
-                                      <div className="flex flex-wrap gap-2 pt-1">
-                                        {issue.locations.map(
-                                          (
-                                            loc: {
-                                              path: string;
-                                              line?: number;
-                                            },
-                                            idx: number
-                                          ) => (
-                                            <div
-                                              key={idx}
-                                              className="flex items-center gap-2 text-[10px] font-mono text-cyan-400 bg-cyan-400/5 px-2 py-1 rounded border border-cyan-400/10"
-                                            >
-                                              <FileIcon className="w-3 h-3" />
-                                              {loc.path}
-                                              {loc.line && (
-                                                <span className="text-slate-600">
-                                                  :L{loc.line}
-                                                </span>
-                                              )}
-                                            </div>
-                                          )
-                                        )}
+                                    {issue.severity}
+                                  </span>
+                                </div>
+                                <h4 className="font-bold text-white text-md leading-snug">
+                                  {issue.message}
+                                </h4>
 
-                                        {issue.similarity && (
-                                          <div className="text-[10px] font-bold text-emerald-400 bg-emerald-400/5 px-2 py-1 rounded border border-emerald-400/10">
-                                            {(issue.similarity * 100).toFixed(
-                                              0
-                                            )}
-                                            % Similarity
+                                {!isExpanded && (
+                                  <div className="flex flex-wrap gap-2 pt-1 opacity-70">
+                                    {issue.locations
+                                      .slice(0, 3)
+                                      .map(
+                                        (
+                                          loc: { path: string; line?: number },
+                                          idx: number
+                                        ) => (
+                                          <div
+                                            key={idx}
+                                            className="text-[9px] font-mono text-slate-400 bg-white/5 px-1.5 py-0.5 rounded border border-white/5"
+                                          >
+                                            {loc.path.split('/').pop()}
+                                            {typeof loc.line === 'number' &&
+                                              loc.line > 0 &&
+                                              `:L${loc.line}`}
                                           </div>
-                                        )}
-                                        {issue.chainLength && (
-                                          <div className="text-[10px] font-bold text-amber-400 bg-amber-400/5 px-2 py-1 rounded border border-amber-400/10">
-                                            Chain: {issue.chainLength}
-                                          </div>
-                                        )}
-                                        {issue.expected && (
-                                          <div className="text-[10px] font-bold text-blue-400 bg-blue-400/5 px-2 py-1 rounded border border-blue-400/10">
-                                            Expected: {issue.expected}
+                                        )
+                                      )}
+                                    {issue.locations.length > 3 && (
+                                      <div className="text-[9px] font-mono text-slate-500 py-0.5">
+                                        +{issue.locations.length - 3} more
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+
+                                <AnimatePresence>
+                                  {isExpanded && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: 'auto', opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      className="overflow-hidden"
+                                    >
+                                      <div className="pt-4 space-y-4">
+                                        {/* Location & Context Tags */}
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                          {issue.locations.map(
+                                            (
+                                              loc: {
+                                                path: string;
+                                                line?: number;
+                                              },
+                                              idx: number
+                                            ) => (
+                                              <div
+                                                key={idx}
+                                                className="flex items-center gap-2 text-[10px] font-mono text-cyan-400 bg-cyan-400/5 px-2 py-1 rounded border border-cyan-400/10"
+                                              >
+                                                <FileIcon className="w-3 h-3" />
+                                                {loc.path}
+                                                {typeof loc.line === 'number' &&
+                                                  loc.line > 0 && (
+                                                    <span className="text-slate-600">
+                                                      :L{loc.line}
+                                                    </span>
+                                                  )}
+                                              </div>
+                                            )
+                                          )}
+
+                                          {issue.similarity && (
+                                            <div className="text-[10px] font-bold text-emerald-400 bg-emerald-400/5 px-2 py-1 rounded border border-emerald-400/10">
+                                              {(issue.similarity * 100).toFixed(
+                                                0
+                                              )}
+                                              % Similarity
+                                            </div>
+                                          )}
+                                          {issue.chainLength && (
+                                            <div className="text-[10px] font-bold text-amber-400 bg-amber-400/5 px-2 py-1 rounded border border-amber-400/10">
+                                              Chain: {issue.chainLength}
+                                            </div>
+                                          )}
+                                          {issue.expected && (
+                                            <div className="text-[10px] font-bold text-blue-400 bg-blue-400/5 px-2 py-1 rounded border border-blue-400/10">
+                                              Expected: {issue.expected}
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        {/* Suggestion / Action */}
+                                        {(issue.suggestion || issue.action) && (
+                                          <div className="p-4 bg-indigo-500/5 rounded-xl border border-indigo-500/10 space-y-2">
+                                            <div className="flex items-center gap-2 text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">
+                                              <BrainIcon className="w-4 h-4" />
+                                              Recommendation
+                                            </div>
+                                            <p className="text-sm text-slate-300 leading-relaxed italic">
+                                              "
+                                              {issue.suggestion || issue.action}
+                                              "
+                                            </p>
                                           </div>
                                         )}
                                       </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </div>
 
-                                      {/* Suggestion / Action */}
-                                      {(issue.suggestion || issue.action) && (
-                                        <div className="p-4 bg-indigo-500/5 rounded-xl border border-indigo-500/10 space-y-2">
-                                          <div className="flex items-center gap-2 text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em]">
-                                            <BrainIcon className="w-4 h-4" />
-                                            Recommendation
-                                          </div>
-                                          <p className="text-sm text-slate-300 leading-relaxed italic">
-                                            "{issue.suggestion || issue.action}"
-                                          </p>
-                                        </div>
-                                      )}
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                            </div>
-
-                            <div className="mt-1">
-                              <motion.div
-                                animate={{ rotate: isExpanded ? 180 : 0 }}
-                                className="text-slate-600 group-hover:text-slate-400"
-                              >
-                                <svg
-                                  className="w-4 h-4"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
+                              <div className="mt-1">
+                                <motion.div
+                                  animate={{ rotate: isExpanded ? 180 : 0 }}
+                                  className="text-slate-600 group-hover:text-slate-400"
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth="2"
-                                    d="M19 9l-7 7-7-7"
-                                  />
-                                </svg>
-                              </motion.div>
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M19 9l-7 7-7-7"
+                                    />
+                                  </svg>
+                                </motion.div>
+                              </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      );
-                    })
+                          </motion.div>
+                        );
+                      })}
+
+                      {hasMore && (
+                        <div className="pt-4 text-center">
+                          <button
+                            onClick={() => setCurrentPage((p) => p + 1)}
+                            className="px-8 py-3 bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-cyan-500/30 rounded-2xl text-xs font-black uppercase tracking-widest text-slate-400 hover:text-cyan-400 transition-all shadow-lg"
+                          >
+                            Load More Issues
+                            <span className="ml-2 opacity-50 font-mono">
+                              ({filteredIssues.length - paginatedIssues.length}{' '}
+                              remaining)
+                            </span>
+                          </button>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

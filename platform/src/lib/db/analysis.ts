@@ -1,9 +1,10 @@
 import { PutCommand, QueryCommand } from '@aws-sdk/lib-dynamodb';
-import { doc, TABLE_NAME } from './client';
+import { doc, getTableName } from './client';
 import type { Analysis } from './types';
 import { updateRepositoryScore } from './repositories';
 
 export async function createAnalysis(analysis: Analysis): Promise<Analysis> {
+  const TABLE_NAME = getTableName();
   const item = {
     PK: `ANALYSIS#${analysis.repoId}`,
     SK: analysis.timestamp,
@@ -22,6 +23,7 @@ export async function listRepositoryAnalyses(
   repoId: string,
   limit = 20
 ): Promise<Analysis[]> {
+  const TABLE_NAME = getTableName();
   const result = await doc.send(
     new QueryCommand({
       TableName: TABLE_NAME,
@@ -37,6 +39,7 @@ export async function listRepositoryAnalyses(
 export async function getLatestAnalysis(
   repoId: string
 ): Promise<Analysis | null> {
+  const TABLE_NAME = getTableName();
   const result = await doc.send(
     new QueryCommand({
       TableName: TABLE_NAME,
