@@ -104,3 +104,52 @@ export function handleCLIError(error: unknown, commandName: string): never {
 export function getElapsedTime(startTime: number): string {
   return ((Date.now() - startTime) / 1000).toFixed(2);
 }
+
+/**
+ * Generate a visual score bar for console output
+ */
+export function getScoreBar(val: number): string {
+  return '█'.repeat(Math.round(val / 10)).padEnd(10, '░');
+}
+
+/**
+ * Get status icon for safety ratings
+ */
+export function getSafetyIcon(rating: string): string {
+  switch (rating) {
+    case 'safe':
+      return '✅';
+    case 'moderate-risk':
+      return '⚠️ ';
+    case 'high-risk':
+      return '🔴';
+    case 'blind-risk':
+      return '💀';
+    default:
+      return '❓';
+  }
+}
+
+/**
+ * Get chalk color function for a given severity
+ * @param severity severity level
+ * @param chalk chalk instance
+ */
+export function getSeverityColor(severity: string, chalk: any) {
+  switch (severity.toLowerCase()) {
+    case 'critical':
+    case 'high-risk':
+    case 'blind-risk':
+      return chalk.red;
+    case 'major':
+    case 'moderate-risk':
+      return chalk.yellow;
+    case 'minor':
+    case 'safe':
+      return chalk.green;
+    case 'info':
+      return chalk.blue;
+    default:
+      return chalk.white;
+  }
+}
