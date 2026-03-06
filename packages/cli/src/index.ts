@@ -53,8 +53,22 @@ const TOOL_PACKAGE_MAP: Record<string, string> = {
   [ToolName.ChangeAmplification]: '@aiready/change-amplification',
   // Aliases handled by registry
   patterns: '@aiready/pattern-detect',
+  duplicates: '@aiready/pattern-detect',
   context: '@aiready/context-analyzer',
+  fragmentation: '@aiready/context-analyzer',
   consistency: '@aiready/consistency',
+  'naming-consistency': '@aiready/consistency',
+  'ai-signal': '@aiready/ai-signal-clarity',
+  'ai-signal-clarity': '@aiready/ai-signal-clarity',
+  grounding: '@aiready/agent-grounding',
+  'agent-grounding': '@aiready/agent-grounding',
+  testability: '@aiready/testability',
+  'testability-index': '@aiready/testability',
+  'doc-drift': '@aiready/doc-drift',
+  'deps-health': '@aiready/deps',
+  'dependency-health': '@aiready/deps',
+  'change-amp': '@aiready/change-amplification',
+  'change-amplification': '@aiready/change-amplification',
 };
 
 /**

@@ -748,15 +748,42 @@ importers:
 
   platform:
     dependencies:
+      '@aiready/agent-grounding':
+        specifier: workspace:*
+        version: link:../packages/agent-grounding
+      '@aiready/ai-signal-clarity':
+        specifier: workspace:*
+        version: link:../packages/ai-signal-clarity
+      '@aiready/change-amplification':
+        specifier: workspace:*
+        version: link:../packages/change-amplification
       '@aiready/cli':
         specifier: workspace:*
         version: link:../packages/cli
       '@aiready/components':
         specifier: workspace:*
         version: link:../packages/components
+      '@aiready/consistency':
+        specifier: workspace:*
+        version: link:../packages/consistency
+      '@aiready/context-analyzer':
+        specifier: workspace:*
+        version: link:../packages/context-analyzer
       '@aiready/core':
         specifier: workspace:*
         version: link:../packages/core
+      '@aiready/deps':
+        specifier: workspace:*
+        version: link:../packages/deps
+      '@aiready/doc-drift':
+        specifier: workspace:*
+        version: link:../packages/doc-drift
+      '@aiready/pattern-detect':
+        specifier: workspace:*
+        version: link:../packages/pattern-detect
+      '@aiready/testability':
+        specifier: workspace:*
+        version: link:../packages/testability
       '@auth/core':
         specifier: ^0.34.0
         version: 0.34.3
