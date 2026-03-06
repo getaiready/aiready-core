@@ -35,8 +35,8 @@ describe('Core Scoring Infrastructure', () => {
         ],
       ]);
 
-      // Default weights: pattern-detect=40, context-analyzer=35
-      // (80 * 40 + 60 * 35) / (40 + 35) = (3200 + 2100) / 75 = 5300 / 75 = 70.67 → 71
+      // Default weights: pattern-detect=22, context-analyzer=19
+      // (80 * 22 + 60 * 19) / (22 + 19) = (1760 + 1140) / 41 = 2900 / 41 = 70.73 → 71
       const result = calculateOverallScore(toolOutputs);
 
       expect(result.overall).toBe(71);
@@ -162,7 +162,7 @@ describe('Core Scoring Infrastructure', () => {
 
       expect(weights.get('pattern-detect')).toBe(50);
       expect(weights.get('context-analyzer')).toBe(30);
-      expect(weights.get('consistency')).toBe(20);
+      expect(weights.get('naming-consistency')).toBe(20);
     });
 
     it('should return empty map for undefined input', () => {
@@ -178,7 +178,7 @@ describe('Core Scoring Infrastructure', () => {
 
       expect(weights.get('pattern-detect')).toBe(50);
       expect(weights.get('context-analyzer')).toBeUndefined();
-      expect(weights.get('consistency')).toBe(30);
+      expect(weights.get('naming-consistency')).toBe(30);
     });
   });
 
@@ -186,7 +186,7 @@ describe('Core Scoring Infrastructure', () => {
     it('should normalize shorthand tool names', () => {
       expect(normalizeToolName('patterns')).toBe('pattern-detect');
       expect(normalizeToolName('context')).toBe('context-analyzer');
-      expect(normalizeToolName('consistency')).toBe('consistency');
+      expect(normalizeToolName('consistency')).toBe('naming-consistency');
     });
 
     it('should return full names unchanged', () => {
