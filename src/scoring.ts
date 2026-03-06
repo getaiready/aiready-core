@@ -1,3 +1,5 @@
+import { ToolName } from './types/schema';
+
 /**
  * AI Readiness Scoring System
  *
@@ -75,76 +77,59 @@ export interface ScoringConfig {
  * Default weights for known tools. Weights sum to 100 and read directly as
  * percentage contribution to the overall score.
  * New tools get weight of 5 if not specified.
- *
- * Weight philosophy:
- * - pattern-detect (22%): Semantic duplication directly wastes token budget and
- *   confuses AI with contradictory in-context examples.
- * - context-analyzer (19%): Context limits are the primary hard constraint on
- *   AI effectiveness regardless of model size.
- * - consistency (14%): Naming/pattern inconsistency degrades AI intent understanding
- *   proportionally to codebase size.
- * - ai-signal-clarity (11%): Code patterns empirically causing AI to generate
- *   confidently wrong outputs — critical for agentic use cases.
- * - agent-grounding (10%): How well an autonomous agent can navigate unaided —
- *   increasingly important as agentic workflows grow.
- * - testability (10%): AI changes without verifiability create hidden risk.
- * - doc-drift (8%): Stale docs actively mislead AI; planned spoke.
- * - deps (6%): Dependency health affects AI suggestion accuracy; planned spoke.
  */
 export const DEFAULT_TOOL_WEIGHTS: Record<string, number> = {
-  'pattern-detect': 22,
-  'context-analyzer': 19,
-  consistency: 14,
-  'ai-signal-clarity': 11,
-  'agent-grounding': 10,
-  testability: 10,
-  'doc-drift': 8,
-  deps: 6,
+  [ToolName.PatternDetect]: 22,
+  [ToolName.ContextAnalyzer]: 19,
+  [ToolName.NamingConsistency]: 14,
+  [ToolName.AiSignalClarity]: 11,
+  [ToolName.AgentGrounding]: 10,
+  [ToolName.TestabilityIndex]: 10,
+  [ToolName.DocDrift]: 8,
+  [ToolName.DependencyHealth]: 6,
+  [ToolName.ChangeAmplification]: 8,
 };
 
 /**
- * Tool name normalization map (shorthand -> full name)
+ * Tool name normalization map (shorthand -> canonical name)
  */
 export const TOOL_NAME_MAP: Record<string, string> = {
-  patterns: 'pattern-detect',
-  context: 'context-analyzer',
-  consistency: 'consistency',
-  'AI signal clarity': 'ai-signal-clarity',
-  'ai-signal-clarity': 'ai-signal-clarity',
-  grounding: 'agent-grounding',
-  'agent-grounding': 'agent-grounding',
-  testability: 'testability',
-  tests: 'testability',
-  'doc-drift': 'doc-drift',
-  docs: 'doc-drift',
-  deps: 'deps',
+  patterns: ToolName.PatternDetect,
+  'pattern-detect': ToolName.PatternDetect,
+  context: ToolName.ContextAnalyzer,
+  'context-analyzer': ToolName.ContextAnalyzer,
+  consistency: ToolName.NamingConsistency,
+  'naming-consistency': ToolName.NamingConsistency,
+  'ai-signal': ToolName.AiSignalClarity,
+  'ai-signal-clarity': ToolName.AiSignalClarity,
+  grounding: ToolName.AgentGrounding,
+  'agent-grounding': ToolName.AgentGrounding,
+  testability: ToolName.TestabilityIndex,
+  'testability-index': ToolName.TestabilityIndex,
+  'doc-drift': ToolName.DocDrift,
+  'deps-health': ToolName.DependencyHealth,
+  'dependency-health': ToolName.DependencyHealth,
+  'change-amp': ToolName.ChangeAmplification,
+  'change-amplification': ToolName.ChangeAmplification,
 };
 
 /**
  * Model context tiers for context-aware threshold calibration.
- *
- * As AI models evolve from 32k → 128k → 1M+ context windows, absolute token
- * thresholds become meaningless. Use these tiers to adjust context-analyzer
- * thresholds relative to the model your team uses.
  */
 export type ModelContextTier =
-  | 'compact' // 4k-16k  tokens: GPT-3.5, older Codex
-  | 'standard' // 16k-64k tokens: GPT-4, Claude 3 Haiku
-  | 'extended' // 64k-200k: GPT-4o, Claude 3.5 Sonnet, Gemini 1.5 Pro
-  | 'frontier'; // 200k+: Claude 3.5/3.7/4, Gemini 2.0/2.5, GPT-4.5+
+  | 'compact' // 4k-16k  tokens
+  | 'standard' // 16k-64k tokens
+  | 'extended' // 64k-200k
+  | 'frontier'; // 200k+
 
 /**
  * Context budget thresholds per tier.
- * Scores are interpolated between these boundaries.
  */
 export const CONTEXT_TIER_THRESHOLDS: Record<
   ModelContextTier,
   {
-    /** Below this → full score for context budget */
     idealTokens: number;
-    /** Above this → critical penalty for context budget */
     criticalTokens: number;
-    /** Suggested max import depth before penalty */
     idealDepth: number;
   }
 > = {
@@ -156,10 +141,6 @@ export const CONTEXT_TIER_THRESHOLDS: Record<
 
 /**
  * Project-size-adjusted minimum thresholds.
- *
- * Large codebases structurally accrue more issues. A score of 65 in an
- * enterprise codebase is roughly equivalent to 75 in a small project.
- * These are recommended minimum passing thresholds by project size.
  */
 export const SIZE_ADJUSTED_THRESHOLDS: Record<string, number> = {
   xs: 80, // < 50 files
@@ -191,54 +172,37 @@ export function getRecommendedThreshold(
 ): number {
   const sizeTier = getProjectSizeTier(fileCount);
   const base = SIZE_ADJUSTED_THRESHOLDS[sizeTier];
-  // Frontier models are more forgiving (higher context = better comprehension)
   const modelBonus =
     modelTier === 'frontier' ? -3 : modelTier === 'extended' ? -2 : 0;
   return base + modelBonus;
 }
 
 /**
- * Normalize tool name from shorthand to full name
+ * Normalize tool name from shorthand to canonical name
  */
 export function normalizeToolName(shortName: string): string {
-  return TOOL_NAME_MAP[shortName] || shortName;
+  return TOOL_NAME_MAP[shortName.toLowerCase()] || shortName;
 }
 
 /**
- * Get tool weight with fallback priority:
- * 1. CLI override
- * 2. Tool config scoreWeight
- * 3. Default weight
- * 4. 10 (for unknown tools)
+ * Get tool weight
  */
 export function getToolWeight(
   toolName: string,
   toolConfig?: { scoreWeight?: number },
   cliOverride?: number
 ): number {
-  // CLI override has highest priority
-  if (cliOverride !== undefined) {
-    return cliOverride;
-  }
-
-  // Check tool's own config
-  if (toolConfig?.scoreWeight !== undefined) {
-    return toolConfig.scoreWeight;
-  }
-
-  // Fall back to defaults
+  if (cliOverride !== undefined) return cliOverride;
+  if (toolConfig?.scoreWeight !== undefined) return toolConfig.scoreWeight;
   return DEFAULT_TOOL_WEIGHTS[toolName] || 5;
 }
 
 /**
- * Parse weight string from CLI (e.g., "patterns:50,context:30")
+ * Parse weight string from CLI
  */
 export function parseWeightString(weightStr?: string): Map<string, number> {
   const weights = new Map<string, number>();
-
-  if (!weightStr) {
-    return weights;
-  }
+  if (!weightStr) return weights;
 
   const pairs = weightStr.split(',');
   for (const pair of pairs) {
@@ -251,17 +215,11 @@ export function parseWeightString(weightStr?: string): Map<string, number> {
       }
     }
   }
-
   return weights;
 }
 
 /**
- * Calculate overall AI Readiness Score from multiple tool scores.
- *
- * Formula: Σ(tool_score × tool_weight) / Σ(active_tool_weights)
- *
- * This allows dynamic composition - score adjusts automatically
- * based on which tools actually ran.
+ * Calculate overall AI Readiness Score
  */
 export function calculateOverallScore(
   toolOutputs: Map<string, ToolScoringOutput>,
@@ -272,7 +230,6 @@ export function calculateOverallScore(
     throw new Error('No tool outputs provided for scoring');
   }
 
-  // Build weights map with priority: CLI > config > defaults
   const weights = new Map<string, number>();
   for (const [toolName] of toolOutputs.entries()) {
     const cliWeight = cliWeights?.get(toolName);
@@ -282,7 +239,6 @@ export function calculateOverallScore(
     weights.set(toolName, weight);
   }
 
-  // Calculate weighted sum and total weight
   let weightedSum = 0;
   let totalWeight = 0;
 
@@ -292,22 +248,16 @@ export function calculateOverallScore(
 
   for (const [toolName, output] of toolOutputs.entries()) {
     const weight = weights.get(toolName) || 5;
-    const weightedScore = output.score * weight;
-
-    weightedSum += weightedScore;
+    weightedSum += output.score * weight;
     totalWeight += weight;
     toolsUsed.push(toolName);
     calculationWeights[toolName] = weight;
     breakdown.push(output);
   }
 
-  // Calculate final score
   const overall = Math.round(weightedSum / totalWeight);
-
-  // Determine rating
   const rating = getRating(overall);
 
-  // Build formula string
   const formulaParts = Array.from(toolOutputs.entries()).map(
     ([name, output]) => {
       const w = weights.get(name) || 5;
@@ -343,7 +293,6 @@ export function getRating(score: number): ScoringResult['rating'] {
 
 /**
  * Convert score to rating with project-size awareness.
- * Use this for display to give fairer assessment to large codebases.
  */
 export function getRatingWithContext(
   score: number,
@@ -351,13 +300,12 @@ export function getRatingWithContext(
   modelTier: ModelContextTier = 'standard'
 ): ScoringResult['rating'] {
   const threshold = getRecommendedThreshold(fileCount, modelTier);
-  // Shift the rating bands based on size-adjusted threshold
-  const normalized = score - threshold + 70; // 70 = inflection point for 'Fair'
+  const normalized = score - threshold + 70;
   return getRating(normalized);
 }
 
 /**
- * Get rating emoji and color for display
+ * Get rating display properties
  */
 export function getRatingDisplay(rating: ScoringResult['rating']): {
   emoji: string;
@@ -378,7 +326,7 @@ export function getRatingDisplay(rating: ScoringResult['rating']): {
 }
 
 /**
- * Format score for display with rating
+ * Format score for display
  */
 export function formatScore(result: ScoringResult): string {
   const { emoji } = getRatingDisplay(result.rating);
