@@ -118,10 +118,16 @@ export async function scanFiles(options: ScanOptions): Promise<string[]> {
     }
   }
 
-  const TEST_PATTERNS = ['**/*.test.*', '**/*.spec.*', '**/__tests__/**', '**/test/**', '**/tests/**'];
+  const TEST_PATTERNS = [
+    '**/*.test.*',
+    '**/*.spec.*',
+    '**/__tests__/**',
+    '**/test/**',
+    '**/tests/**',
+  ];
 
   const baseExclude = options.includeTests
-    ? DEFAULT_EXCLUDE.filter(p => !TEST_PATTERNS.includes(p))
+    ? DEFAULT_EXCLUDE.filter((p) => !TEST_PATTERNS.includes(p))
     : DEFAULT_EXCLUDE;
 
   const finalExclude = [
@@ -155,7 +161,10 @@ export async function scanFiles(options: ScanOptions): Promise<string[]> {
       for (const gitignorePath of gitignoreFiles) {
         const gitTxt = await readFile(gitignorePath, 'utf-8');
         const gitignoreDir = dirname(gitignorePath);
-        const relativePrefix = relative(rootDir || '.', gitignoreDir).replace(/\\/g, '/');
+        const relativePrefix = relative(rootDir || '.', gitignoreDir).replace(
+          /\\/g,
+          '/'
+        );
 
         const patterns = gitTxt
           .split(/\r?\n/)
@@ -167,7 +176,13 @@ export async function scanFiles(options: ScanOptions): Promise<string[]> {
           ig.add(patterns);
         } else {
           // Add patterns with directory prefix for nested gitignores
-          ig.add(patterns.map((p) => (p.startsWith('/') ? `${relativePrefix}${p}` : `${relativePrefix}/**/${p}`)));
+          ig.add(
+            patterns.map((p) =>
+              p.startsWith('/')
+                ? `${relativePrefix}${p}`
+                : `${relativePrefix}/**/${p}`
+            )
+          );
         }
       }
 
@@ -190,7 +205,9 @@ export async function scanFiles(options: ScanOptions): Promise<string[]> {
  * Scan for both files and directories, respecting ignore rules.
  * Useful for tools that need to analyze directory structure.
  */
-export async function scanEntries(options: ScanOptions): Promise<{ files: string[]; dirs: string[] }> {
+export async function scanEntries(
+  options: ScanOptions
+): Promise<{ files: string[]; dirs: string[] }> {
   const files = await scanFiles(options);
   const { rootDir, include = ['**/*'], exclude, includeTests } = options;
 
@@ -210,12 +227,20 @@ export async function scanEntries(options: ScanOptions): Promise<{ files: string
     }
   }
 
-  const TEST_PATTERNS = ['**/*.test.*', '**/*.spec.*', '**/__tests__/**', '**/test/**', '**/tests/**'];
+  const TEST_PATTERNS = [
+    '**/*.test.*',
+    '**/*.spec.*',
+    '**/__tests__/**',
+    '**/test/**',
+    '**/tests/**',
+  ];
   const baseExclude = includeTests
-    ? DEFAULT_EXCLUDE.filter(p => !TEST_PATTERNS.includes(p))
+    ? DEFAULT_EXCLUDE.filter((p) => !TEST_PATTERNS.includes(p))
     : DEFAULT_EXCLUDE;
 
-  const finalExclude = [...new Set([...(exclude || []), ...ignoreFromFile, ...baseExclude])];
+  const finalExclude = [
+    ...new Set([...(exclude || []), ...ignoreFromFile, ...baseExclude]),
+  ];
 
   const dirs = await glob('**/', {
     cwd: rootDir,
@@ -235,18 +260,33 @@ export async function scanEntries(options: ScanOptions): Promise<{ files: string
     for (const gitignorePath of gitignoreFiles) {
       const gitTxt = await readFile(gitignorePath, 'utf-8');
       const gitignoreDir = dirname(gitignorePath);
-      const relativePrefix = relative(rootDir || '.', gitignoreDir).replace(/\\/g, '/');
-      const patterns = gitTxt.split(/\r?\n/).map((s) => s.trim()).filter(Boolean).filter((l) => !l.startsWith('#'));
+      const relativePrefix = relative(rootDir || '.', gitignoreDir).replace(
+        /\\/g,
+        '/'
+      );
+      const patterns = gitTxt
+        .split(/\r?\n/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .filter((l) => !l.startsWith('#'));
 
       if (relativePrefix === '.' || relativePrefix === '') {
         ig.add(patterns);
       } else {
-        ig.add(patterns.map((p) => (p.startsWith('/') ? `${relativePrefix}${p}` : `${relativePrefix}/**/${p}`)));
+        ig.add(
+          patterns.map((p) =>
+            p.startsWith('/')
+              ? `${relativePrefix}${p}`
+              : `${relativePrefix}/**/${p}`
+          )
+        );
       }
     }
 
     const filteredDirs = dirs.filter((d) => {
-      let rel = relative(rootDir || '.', d).replace(/\\/g, '/').replace(/\/$/, '');
+      const rel = relative(rootDir || '.', d)
+        .replace(/\\/g, '/')
+        .replace(/\/$/, '');
       if (rel === '') return true; // project root is never ignored by its own gitignore
       return !ig.ignores(rel);
     });

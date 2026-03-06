@@ -41,7 +41,7 @@ export function calculateChangeAmplification(params: {
     hotspots.reduce((sum, h) => sum + h.amplificationFactor, 0) /
     hotspots.length;
 
-  let score = Math.max(
+  const score = Math.max(
     0,
     Math.min(
       100,
