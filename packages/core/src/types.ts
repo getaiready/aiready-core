@@ -1,71 +1,15 @@
-export interface AnalysisResult {
-  fileName: string;
-  issues: Issue[];
-  metrics: Metrics;
-}
+export * from './types/schema';
+import {
+  Severity,
+  IssueType,
+  Location,
+  Issue,
+  Metrics,
+  AnalysisResult,
+  ModelTier,
+} from './types/schema';
 
-export interface Issue {
-  type: IssueType;
-  severity: 'critical' | 'major' | 'minor' | 'info';
-  message: string;
-  location: Location;
-  suggestion?: string;
-}
-
-export type IssueType =
-  | 'duplicate-pattern'
-  | 'context-fragmentation'
-  | 'doc-drift'
-  | 'dependency-health'
-  | 'naming-inconsistency'
-  | 'naming-quality'
-  | 'pattern-inconsistency'
-  | 'architecture-inconsistency'
-  | 'dead-code'
-  | 'circular-dependency'
-  | 'missing-types'
-  // v0.12+ dimensions
-  | 'ai-signal-clarity' // Code pattern known to cause AI AI signal clarity
-  | 'low-testability' // AI changes cannot be safely verified
-  | 'agent-navigation-failure' // Agent cannot determine where code belongs
-  | 'ambiguous-api' // Public API surface is unclear or untyped
-  | 'magic-literal' // Unnamed constant confuses AI intent inference
-  | 'boolean-trap' // Boolean param pattern that inverts AI intent
-  | 'change-amplification'; // A small change here causes massive downstream breakages
-
-export interface Location {
-  file: string;
-  line: number;
-  column?: number;
-  endLine?: number;
-  endColumn?: number;
-}
-
-export interface Metrics {
-  tokenCost?: number;
-  complexityScore?: number;
-  consistencyScore?: number;
-  docFreshnessScore?: number;
-
-  // Business value metrics (v0.10+)
-  estimatedMonthlyCost?: number;
-  estimatedDeveloperHours?: number;
-  comprehensionDifficultyIndex?: number;
-
-  // AI agent readiness metrics (v0.12+)
-  /** Probability (0-100) that AI will hallucinate in this file/module */
-  aiSignalClarityScore?: number;
-  /** How well an agent can navigate to/from this file unaided (0-100) */
-  agentGroundingScore?: number;
-  /** Whether AI-generated changes to this file can be safely verified (0-100) */
-  testabilityScore?: number;
-  /** Level of documentation drift vs code reality (0-100, higher = more drift) */
-  docDriftScore?: number;
-  /** Health of dependencies in relation to AI training knowledge (0-100) */
-  dependencyHealthScore?: number;
-  /** Model context tier this analysis was calibrated for */
-  modelContextTier?: 'compact' | 'standard' | 'extended' | 'frontier';
-}
+// Re-export specific common types as needed (though schema.ts exports them too)
 
 // ============================================
 // Business Value Metrics
@@ -121,9 +65,7 @@ export interface ProductivityImpact {
   totalCost: number;
   /** Breakdown by severity */
   bySeverity: {
-    critical: { hours: number; cost: number };
-    major: { hours: number; cost: number };
-    minor: { hours: number; cost: number };
+    [K in Severity]: { hours: number; cost: number };
   };
 }
 
@@ -338,7 +280,7 @@ export interface Report {
 /**
  * Severity levels for issues
  */
-export type GraphIssueSeverity = 'critical' | 'major' | 'minor' | 'info';
+export type GraphIssueSeverity = Severity;
 
 /**
  * Base graph node
@@ -379,7 +321,7 @@ export interface GraphMetadata {
   minorIssues: number;
   infoIssues: number;
   /** AI token budget unit economics (v0.13+) */
-  tokenBudget?: import('./types').TokenBudget;
+  tokenBudget?: TokenBudget;
 }
 
 /**
@@ -392,7 +334,7 @@ export interface GraphData {
   issues?: {
     id: string;
     type: string;
-    severity: GraphIssueSeverity;
+    severity: Severity;
     nodeIds: string[];
     message: string;
   }[];

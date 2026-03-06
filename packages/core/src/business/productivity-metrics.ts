@@ -1,14 +1,15 @@
 import type { ProductivityImpact, AcceptancePrediction } from '../types';
+import { Severity } from '../types';
 import type { ToolScoringOutput } from '../scoring';
 
 /**
  * Severity time estimates (hours to fix)
  */
 export const SEVERITY_TIME_ESTIMATES = {
-  critical: 4,
-  major: 2,
-  minor: 0.5,
-  info: 0.25,
+  [Severity.Critical]: 4,
+  [Severity.Major]: 2,
+  [Severity.Minor]: 0.5,
+  [Severity.Info]: 0.25,
 };
 
 const DEFAULT_HOURLY_RATE = 75;
@@ -21,20 +22,31 @@ export function calculateProductivityImpact(
   hourlyRate: number = DEFAULT_HOURLY_RATE
 ): ProductivityImpact {
   const counts = {
-    critical: issues.filter((i) => i.severity === 'critical').length,
-    major: issues.filter((i) => i.severity === 'major').length,
-    minor: issues.filter((i) => i.severity === 'minor').length,
-    info: issues.filter((i) => i.severity === 'info').length,
+    [Severity.Critical]: issues.filter((i) => i.severity === Severity.Critical)
+      .length,
+    [Severity.Major]: issues.filter((i) => i.severity === Severity.Major)
+      .length,
+    [Severity.Minor]: issues.filter((i) => i.severity === Severity.Minor)
+      .length,
+    [Severity.Info]: issues.filter((i) => i.severity === Severity.Info).length,
   };
 
   const hours = {
-    critical: counts.critical * SEVERITY_TIME_ESTIMATES.critical,
-    major: counts.major * SEVERITY_TIME_ESTIMATES.major,
-    minor: counts.minor * SEVERITY_TIME_ESTIMATES.minor,
-    info: counts.info * SEVERITY_TIME_ESTIMATES.info,
+    [Severity.Critical]:
+      counts[Severity.Critical] * SEVERITY_TIME_ESTIMATES[Severity.Critical],
+    [Severity.Major]:
+      counts[Severity.Major] * SEVERITY_TIME_ESTIMATES[Severity.Major],
+    [Severity.Minor]:
+      counts[Severity.Minor] * SEVERITY_TIME_ESTIMATES[Severity.Minor],
+    [Severity.Info]:
+      counts[Severity.Info] * SEVERITY_TIME_ESTIMATES[Severity.Info],
   };
 
-  const totalHours = hours.critical + hours.major + hours.minor + hours.info;
+  const totalHours =
+    hours[Severity.Critical] +
+    hours[Severity.Major] +
+    hours[Severity.Minor] +
+    hours[Severity.Info];
   const totalCost = totalHours * hourlyRate;
 
   return {
@@ -42,17 +54,21 @@ export function calculateProductivityImpact(
     hourlyRate,
     totalCost: Math.round(totalCost),
     bySeverity: {
-      critical: {
-        hours: Math.round(hours.critical * 10) / 10,
-        cost: Math.round(hours.critical * hourlyRate),
+      [Severity.Critical]: {
+        hours: Math.round(hours[Severity.Critical] * 10) / 10,
+        cost: Math.round(hours[Severity.Critical] * hourlyRate),
       },
-      major: {
-        hours: Math.round(hours.major * 10) / 10,
-        cost: Math.round(hours.major * hourlyRate),
+      [Severity.Major]: {
+        hours: Math.round(hours[Severity.Major] * 10) / 10,
+        cost: Math.round(hours[Severity.Major] * hourlyRate),
       },
-      minor: {
-        hours: Math.round(hours.minor * 10) / 10,
-        cost: Math.round(hours.minor * hourlyRate),
+      [Severity.Minor]: {
+        hours: Math.round(hours[Severity.Minor] * 10) / 10,
+        cost: Math.round(hours[Severity.Minor] * hourlyRate),
+      },
+      [Severity.Info]: {
+        hours: Math.round(hours[Severity.Info] * 10) / 10,
+        cost: Math.round(hours[Severity.Info] * hourlyRate),
       },
     },
   };

@@ -4,22 +4,10 @@
  * changes in spokes don't break the CLI, Platform, or Visualizer.
  */
 
-import { AnalysisResult, Metrics } from '../types';
+import { z } from 'zod';
+import { AnalysisResult, SpokeOutput, UnifiedReport } from '../types';
 
-/**
- * The standard output every spoke MUST provide when analyzed.
- * Some fields are optional depending on the tool's focus.
- */
-export interface SpokeOutput {
-  results: AnalysisResult[];
-  summary: any;
-  metadata?: {
-    toolName: string;
-    version: string;
-    timestamp: string;
-    [key: string]: any;
-  };
-}
+export type { SpokeOutput, UnifiedReport };
 
 /**
  * Validation utility to ensure a spoke's output matches the expected contract.
@@ -93,27 +81,18 @@ export function validateSpokeOutput(
 }
 
 /**
- * The unified report format produced by the CLI and consumed by the Platform.
- * This is the master contract for the entire system.
+ * Zod-based validation (Round 1 improvement)
  */
-export interface UnifiedReport {
-  summary: {
-    totalFiles: number;
-    totalIssues: number;
-    criticalIssues: number;
-    majorIssues: number;
+export function validateWithSchema<T>(
+  schema: z.ZodSchema<T>,
+  data: any
+): { valid: boolean; data?: T; errors?: string[] } {
+  const result = schema.safeParse(data);
+  if (result.success) {
+    return { valid: true, data: result.data };
+  }
+  return {
+    valid: false,
+    errors: result.error.issues.map((e) => `${e.path.join('.')}: ${e.message}`),
   };
-  results: AnalysisResult[];
-  scoring?: {
-    overall: number;
-    rating: string;
-    timestamp: string;
-    breakdown: Array<{
-      toolName: string;
-      score: number;
-      [key: string]: any;
-    }>;
-  };
-  // Each tool can also include its raw specific output here
-  [toolKey: string]: any;
 }
