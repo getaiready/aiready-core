@@ -262,6 +262,10 @@ release-one: ## Release one spoke: TYPE=patch|minor|major, SPOKE=core|pattern-de
 	$(call log_step,Building workspace...); \
 	$(MAKE) -C $(ROOT_DIR) build; \
 	$(call log_success,Build complete); \
+	if ! $(MAKE) -C $(ROOT_DIR) test-contract SPOKE=$(SPOKE); then \
+		$(call log_error,Contract Tests failed for @aiready/$(SPOKE). Aborting release.); \
+		exit 1; \
+	fi; \
 	if ! $(MAKE) -C $(ROOT_DIR) test-integration; then \
 		$(call log_error,Integration Tests failed for @aiready/$(SPOKE). Aborting release.); \
 		exit 1; \

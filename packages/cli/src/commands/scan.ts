@@ -23,6 +23,7 @@ import {
   parseWeightString,
   getRepoMetadata,
   Severity,
+  IssueType,
   type ToolScoringOutput,
 } from '@aiready/core';
 import { analyzeUnified, scoreUnified, type ScoringResult } from '../index';
@@ -655,6 +656,114 @@ export async function scanAction(directory: string, options: ScanOptions) {
       }
     }
 
+    // Helper to map CLI results to UnifiedReport schema
+    const mapToUnifiedReport = (
+      res: any,
+      scoring: ScoringResult | undefined
+    ) => {
+      const allResults: any[] = [];
+      let totalFilesSet = new Set<string>();
+      let criticalCount = 0;
+      let majorCount = 0;
+
+      // Collect from all spokes and normalize to AnalysisResult
+      const collect = (
+        spokeRes: any,
+        defaultType: IssueType = IssueType.AiSignalClarity
+      ) => {
+        if (!spokeRes || !spokeRes.results) return;
+        spokeRes.results.forEach((r: any) => {
+          const fileName = r.fileName || r.file || 'unknown';
+          totalFilesSet.add(fileName);
+
+          // Enforce strict AnalysisResult schema
+          const normalizedResult = {
+            fileName,
+            issues: [] as any[],
+            metrics: r.metrics || { tokenCost: r.tokenCost || 0 },
+          };
+
+          if (r.issues && Array.isArray(r.issues)) {
+            r.issues.forEach((i: any) => {
+              const normalizedIssue =
+                typeof i === 'string'
+                  ? {
+                      type: defaultType,
+                      severity: (r.severity || Severity.Info) as Severity,
+                      message: i,
+                      location: { file: fileName, line: 1 },
+                    }
+                  : {
+                      type: i.type || defaultType,
+                      severity: (i.severity ||
+                        r.severity ||
+                        Severity.Info) as Severity,
+                      message: i.message || String(i),
+                      location: i.location || { file: fileName, line: 1 },
+                      suggestion: i.suggestion,
+                    };
+
+              if (
+                normalizedIssue.severity === Severity.Critical ||
+                normalizedIssue.severity === 'critical'
+              )
+                criticalCount++;
+              if (
+                normalizedIssue.severity === Severity.Major ||
+                normalizedIssue.severity === 'major'
+              )
+                majorCount++;
+
+              normalizedResult.issues.push(normalizedIssue);
+            });
+          } else if (r.severity) {
+            // handle context-analyzer style if issues missing but severity present
+            const normalizedIssue = {
+              type: defaultType,
+              severity: r.severity as Severity,
+              message: r.message || 'General issue',
+              location: { file: fileName, line: 1 },
+            };
+            if (
+              normalizedIssue.severity === Severity.Critical ||
+              normalizedIssue.severity === 'critical'
+            )
+              criticalCount++;
+            if (
+              normalizedIssue.severity === Severity.Major ||
+              normalizedIssue.severity === 'major'
+            )
+              majorCount++;
+            normalizedResult.issues.push(normalizedIssue);
+          }
+
+          allResults.push(normalizedResult);
+        });
+      };
+
+      collect(res.patternDetect, IssueType.DuplicatePattern);
+      collect(res.contextAnalyzer, IssueType.ContextFragmentation);
+      collect(res.consistency, IssueType.NamingInconsistency);
+      collect(res.docDrift, IssueType.DocDrift);
+      collect(res.dependencyHealth, IssueType.DependencyHealth);
+      collect(res.aiSignalClarity, IssueType.AiSignalClarity);
+      collect(res.agentGrounding, IssueType.AgentNavigationFailure);
+      collect(res.testability, IssueType.LowTestability);
+      collect(res.changeAmplification, IssueType.ChangeAmplification);
+
+      return {
+        ...res,
+        results: allResults,
+        summary: {
+          ...res.summary,
+          totalFiles: totalFilesSet.size,
+          criticalIssues: criticalCount,
+          majorIssues: majorCount,
+        },
+        scoring: scoring,
+      };
+    };
+
     // Persist JSON summary when output format is json
     const outputFormat =
       options.output || finalOptions.output?.format || 'console';
@@ -668,8 +777,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
         resolvedDir
       );
       const outputData = {
-        ...results,
-        scoring: scoringResult,
+        ...mapToUnifiedReport(results, scoringResult),
         repository: repoMetadata,
       };
       handleJSONOutput(
@@ -699,8 +807,7 @@ export async function scanAction(directory: string, options: ScanOptions) {
         resolvedDir
       );
       const outputData = {
-        ...results,
-        scoring: scoringResult,
+        ...mapToUnifiedReport(results, scoringResult),
         repository: repoMetadata,
       };
 
