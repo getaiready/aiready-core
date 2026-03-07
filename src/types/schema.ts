@@ -201,6 +201,7 @@ export const SpokeOutputSchema = z.object({
       toolName: z.string(),
       version: z.string().optional(),
       timestamp: z.string().optional(),
+      config: z.any().optional(),
     })
     .catchall(z.any())
     .optional(),
