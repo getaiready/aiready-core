@@ -75,32 +75,38 @@ export async function handler(event: SQSEvent) {
 
       console.log(`[ScanWorker] Running AIReady analysis...`);
 
-      // Dynamic import of CLI to avoid loading it if not needed
-      const cli = (await import('@aiready/cli')) as any;
-      const analyzeUnified = cli.analyzeUnified || cli.default?.analyzeUnified;
-      const scoreUnified = cli.scoreUnified || cli.default?.scoreUnified;
+      // Dynamic import of CLI and Core to avoid loading if not needed
+      const [cli, core] = await Promise.all([
+        import('@aiready/cli'),
+        import('@aiready/core'),
+      ]);
+      const { ToolName } = core;
+      const analyzeUnified =
+        (cli as any).analyzeUnified || (cli as any).default?.analyzeUnified;
+      const scoreUnified =
+        (cli as any).scoreUnified || (cli as any).default?.scoreUnified;
 
       if (
         typeof analyzeUnified !== 'function' ||
         typeof scoreUnified !== 'function'
       ) {
         throw new Error(
-          `[ScanWorker] Failed to load analyzeUnified or scoreUnified from @aiready/cli. cli type: ${typeof cli}`
+          `[ScanWorker] Failed to load analyzeUnified or scoreUnified from @aiready/cli.`
         );
       }
 
       const analysisResults = await analyzeUnified({
         rootDir: tempDir,
         tools: repo.scanConfig?.scan?.tools || [
-          'patterns',
-          'context',
-          'consistency',
-          'change-amplification',
-          'ai-signal-clarity',
-          'agent-grounding',
-          'testability',
-          'doc-drift',
-          'deps-health',
+          ToolName.PatternDetect,
+          ToolName.ContextAnalyzer,
+          ToolName.NamingConsistency,
+          ToolName.ChangeAmplification,
+          ToolName.AiSignalClarity,
+          ToolName.AgentGrounding,
+          ToolName.TestabilityIndex,
+          ToolName.DocDrift,
+          ToolName.DependencyHealth,
         ],
         toolConfigs: repo.scanConfig?.tools,
         ...(repo.scanConfig?.scan || {}),

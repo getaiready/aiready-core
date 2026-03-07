@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   SettingsIcon,
   SaveIcon,
@@ -11,6 +11,7 @@ import {
   ChartIcon,
 } from '@/components/Icons';
 import type { AIReadyConfig } from '@aiready/core';
+import { ToolName } from '@aiready/core/client';
 
 interface Props {
   repoId: string;
@@ -19,28 +20,75 @@ interface Props {
 }
 
 export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
-  const [settings, setSettings] = useState<AIReadyConfig>(
-    initialSettings || {
+  const defaultSettings: AIReadyConfig = {
+    scan: {
+      tools: [
+        ToolName.PatternDetect,
+        ToolName.ContextAnalyzer,
+        ToolName.NamingConsistency,
+        ToolName.ChangeAmplification,
+        ToolName.AiSignalClarity,
+        ToolName.AgentGrounding,
+        ToolName.TestabilityIndex,
+        ToolName.DocDrift,
+        ToolName.DependencyHealth,
+      ],
+      exclude: ['**/node_modules/**', '**/dist/**', '**/.git/**'],
+    },
+    tools: {
+      [ToolName.PatternDetect]: { minSimilarity: 0.8, minLines: 5 },
+      [ToolName.ContextAnalyzer]: { maxDepth: 5, minCohesion: 0.6 },
+      [ToolName.AiSignalClarity]: {
+        checkMagicLiterals: true,
+        checkBooleanTraps: true,
+        checkAmbiguousNames: true,
+        checkUndocumentedExports: true,
+        checkImplicitSideEffects: true,
+        checkDeepCallbacks: true,
+      },
+      [ToolName.AgentGrounding]: { maxRecommendedDepth: 4 },
+      [ToolName.DocDrift]: { staleMonths: 6 },
+    },
+  };
+
+  const [settings, setSettings] = useState<AIReadyConfig>(() => {
+    if (!initialSettings) return defaultSettings;
+
+    // Map aliases to canonical names in initialSettings
+    const aliasMap: Record<string, string> = {
+      patterns: ToolName.PatternDetect,
+      duplicates: ToolName.PatternDetect,
+      context: ToolName.ContextAnalyzer,
+      fragmentation: ToolName.ContextAnalyzer,
+      consistency: ToolName.NamingConsistency,
+      'ai-signal': ToolName.AiSignalClarity,
+      grounding: ToolName.AgentGrounding,
+      testability: ToolName.TestabilityIndex,
+      'deps-health': ToolName.DependencyHealth,
+      'change-amp': ToolName.ChangeAmplification,
+    };
+
+    const normalizedTools = (initialSettings.scan?.tools || []).map(
+      (t) => aliasMap[t] || t
+    );
+
+    return {
+      ...defaultSettings,
+      ...initialSettings,
       scan: {
-        tools: [
-          'patterns',
-          'context',
-          'consistency',
-          'change-amplification',
-          'ai-signal-clarity',
-          'agent-grounding',
-          'testability',
-          'doc-drift',
-          'deps-health',
-        ],
-        exclude: ['**/node_modules/**', '**/dist/**', '**/.git/**'],
+        ...defaultSettings.scan,
+        ...initialSettings.scan,
+        tools:
+          normalizedTools.length > 0
+            ? normalizedTools
+            : defaultSettings.scan!.tools,
       },
       tools: {
-        'pattern-detect': { minSimilarity: 0.8, minLines: 5 },
-        'context-analyzer': { maxDepth: 5 },
+        ...defaultSettings.tools,
+        ...initialSettings.tools,
       },
-    }
-  );
+    };
+  });
 
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -79,47 +127,47 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
 
   const allTools = [
     {
-      id: 'patterns',
+      id: ToolName.PatternDetect,
       name: 'Pattern Detection',
       description: 'Finds semantic duplicates and logic clones.',
     },
     {
-      id: 'context',
+      id: ToolName.ContextAnalyzer,
       name: 'Context Analyzer',
       description: 'Analyzes dependency fragmentation and context costs.',
     },
     {
-      id: 'consistency',
+      id: ToolName.NamingConsistency,
       name: 'Naming Consistency',
       description: 'Enforces standard naming conventions and clarity.',
     },
     {
-      id: 'change-amplification',
+      id: ToolName.ChangeAmplification,
       name: 'Change Amplification',
       description: 'Detects code that causes excessive downstream changes.',
     },
     {
-      id: 'ai-signal-clarity',
+      id: ToolName.AiSignalClarity,
       name: 'AI Signal Clarity',
       description: 'Measures how easy it is for AI to reason about the code.',
     },
     {
-      id: 'agent-grounding',
+      id: ToolName.AgentGrounding,
       name: 'Agent Grounding',
       description: 'Verifies if business concepts are correctly implemented.',
     },
     {
-      id: 'testability',
+      id: ToolName.TestabilityIndex,
       name: 'Testability Index',
       description: 'Evaluates how easy it is to write unit tests for the code.',
     },
     {
-      id: 'doc-drift',
+      id: ToolName.DocDrift,
       name: 'Document Drift',
       description: 'Checks if documentation matches actual implementation.',
     },
     {
-      id: 'deps-health',
+      id: ToolName.DependencyHealth,
       name: 'Dependency Health',
       description: 'Analyzes external dependency risks and bloat.',
     },
@@ -236,8 +284,8 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
                   </span>
                   <span className="text-amber-500">
                     {Math.round(
-                      (settings.tools?.['pattern-detect']?.minSimilarity ||
-                        0.8) * 100
+                      (settings.tools?.[ToolName.PatternDetect]
+                        ?.minSimilarity || 0.8) * 100
                     )}
                     %
                   </span>
@@ -248,15 +296,16 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
                   max="1.0"
                   step="0.05"
                   value={
-                    settings.tools?.['pattern-detect']?.minSimilarity || 0.8
+                    settings.tools?.[ToolName.PatternDetect]?.minSimilarity ||
+                    0.8
                   }
                   onChange={(e) =>
                     setSettings({
                       ...settings,
                       tools: {
                         ...settings.tools,
-                        'pattern-detect': {
-                          ...settings.tools?.['pattern-detect'],
+                        [ToolName.PatternDetect]: {
+                          ...settings.tools?.[ToolName.PatternDetect],
                           minSimilarity: parseFloat(e.target.value),
                         },
                       },
@@ -272,7 +321,8 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
                     <InfoIcon className="w-4 h-4 text-slate-600 cursor-help" />
                   </span>
                   <span className="text-amber-500">
-                    {settings.tools?.['pattern-detect']?.minLines || 5} lines
+                    {settings.tools?.[ToolName.PatternDetect]?.minLines || 5}{' '}
+                    lines
                   </span>
                 </label>
                 <input
@@ -280,14 +330,16 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
                   min="3"
                   max="50"
                   step="1"
-                  value={settings.tools?.['pattern-detect']?.minLines || 5}
+                  value={
+                    settings.tools?.[ToolName.PatternDetect]?.minLines || 5
+                  }
                   onChange={(e) =>
                     setSettings({
                       ...settings,
                       tools: {
                         ...settings.tools,
-                        'pattern-detect': {
-                          ...settings.tools?.['pattern-detect'],
+                        [ToolName.PatternDetect]: {
+                          ...settings.tools?.[ToolName.PatternDetect],
                           minLines: parseInt(e.target.value),
                         },
                       },
@@ -312,7 +364,8 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
                     <InfoIcon className="w-4 h-4 text-slate-600 cursor-help" />
                   </span>
                   <span className="text-amber-500">
-                    {settings.tools?.['context-analyzer']?.maxDepth || 5} layers
+                    {settings.tools?.[ToolName.ContextAnalyzer]?.maxDepth || 5}{' '}
+                    layers
                   </span>
                 </label>
                 <input
@@ -320,14 +373,16 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
                   min="1"
                   max="15"
                   step="1"
-                  value={settings.tools?.['context-analyzer']?.maxDepth || 5}
+                  value={
+                    settings.tools?.[ToolName.ContextAnalyzer]?.maxDepth || 5
+                  }
                   onChange={(e) =>
                     setSettings({
                       ...settings,
                       tools: {
                         ...settings.tools,
-                        'context-analyzer': {
-                          ...settings.tools?.['context-analyzer'],
+                        [ToolName.ContextAnalyzer]: {
+                          ...settings.tools?.[ToolName.ContextAnalyzer],
                           maxDepth: parseInt(e.target.value),
                         },
                       },
@@ -344,8 +399,8 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
                   </span>
                   <span className="text-amber-500">
                     {Math.round(
-                      (settings.tools?.['context-analyzer']?.minCohesion ||
-                        0.6) * 100
+                      (settings.tools?.[ToolName.ContextAnalyzer]
+                        ?.minCohesion || 0.6) * 100
                     )}
                     %
                   </span>
@@ -356,15 +411,16 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
                   max="0.9"
                   step="0.05"
                   value={
-                    settings.tools?.['context-analyzer']?.minCohesion || 0.6
+                    settings.tools?.[ToolName.ContextAnalyzer]?.minCohesion ||
+                    0.6
                   }
                   onChange={(e) =>
                     setSettings({
                       ...settings,
                       tools: {
                         ...settings.tools,
-                        'context-analyzer': {
-                          ...settings.tools?.['context-analyzer'],
+                        [ToolName.ContextAnalyzer]: {
+                          ...settings.tools?.[ToolName.ContextAnalyzer],
                           minCohesion: parseFloat(e.target.value),
                         },
                       },
@@ -397,22 +453,22 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
                   key={check.id}
                   onClick={() => {
                     const current =
-                      settings.tools?.['ai-signal-clarity']?.[
+                      settings.tools?.[ToolName.AiSignalClarity]?.[
                         check.id as keyof any
                       ] !== false;
                     setSettings({
                       ...settings,
                       tools: {
                         ...settings.tools,
-                        'ai-signal-clarity': {
-                          ...settings.tools?.['ai-signal-clarity'],
+                        [ToolName.AiSignalClarity]: {
+                          ...settings.tools?.[ToolName.AiSignalClarity],
                           [check.id]: !current,
                         },
                       },
                     });
                   }}
                   className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                    settings.tools?.['ai-signal-clarity']?.[
+                    settings.tools?.[ToolName.AiSignalClarity]?.[
                       check.id as keyof any
                     ] !== false
                       ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-500'
@@ -424,7 +480,7 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
                   </span>
                   <div
                     className={`w-2.5 h-2.5 rounded-full ${
-                      settings.tools?.['ai-signal-clarity']?.[
+                      settings.tools?.[ToolName.AiSignalClarity]?.[
                         check.id as keyof any
                       ] !== false
                         ? 'bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]'
@@ -449,8 +505,8 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
                     <InfoIcon className="w-4 h-4 text-slate-600 cursor-help" />
                   </span>
                   <span className="text-amber-500">
-                    {settings.tools?.['agent-grounding']?.maxRecommendedDepth ||
-                      4}{' '}
+                    {settings.tools?.[ToolName.AgentGrounding]
+                      ?.maxRecommendedDepth || 4}{' '}
                     levels
                   </span>
                 </label>
@@ -460,16 +516,16 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
                   max="10"
                   step="1"
                   value={
-                    settings.tools?.['agent-grounding']?.maxRecommendedDepth ||
-                    4
+                    settings.tools?.[ToolName.AgentGrounding]
+                      ?.maxRecommendedDepth || 4
                   }
                   onChange={(e) =>
                     setSettings({
                       ...settings,
                       tools: {
                         ...settings.tools,
-                        'agent-grounding': {
-                          ...settings.tools?.['agent-grounding'],
+                        [ToolName.AgentGrounding]: {
+                          ...settings.tools?.[ToolName.AgentGrounding],
                           maxRecommendedDepth: parseInt(e.target.value),
                         },
                       },
@@ -485,7 +541,8 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
                     <InfoIcon className="w-4 h-4 text-slate-600 cursor-help" />
                   </span>
                   <span className="text-amber-500">
-                    {settings.tools?.['doc-drift']?.staleMonths || 6} months
+                    {settings.tools?.[ToolName.DocDrift]?.staleMonths || 6}{' '}
+                    months
                   </span>
                 </label>
                 <input
@@ -493,14 +550,14 @@ export function ScanConfigForm({ repoId, initialSettings, onSave }: Props) {
                   min="1"
                   max="24"
                   step="1"
-                  value={settings.tools?.['doc-drift']?.staleMonths || 6}
+                  value={settings.tools?.[ToolName.DocDrift]?.staleMonths || 6}
                   onChange={(e) =>
                     setSettings({
                       ...settings,
                       tools: {
                         ...settings.tools,
-                        'doc-drift': {
-                          ...settings.tools?.['doc-drift'],
+                        [ToolName.DocDrift]: {
+                          ...settings.tools?.[ToolName.DocDrift],
                           staleMonths: parseInt(e.target.value),
                         },
                       },

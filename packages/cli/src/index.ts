@@ -181,15 +181,26 @@ export async function analyzeUnified(
       // 1. Pass through all known infra and fine-tuning options from root level
       [...GLOBAL_INFRA_OPTIONS, ...COMMON_FINE_TUNING_OPTIONS].forEach(
         (key) => {
-          if (key in options && key !== 'toolConfigs') {
+          if (key in options && key !== 'toolConfigs' && key !== 'tools') {
             toolOptions[key] = (options as any)[key];
           }
         }
       );
 
       // 3. Add tool-specific overrides
+      // Check priority:
+      // a) options.toolConfigs[toolId]
+      // b) options.tools[toolId] (if tools is an object, not the array of tool names)
+      // c) options[toolId] (legacy)
       if (options.toolConfigs?.[provider.id]) {
         Object.assign(toolOptions, options.toolConfigs[provider.id]);
+      } else if (
+        options.tools &&
+        !Array.isArray(options.tools) &&
+        typeof options.tools === 'object' &&
+        (options.tools as any)[provider.id]
+      ) {
+        Object.assign(toolOptions, (options.tools as any)[provider.id]);
       } else if ((options as any)[provider.id]) {
         // Fallback for legacy tool-specific keys
         Object.assign(toolOptions, (options as any)[provider.id]);
@@ -275,10 +286,18 @@ export async function analyzeUnified(
     }
   }
 
-  // Finalize configuration for metadata
+  // Finalize configuration for metadata to match AIReadyConfig structure
   result.summary.config = {
-    ...options,
-    toolConfigs: result.summary.toolConfigs,
+    scan: {
+      tools: requestedTools,
+      include: options.include,
+      exclude: options.exclude,
+    },
+    // Use 'tools' for tool-specific configurations to match AIReadyConfig
+    tools: result.summary.toolConfigs,
+    // Keep top-level options for backward compatibility
+    rootDir: options.rootDir,
+    useSmartDefaults: options.useSmartDefaults,
   };
 
   result.summary.executionTime = Date.now() - startTime;
