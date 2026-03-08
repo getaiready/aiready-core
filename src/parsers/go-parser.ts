@@ -1,6 +1,4 @@
 import * as Parser from 'web-tree-sitter';
-import * as path from 'path';
-import * as fs from 'fs';
 import {
   Language,
   LanguageParser,
@@ -10,6 +8,7 @@ import {
   NamingConvention,
   ParseError,
 } from '../types/language';
+import { setupParser } from './tree-sitter-utils';
 
 /**
  * Go Parser implementation using tree-sitter
@@ -25,53 +24,8 @@ export class GoParser implements LanguageParser {
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
-
-    try {
-      if (typeof Parser.Parser.init === 'function') {
-        await Parser.Parser.init();
-      }
-      this.parser = new Parser.Parser();
-
-      const possiblePaths = [
-        path.join(
-          process.cwd(),
-          'node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-go.wasm'
-        ),
-        path.join(
-          __dirname,
-          '../../node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-go.wasm'
-        ),
-        path.join(
-          __dirname,
-          '../../../node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-go.wasm'
-        ),
-        path.join(
-          __dirname,
-          '../../../../node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-go.wasm'
-        ),
-      ];
-
-      let wasmPath = '';
-      for (const p of possiblePaths) {
-        if (fs.existsSync(p)) {
-          wasmPath = p;
-          break;
-        }
-      }
-
-      if (!wasmPath) {
-        console.warn(
-          `Go WASM not found. Tried paths: ${possiblePaths.join(', ')}`
-        );
-        return;
-      }
-
-      const Go = await Parser.Language.load(wasmPath);
-      this.parser.setLanguage(Go);
-      this.initialized = true;
-    } catch (error) {
-      console.error('Failed to initialize tree-sitter-go:', error);
-    }
+    this.parser = await setupParser('go');
+    this.initialized = true;
   }
 
   async getAST(code: string, filePath: string): Promise<Parser.Tree | null> {

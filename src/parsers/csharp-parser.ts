@@ -1,6 +1,4 @@
 import * as Parser from 'web-tree-sitter';
-import * as path from 'path';
-import * as fs from 'fs';
 import {
   Language,
   LanguageParser,
@@ -10,6 +8,7 @@ import {
   NamingConvention,
   ParseError,
 } from '../types/language';
+import { setupParser } from './tree-sitter-utils';
 
 /**
  * C# Parser implementation using tree-sitter
@@ -25,53 +24,8 @@ export class CSharpParser implements LanguageParser {
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
-
-    try {
-      if (typeof Parser.Parser.init === 'function') {
-        await Parser.Parser.init();
-      }
-      this.parser = new Parser.Parser();
-
-      const possiblePaths = [
-        path.join(
-          process.cwd(),
-          'node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-c_sharp.wasm'
-        ),
-        path.join(
-          __dirname,
-          '../../node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-c_sharp.wasm'
-        ),
-        path.join(
-          __dirname,
-          '../../../node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-c_sharp.wasm'
-        ),
-        path.join(
-          __dirname,
-          '../../../../node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-c_sharp.wasm'
-        ),
-      ];
-
-      let wasmPath = '';
-      for (const p of possiblePaths) {
-        if (fs.existsSync(p)) {
-          wasmPath = p;
-          break;
-        }
-      }
-
-      if (!wasmPath) {
-        console.warn(
-          `C# WASM not found. Tried paths: ${possiblePaths.join(', ')}`
-        );
-        return;
-      }
-
-      const CSharp = await Parser.Language.load(wasmPath);
-      this.parser.setLanguage(CSharp);
-      this.initialized = true;
-    } catch (error) {
-      console.error('Failed to initialize tree-sitter-c-sharp:', error);
-    }
+    this.parser = await setupParser('c_sharp');
+    this.initialized = true;
   }
 
   async getAST(code: string, filePath: string): Promise<Parser.Tree | null> {

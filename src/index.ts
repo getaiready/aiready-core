@@ -16,6 +16,7 @@ export * from './business-metrics';
 
 // Multi-language parser support
 export * from './parsers/parser-factory';
+export * from './parsers/tree-sitter-utils';
 export * from './parsers/typescript-parser';
 export * from './parsers/python-parser';
 export * from './parsers/java-parser';

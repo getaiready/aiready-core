@@ -1,6 +1,4 @@
 import * as Parser from 'web-tree-sitter';
-import * as path from 'path';
-import * as fs from 'fs';
 import {
   Language,
   LanguageParser,
@@ -10,6 +8,7 @@ import {
   NamingConvention,
   ParseError,
 } from '../types/language';
+import { setupParser } from './tree-sitter-utils';
 
 /**
  * Java Parser implementation using tree-sitter
@@ -25,62 +24,8 @@ export class JavaParser implements LanguageParser {
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
-
-    try {
-      if (typeof Parser.Parser.init === 'function') {
-        await Parser.Parser.init();
-      }
-      this.parser = new Parser.Parser();
-
-      // Try to find the wasm file in several common locations
-      // Using tree-sitter-wasms package
-      const possiblePaths = [
-        path.join(
-          process.cwd(),
-          'node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-java.wasm'
-        ),
-        path.join(
-          __dirname,
-          '../../node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-java.wasm'
-        ),
-        path.join(
-          __dirname,
-          '../../../node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-java.wasm'
-        ),
-        path.join(
-          __dirname,
-          '../../../../node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-java.wasm'
-        ),
-        path.join(
-          process.cwd(),
-          'node_modules/tree-sitter-wasms/out/tree-sitter-java.wasm'
-        ),
-      ];
-
-      let wasmPath = '';
-      for (const p of possiblePaths) {
-        if (fs.existsSync(p)) {
-          wasmPath = p;
-          break;
-        }
-      }
-
-      if (!wasmPath) {
-        console.warn(
-          `Java WASM not found. Tried paths: ${possiblePaths.join(', ')}`
-        );
-        return;
-      }
-
-      const Java = await Parser.Language.load(wasmPath);
-      this.parser.setLanguage(Java);
-      this.initialized = true;
-    } catch (error) {
-      console.error('Failed to initialize tree-sitter-java:', error);
-      if (error instanceof Error && error.stack) {
-        console.error(error.stack);
-      }
-    }
+    this.parser = await setupParser('java');
+    this.initialized = true;
   }
 
   async getAST(code: string, filePath: string): Promise<Parser.Tree | null> {

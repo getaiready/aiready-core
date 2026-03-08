@@ -1,6 +1,4 @@
 import * as Parser from 'web-tree-sitter';
-import * as path from 'path';
-import * as fs from 'fs';
 import {
   Language,
   LanguageParser,
@@ -10,6 +8,7 @@ import {
   NamingConvention,
   ParseError,
 } from '../types/language';
+import { setupParser } from './tree-sitter-utils';
 
 /**
  * Python Parser implementation using tree-sitter
@@ -25,52 +24,8 @@ export class PythonParser implements LanguageParser {
    */
   async initialize(): Promise<void> {
     if (this.initialized) return;
-
-    try {
-      await Parser.Parser.init();
-      this.parser = new Parser.Parser();
-
-      // Try to find the wasm file in several common locations
-      const possiblePaths = [
-        path.join(
-          process.cwd(),
-          'node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-python.wasm'
-        ),
-        path.join(
-          __dirname,
-          '../../node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-python.wasm'
-        ),
-        path.join(
-          __dirname,
-          '../../../node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-python.wasm'
-        ),
-        path.join(
-          __dirname,
-          '../../../../node_modules/@unit-mesh/treesitter-artifacts/wasm/tree-sitter-python.wasm'
-        ),
-        path.join(
-          process.cwd(),
-          'node_modules/tree-sitter-wasms/out/tree-sitter-python.wasm'
-        ),
-        path.join(__dirname, '../assets/tree-sitter-python.wasm'),
-      ];
-
-      let wasmPath = '';
-      for (const p of possiblePaths) {
-        if (fs.existsSync(p)) {
-          wasmPath = p;
-          break;
-        }
-      }
-
-      if (!wasmPath) {
-        return;
-      }
-
-      const Python = await Parser.Language.load(wasmPath);
-      this.parser.setLanguage(Python);
-      this.initialized = true;
-    } catch (error) {}
+    this.parser = await setupParser('python');
+    this.initialized = true;
   }
 
   async getAST(code: string, filePath: string): Promise<Parser.Tree | null> {
