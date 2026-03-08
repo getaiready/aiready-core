@@ -11,13 +11,10 @@ export async function initTreeSitter(): Promise<void> {
   if (isTreeSitterInitialized) return;
 
   try {
+    const wasmPath = getWasmPath('web-tree-sitter');
     await Parser.Parser.init({
-      locateFile(scriptName: string) {
-        const p = path.join(process.cwd(), scriptName);
-        if (fs.existsSync(p)) return p;
-        const p2 = path.join(__dirname, scriptName);
-        if (fs.existsSync(p2)) return p2;
-        return scriptName;
+      locateFile() {
+        return wasmPath || 'web-tree-sitter.wasm';
       },
     });
     isTreeSitterInitialized = true;
@@ -31,49 +28,54 @@ export async function initTreeSitter(): Promise<void> {
  * Find a WASM file for a specific language
  */
 export function getWasmPath(language: string): string | null {
-  const wasmFileName = `tree-sitter-${language}.wasm`;
+  const wasmFileName =
+    language === 'web-tree-sitter'
+      ? 'web-tree-sitter.wasm'
+      : `tree-sitter-${language}.wasm`;
 
-  const possiblePaths = [
+  const possiblePaths: string[] = [
     // 1. Current directory (Lambda/SST root or bundled CLI)
     path.join(process.cwd(), wasmFileName),
     path.join(__dirname, wasmFileName),
-
-    // 2. Standard node_modules locations (monorepo & installed)
-    path.join(
-      process.cwd(),
-      'node_modules/@unit-mesh/treesitter-artifacts/wasm',
-      wasmFileName
-    ),
-    path.join(
-      process.cwd(),
-      'node_modules/tree-sitter-wasms/out',
-      wasmFileName
-    ),
-
-    // 3. Parent node_modules (when running from a package in monorepo)
-    path.join(
-      __dirname,
-      '../../node_modules/@unit-mesh/treesitter-artifacts/wasm',
-      wasmFileName
-    ),
-    path.join(
-      __dirname,
-      '../../../node_modules/@unit-mesh/treesitter-artifacts/wasm',
-      wasmFileName
-    ),
-    path.join(
-      __dirname,
-      '../../../../node_modules/@unit-mesh/treesitter-artifacts/wasm',
-      wasmFileName
-    ),
-
-    // 4. Relative to core assets (if we bundle them)
-    path.join(__dirname, '../assets', wasmFileName),
   ];
+
+  // 2. Add relative paths from __dirname (up to 6 levels for deep monorepo artifacts)
+  let currentDir = __dirname;
+  for (let i = 0; i < 6; i++) {
+    possiblePaths.push(
+      path.join(
+        currentDir,
+        'node_modules/@unit-mesh/treesitter-artifacts/wasm',
+        wasmFileName
+      )
+    );
+    possiblePaths.push(
+      path.join(currentDir, 'node_modules/web-tree-sitter', wasmFileName)
+    );
+    possiblePaths.push(
+      path.join(currentDir, 'node_modules/tree-sitter-wasms/out', wasmFileName)
+    );
+    currentDir = path.dirname(currentDir);
+  }
+
+  // 3. Add relative paths from process.cwd()
+  let currentCwd = process.cwd();
+  for (let i = 0; i < 6; i++) {
+    possiblePaths.push(
+      path.join(
+        currentCwd,
+        'node_modules/@unit-mesh/treesitter-artifacts/wasm',
+        wasmFileName
+      )
+    );
+    possiblePaths.push(
+      path.join(currentCwd, 'node_modules/web-tree-sitter', wasmFileName)
+    );
+    currentCwd = path.dirname(currentCwd);
+  }
 
   for (const p of possiblePaths) {
     if (fs.existsSync(p)) {
-      // console.log(`[Parser] Found WASM for ${language} at: ${p}`);
       return p;
     }
   }
@@ -94,7 +96,7 @@ export async function setupParser(
 
   const wasmPath = getWasmPath(language);
   if (!wasmPath) {
-    console.warn(`WASM file for ${language} not found.`);
+    // console.warn(`WASM file for ${language} not found.`);
     return null;
   }
 
