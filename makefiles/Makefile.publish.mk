@@ -15,8 +15,8 @@ REPO_ROOT := $(abspath $(MAKEFILE_DIR)/..)
 .PHONY: publish npm-publish npm-login npm-check npm-publish-all \
 	publish-vscode publish-vscode-via-ci \
 	version-patch version-minor version-major \
-        publish-core publish-pattern-detect publish-skills \
-        npm-publish-core npm-publish-pattern-detect npm-publish-skills \
+        publish-core publish-pattern-detect publish-skills publish-clawmart \
+        npm-publish-core npm-publish-pattern-detect npm-publish-skills npm-publish-clawmart \
         pull sync-from-spoke sync deploy push
 
 # Default owner for GitHub repos
@@ -318,6 +318,48 @@ publish-landing: ## Publish landing page to GitHub. Usage: make publish-landing 
 	git push -f "$$remote" "$$landing_tag"; \
 	$(call log_success,Landing tag pushed: $$landing_tag)
 
+sync-clawmart: ## Sync changes from aiready-clawmart repo back to monorepo
+	@$(call log_step,Syncing changes from aiready-clawmart back to monorepo...)
+	@url="https://github.com/$(OWNER)/aiready-clawmart.git"; \
+	remote="aiready-clawmart"; \
+	branch="main"; \
+	git remote add "$$remote" "$$url" 2>/dev/null || git remote set-url "$$remote" "$$url"; \
+	$(call log_info,Fetching latest from $$remote...); \
+	git fetch "$$remote" "$$branch"; \
+	$(call log_info,Pulling changes into clawmart/ directory...); \
+	git subtree pull --prefix=clawmart "$$remote" "$$branch" --squash -m "chore: sync clawmart from private repo"; \
+	$(call log_success,Synced changes from aiready-clawmart)
+
+publish-clawmart: ## Publish clawmart to GitHub. Usage: make publish-clawmart [OWNER=username]
+	@$(call log_step,Publishing clawmart to GitHub...)
+	@url="https://github.com/$(OWNER)/aiready-clawmart.git"; \
+	remote="aiready-clawmart"; \
+	branch="publish-clawmart"; \
+	target_branch="main"; \
+	clawmart_version=$$(node -p "require('$(REPO_ROOT)/clawmart/package.json').version" 2>/dev/null || echo "0.1.0"); \
+	git remote add "$$remote" "$$url" 2>/dev/null || git remote set-url "$$remote" "$$url"; \
+	$(call log_info,Remote set: $$remote -> $$url); \
+	git branch -D "$$branch" >/dev/null 2>&1 || true; \
+	$(call log_info,Creating subtree split for clawmart...); \
+	git subtree split --prefix=clawmart -b "$$branch" >/dev/null; \
+	git checkout $(TARGET_BRANCH) 2>/dev/null; \
+	$(call log_info,Subtree split complete: $$branch); \
+	split_commit=$$(git rev-parse "$$branch"); \
+	git push -f "$$remote" "$$branch:$$target_branch"; \
+	$(call log_success,Synced clawmart to GitHub repo ($$target_branch)); \
+	clawmart_tag="v$$clawmart_version"; \
+	git tag -f "$$clawmart_tag" "$$split_commit" -m "Release clawmart v$$clawmart_version" 2>/dev/null || true; \
+	git push -f "$$remote" "$$clawmart_tag"; \
+	$(call log_success,ClawMart tag pushed: $$clawmart_tag)
+
+npm-publish-clawmart: npm-check ## Publish clawmart to npm (as private)
+	@$(call log_step,Publishing @aiready/clawmart to npm...)
+	@cd $(CLAWMART_DIR) && pnpm publish --access restricted --no-git-checks || { \
+		$(call log_error,Publish failed); \
+		exit 1; \
+	}; \
+	$(call log_success,Published @aiready/clawmart to npm)
+
 # Push to monorepo and all spoke repos
 sync: ## Push monorepo to origin and sync all spokes to their public repos. Use FORCE=true to sync all.
 	@$(call log_step,Detecting changes to sync...)
@@ -340,7 +382,7 @@ sync: ## Push monorepo to origin and sync all spokes to their public repos. Use 
 	@git push origin $(TARGET_BRANCH)
 	@$(call log_success,Pushed to monorepo)
 	@$(call log_step,Syncing relevant repositories in parallel...)
-	@$(MAKE) $(MAKE_PARALLEL) $(addprefix github-sync-spoke-,$(ALL_SPOKES)) github-sync-landing github-sync-vscode github-sync-action CHANGED_FILES="$$CHANGED_FILES" FORCE="$(FORCE)"
+	@$(MAKE) $(MAKE_PARALLEL) $(addprefix github-sync-spoke-,$(ALL_SPOKES)) github-sync-landing github-sync-vscode github-sync-action github-sync-clawmart CHANGED_FILES="$$CHANGED_FILES" FORCE="$(FORCE)"
 	@$(call log_success,Sync process completed)
 
 .PHONY: github-sync-spoke-%
@@ -387,6 +429,17 @@ github-sync-action:
 	if [ "$$should_sync" = "true" ]; then \
 		$(call log_step,Syncing GitHub Action repository...); \
 		$(MAKE) publish-action-sync OWNER=$(OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)' || true; \
+	fi
+
+.PHONY: github-sync-clawmart
+github-sync-clawmart:
+	@should_sync=false; \
+	if [ "$(FORCE)" = "true" ] || [ "$(CHANGED_FILES)" = "FORCE_ALL" ] || echo "$(CHANGED_FILES)" | grep -q "clawmart/"; then \
+		should_sync=true; \
+	fi; \
+	if [ "$$should_sync" = "true" ]; then \
+		$(call log_step,Syncing ClawMart repository...); \
+		$(MAKE) publish-clawmart OWNER=$(OWNER) 2>&1 | grep -E '(SUCCESS|ERROR|Synced|tag pushed)' || true; \
 	fi
 
 deploy: sync ## Alias for sync (push monorepo + publish all spokes)

@@ -28,6 +28,7 @@ ROOT_DIR ?= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))/..)
 LANDING_DIR := $(ROOT_DIR)/landing
 PLATFORM_DIR := $(ROOT_DIR)/platform
 EXTENSION_DIR := $(ROOT_DIR)/vscode-extension
+CLAWMART_DIR := $(ROOT_DIR)/clawmart
 
 # Three-phase release strategy (matches release-all workflow)
 # Landing site is EXCLUDED from release-all (different release cadence)

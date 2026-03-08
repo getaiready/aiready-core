@@ -102,6 +102,18 @@ define commit_and_tag_vscode
 	$(call log_success,Committed and tagged $$tag_name)
 endef
 
+# Internal: commit + tag for clawmart after version bump
+define commit_and_tag_clawmart
+	version=$$(node -p "require('$(CLAWMART_DIR)/package.json').version"); \
+	$(call log_step,Committing @aiready/clawmart v$$version...); \
+	cd $(ROOT_DIR) && git add clawmart/package.json; \
+	cd $(ROOT_DIR) && git commit -m "chore(release): @aiready/clawmart v$$version"; \
+	tag_name="clawmart-v$$version"; \
+	$(call log_step,Tagging $$tag_name...); \
+	cd $(ROOT_DIR) && git tag -a "$$tag_name" -m "Release @aiready/clawmart v$$version"; \
+	$(call log_success,Committed and tagged $$tag_name)
+endef
+
 # Internal: tag platform dev release (no version bump commit)
 define tag_platform_dev
 	version=$$(node -p "require('$(PLATFORM_DIR)/package.json').version"); \
@@ -170,6 +182,23 @@ version-vscode-major: ## Bump vscode-extension version (major)
 	@$(call log_step,Bumping VS Code extension version (major)...)
 	@cd $(EXTENSION_DIR) && npm version major --no-git-tag-version
 	@$(call log_success,VS Code extension version bumped to $$(node -p "require('$(EXTENSION_DIR)/package.json').version"))
+
+##@ ClawMart Version Management
+
+version-clawmart-patch: ## Bump clawmart version (patch)
+	@$(call log_step,Bumping @aiready/clawmart version (patch)...)
+	@cd $(CLAWMART_DIR) && npm version patch --no-git-tag-version
+	@$(call log_success,ClawMart version bumped to $$(node -p "require('$(CLAWMART_DIR)/package.json').version"))
+
+version-clawmart-minor: ## Bump clawmart version (minor)
+	@$(call log_step,Bumping @aiready/clawmart version (minor)...)
+	@cd $(CLAWMART_DIR) && npm version minor --no-git-tag-version
+	@$(call log_success,ClawMart version bumped to $$(node -p "require('$(CLAWMART_DIR)/package.json').version"))
+
+version-clawmart-major: ## Bump clawmart version (major)
+	@$(call log_step,Bumping @aiready/clawmart version (major)...)
+	@cd $(CLAWMART_DIR) && npm version major --no-git-tag-version
+	@$(call log_success,ClawMart version bumped to $$(node -p "require('$(CLAWMART_DIR)/package.json').version"))
 
 ##@ Landing Release
 
@@ -277,6 +306,31 @@ release-vscode: ## Release VS Code extension: TYPE=patch|minor|major
 	$(call log_step,Pushing monorepo branch and tags...); \
 	cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags; \
 	$(call log_success,Release finished for VS Code extension)
+
+##@ ClawMart Release
+
+release-clawmart: ## Release clawmart: TYPE=patch|minor|major
+	@if [ -z "$(TYPE)" ]; then \
+		$(call log_error,TYPE parameter required. Usage: make $@ TYPE=minor); \
+		exit 1; \
+	fi
+	@bump_target="version-clawmart-$(TYPE)"; \
+	if [ "$(TYPE)" != "patch" ] && [ "$(TYPE)" != "minor" ] && [ "$(TYPE)" != "major" ]; then \
+		$(call log_error,Invalid TYPE '$(TYPE)'. Expected patch|minor|major); \
+		exit 1; \
+	fi; \
+	$(MAKE) -C $(ROOT_DIR) $$bump_target; \
+	$(call log_success,Version bump complete for @aiready/clawmart); \
+	$(call commit_and_tag_clawmart); \
+	$(call log_step,Building workspace...); \
+	$(MAKE) -C $(ROOT_DIR) build || exit 1; \
+	$(call log_step,Publishing @aiready/clawmart to npm...); \
+	$(MAKE) -C $(ROOT_DIR) npm-publish-clawmart || exit 1; \
+	$(call log_step,Syncing clawmart to GitHub sub-repo...); \
+	$(MAKE) -C $(ROOT_DIR) publish-clawmart OWNER=$(OWNER); \
+	$(call log_step,Pushing monorepo branch and tags...); \
+	cd $(ROOT_DIR) && git push origin $(TARGET_BRANCH) --follow-tags; \
+	$(call log_success,Release finished for @aiready/clawmart)
 
 ##@ Package Release
 
