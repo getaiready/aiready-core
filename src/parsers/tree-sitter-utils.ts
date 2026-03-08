@@ -25,6 +25,71 @@ export async function initTreeSitter(): Promise<void> {
 }
 
 /**
+ * Deep search for a file in node_modules/.pnpm
+ */
+function findInPnpmStore(
+  startDir: string,
+  fileName: string,
+  depth: number = 0
+): string | null {
+  if (depth > 5) return null;
+
+  const pnpmDir = path.join(startDir, 'node_modules', '.pnpm');
+  if (fs.existsSync(pnpmDir)) {
+    // We found a .pnpm store, let's look for our file anywhere inside it
+    // This is expensive but only happens once per language
+    return findFileRecursively(pnpmDir, fileName, 0);
+  }
+
+  const parent = path.dirname(startDir);
+  if (parent === startDir) return null;
+  return findInPnpmStore(parent, fileName, depth + 1);
+}
+
+function findFileRecursively(
+  dir: string,
+  fileName: string,
+  depth: number
+): string | null {
+  if (depth > 4) return null; // Don't go too deep
+
+  try {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+    // Look for exact match in this dir first
+    for (const entry of entries) {
+      if (entry.isFile() && entry.name === fileName) {
+        // Verification: ensure it's in a path that looks like a treesitter or wasm dir
+        const fullPath = path.join(dir, entry.name);
+        if (
+          fullPath.includes('tree-sitter') ||
+          fullPath.includes('wasm') ||
+          fullPath.includes('artifacts')
+        ) {
+          return fullPath;
+        }
+      }
+    }
+
+    // Then recurse
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        const found = findFileRecursively(
+          path.join(dir, entry.name),
+          fileName,
+          depth + 1
+        );
+        if (found) return found;
+      }
+    }
+  } catch (err) {
+    // Ignore permission errors etc
+  }
+
+  return null;
+}
+
+/**
  * Find a WASM file for a specific language
  */
 export function getWasmPath(language: string): string | null {
@@ -33,55 +98,27 @@ export function getWasmPath(language: string): string | null {
       ? 'web-tree-sitter.wasm'
       : `tree-sitter-${language}.wasm`;
 
-  const possiblePaths: string[] = [
-    // 1. Current directory (Lambda/SST root or bundled CLI)
+  // 1. Check local/bundled paths first
+  const immediatePaths = [
     path.join(process.cwd(), wasmFileName),
     path.join(__dirname, wasmFileName),
+    path.join(__dirname, 'assets', wasmFileName),
   ];
 
-  // 2. Add relative paths from __dirname (up to 6 levels for deep monorepo artifacts)
-  let currentDir = __dirname;
-  for (let i = 0; i < 6; i++) {
-    possiblePaths.push(
-      path.join(
-        currentDir,
-        'node_modules/@unit-mesh/treesitter-artifacts/wasm',
-        wasmFileName
-      )
-    );
-    possiblePaths.push(
-      path.join(currentDir, 'node_modules/web-tree-sitter', wasmFileName)
-    );
-    possiblePaths.push(
-      path.join(currentDir, 'node_modules/tree-sitter-wasms/out', wasmFileName)
-    );
-    currentDir = path.dirname(currentDir);
+  for (const p of immediatePaths) {
+    if (fs.existsSync(p)) return p;
   }
 
-  // 3. Add relative paths from process.cwd()
-  let currentCwd = process.cwd();
-  for (let i = 0; i < 6; i++) {
-    possiblePaths.push(
-      path.join(
-        currentCwd,
-        'node_modules/@unit-mesh/treesitter-artifacts/wasm',
-        wasmFileName
-      )
-    );
-    possiblePaths.push(
-      path.join(currentCwd, 'node_modules/web-tree-sitter', wasmFileName)
-    );
-    currentCwd = path.dirname(currentCwd);
-  }
+  // 2. Search in .pnpm store (climbing up from __dirname)
+  const pnpmPath = findInPnpmStore(__dirname, wasmFileName);
+  if (pnpmPath) return pnpmPath;
 
-  for (const p of possiblePaths) {
-    if (fs.existsSync(p)) {
-      return p;
-    }
-  }
+  // 3. Search in .pnpm store (climbing up from CWD)
+  const pnpmPathCwd = findInPnpmStore(process.cwd(), wasmFileName);
+  if (pnpmPathCwd) return pnpmPathCwd;
 
   console.warn(
-    `[Parser] WASM file for ${language} not found. Checked ${possiblePaths.length} paths. CWD: ${process.cwd()}, DIR: ${__dirname}`
+    `[Parser] WASM file for ${language} not found. CWD: ${process.cwd()}, DIR: ${__dirname}`
   );
   return null;
 }
@@ -106,7 +143,7 @@ export async function setupParser(
     parser.setLanguage(Lang);
     return parser;
   } catch (error) {
-    console.error(`Failed to setup parser for ${language}:`, error);
+    // console.error(`Failed to setup parser for ${language}:`, error);
     return null;
   }
 }
