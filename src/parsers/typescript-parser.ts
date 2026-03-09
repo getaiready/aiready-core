@@ -298,7 +298,11 @@ export class TypeScriptParser implements LanguageParser {
     const exports: ExportInfo[] = [];
     const metadata = this.analyzeMetadata(parentNode || declaration, code);
 
-    if (declaration.type === 'FunctionDeclaration' && declaration.id) {
+    if (
+      (declaration.type === 'FunctionDeclaration' ||
+        declaration.type === 'TSDeclareFunction') &&
+      declaration.id
+    ) {
       exports.push({
         name: declaration.id.name,
         type: 'function',

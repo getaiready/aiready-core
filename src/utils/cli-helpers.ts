@@ -109,7 +109,8 @@ export function getElapsedTime(startTime: number): string {
  * Generate a visual score bar for console output
  */
 export function getScoreBar(val: number): string {
-  return '█'.repeat(Math.round(val / 10)).padEnd(10, '░');
+  const clamped = Math.max(0, Math.min(100, val));
+  return '█'.repeat(Math.round(clamped / 10)).padEnd(10, '░');
 }
 
 /**

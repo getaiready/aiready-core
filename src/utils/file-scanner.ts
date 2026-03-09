@@ -142,12 +142,10 @@ export async function scanFiles(options: ScanOptions): Promise<string[]> {
   });
 
   // If a .gitignore exists, apply its rules (including negations) using the
-  // `ignore` package. We filter the glob result because `glob` doesn't
-  // fully implement gitignore semantics (negations, directory-relative rules).
-  // Recursively apply .gitignore rules from all .gitignore files in the hierarchy
+  // `ignore` package.
   const gitignoreFiles = await glob('**/.gitignore', {
     cwd: rootDir,
-    ignore: finalExclude,
+    ignore: (exclude || []).concat(['**/node_modules/**', '**/.git/**']), // Minimal ignore for gitignore discovery
     absolute: true,
   });
 
@@ -251,7 +249,7 @@ export async function scanEntries(
   // Apply gitignore to directories if available
   const gitignoreFiles = await glob('**/.gitignore', {
     cwd: rootDir,
-    ignore: finalExclude,
+    ignore: (exclude || []).concat(['**/node_modules/**', '**/.git/**']),
     absolute: true,
   });
 
@@ -284,10 +282,10 @@ export async function scanEntries(
     }
 
     const filteredDirs = dirs.filter((d) => {
-      const rel = relative(rootDir || '.', d)
-        .replace(/\\/g, '/')
-        .replace(/\/$/, '');
-      if (rel === '') return true; // project root is never ignored by its own gitignore
+      let rel = relative(rootDir || '.', d).replace(/\\/g, '/');
+      if (rel === '') return true;
+      // Append trailing slash for directory ignore patterns to match correctly
+      if (!rel.endsWith('/')) rel += '/';
       return !ig.ignores(rel);
     });
 

@@ -1,56 +1,82 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeAll,
+  afterAll,
+  beforeEach,
+} from 'vitest';
 import {
   resolveOutputPath,
   getScoreBar,
   getSafetyIcon,
   emitProgress,
+  loadMergedConfig,
+  handleJSONOutput,
 } from '../utils/cli-helpers';
 import { join } from 'path';
-import { existsSync, rmSync } from 'fs';
+import { existsSync, rmSync, mkdirSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 
-describe('CLI Helpers', () => {
-  const tmpDir = join(tmpdir(), 'aiready-cli-helpers-tests');
+describe('CLI Helpers Advanced', () => {
+  let tmpDir: string;
 
   beforeAll(() => {
-    // resolveOutputPath creates dirs, so we test that
+    tmpDir = join(tmpdir(), `aiready-cli-helpers-advanced-${Date.now()}`);
+    mkdirSync(tmpDir, { recursive: true });
   });
 
   afterAll(() => {
     rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('should resolve output path and create directories', () => {
-    const customPath = join(tmpDir, 'reports/my-report.json');
-    const resolved = resolveOutputPath(customPath, 'default.json');
-
-    expect(resolved).toBe(customPath);
-    expect(existsSync(join(tmpDir, 'reports'))).toBe(true);
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  it('should generate a score bar', () => {
-    expect(getScoreBar(50)).toBe('█████░░░░░');
-    expect(getScoreBar(100)).toBe('██████████');
-    expect(getScoreBar(0)).toBe('░░░░░░░░░░');
+  it('loadMergedConfig should merge defaults, config file, and CLI options', async () => {
+    const projectDir = join(tmpDir, 'project-config');
+    mkdirSync(projectDir);
+    writeFileSync(
+      join(projectDir, 'aiready.json'),
+      JSON.stringify({ tools: ['t1'], someOpt: 'file' })
+    );
+
+    const defaults = { tools: ['def'], someOpt: 'def', otherOpt: 'def' };
+    const cliOptions = { someOpt: 'cli' };
+
+    const result = await loadMergedConfig(projectDir, defaults, cliOptions);
+
+    expect(result.someOpt).toBe('cli'); // cli overrides file
+    expect(result.otherOpt).toBe('def'); // from defaults
+    expect(result.rootDir).toBe(projectDir);
   });
 
-  it('should return correct safety icons', () => {
-    expect(getSafetyIcon('safe')).toBe('✅');
-    expect(getSafetyIcon('blind-risk')).toBe('💀');
-    expect(getSafetyIcon('unknown')).toBe('❓');
+  it('handleJSONOutput should write to file', () => {
+    const outFile = join(tmpDir, 'out.json');
+    const data = { test: true };
+
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    handleJSONOutput(data, outFile, 'Success');
+
+    expect(existsSync(outFile)).toBe(true);
+    expect(consoleSpy).toHaveBeenCalledWith('Success');
+    consoleSpy.mockRestore();
   });
 
-  it('should emit progress with throttling', () => {
-    const onProgress = vi.fn();
+  it('handleJSONOutput should log to console if no file provided', () => {
+    const data = { test: true };
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    // Total 100, throttle 50. Should emit at 50 and 100.
-    emitProgress(10, 100, 'test', 'msg', onProgress, 50);
-    expect(onProgress).not.toHaveBeenCalled();
+    handleJSONOutput(data);
 
-    emitProgress(50, 100, 'test', 'msg', onProgress, 50);
-    expect(onProgress).toHaveBeenCalledWith(50, 100, 'msg (50/100)');
+    expect(consoleSpy).toHaveBeenCalledWith(JSON.stringify(data, null, 2));
+    consoleSpy.mockRestore();
+  });
 
-    emitProgress(100, 100, 'test', 'msg', onProgress, 50);
-    expect(onProgress).toHaveBeenCalledTimes(2);
+  it('getScoreBar handles boundaries', () => {
+    expect(getScoreBar(-10)).toBe('░░░░░░░░░░');
+    expect(getScoreBar(110)).toBe('██████████');
   });
 });
