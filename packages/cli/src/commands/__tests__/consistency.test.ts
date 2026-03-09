@@ -1,36 +1,97 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { consistencyAction } from '../consistency';
+import * as core from '@aiready/core';
+import * as fs from 'fs';
+
+vi.mock('@aiready/core', async () => {
+  const actual = await vi.importActual('@aiready/core');
+  return {
+    ...actual,
+    loadMergedConfig: vi.fn(),
+    handleJSONOutput: vi.fn(),
+    handleCLIError: vi.fn(),
+    getElapsedTime: vi.fn().mockReturnValue('1.0'),
+    resolveOutputPath: vi.fn().mockReturnValue('report.json'),
+    formatToolScore: vi.fn().mockReturnValue('Score: 80'),
+  };
+});
+
+vi.mock('fs', async () => {
+  const actual = await vi.importActual('fs');
+  return {
+    ...actual,
+    writeFileSync: vi.fn(),
+  };
+});
 
 vi.mock('@aiready/consistency', () => ({
   analyzeConsistency: vi.fn().mockResolvedValue({
+    results: [
+      {
+        fileName: 'f1.ts',
+        issues: [
+          {
+            category: 'naming',
+            severity: 'major',
+            message: 'Bad name',
+            location: { file: 'f1.ts', line: 1 },
+          },
+        ],
+      },
+    ],
     summary: {
-      totalIssues: 0,
-      namingIssues: 0,
-      patternIssues: 0,
       filesAnalyzed: 1,
+      totalIssues: 1,
+      namingIssues: 1,
+      patternIssues: 0,
     },
-    results: [],
-    recommendations: [],
+    recommendations: ['Fix names'],
   }),
-  calculateConsistencyScore: vi.fn().mockReturnValue({ score: 100 }),
+  calculateConsistencyScore: vi.fn().mockReturnValue({ score: 80 }),
 }));
 
-vi.mock('@aiready/core', () => ({
-  loadMergedConfig: vi
-    .fn()
-    .mockResolvedValue({ output: { format: 'console' } }),
-  handleJSONOutput: vi.fn(),
-  handleCLIError: vi.fn(),
-  getElapsedTime: vi.fn().mockReturnValue('1.0'),
-  resolveOutputPath: vi.fn().mockReturnValue('out.json'),
-  formatToolScore: vi.fn().mockReturnValue('Score: 100'),
-}));
+import { analyzeConsistency } from '@aiready/consistency';
 
 describe('Consistency CLI Action', () => {
-  it('should run analysis', async () => {
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+  let consoleSpy: any;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.mocked(core.loadMergedConfig).mockResolvedValue({
+      output: { format: 'console' },
+    });
+  });
+
+  it('runs consistency analysis and outputs to console', async () => {
     await consistencyAction('.', {});
-    expect(consoleSpy).toHaveBeenCalled();
-    consoleSpy.mockRestore();
+    expect(analyzeConsistency).toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Summary'));
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('Naming Issues')
+    );
+  });
+
+  it('supports JSON output', async () => {
+    vi.mocked(core.loadMergedConfig).mockResolvedValue({
+      output: { format: 'json' },
+    });
+    await consistencyAction('.', {});
+    expect(core.handleJSONOutput).toHaveBeenCalled();
+  });
+
+  it('supports Markdown output', async () => {
+    vi.mocked(core.loadMergedConfig).mockResolvedValue({
+      output: { format: 'markdown' },
+    });
+    await consistencyAction('.', {});
+    expect(fs.writeFileSync).toHaveBeenCalled();
+  });
+
+  it('calculates score if requested', async () => {
+    await consistencyAction('.', { score: true });
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('AI Readiness Score')
+    );
   });
 });
