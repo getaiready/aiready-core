@@ -329,11 +329,28 @@ export class TypeScriptParser implements LanguageParser {
       const methods = body.filter((m) => m.type === 'MethodDefinition');
       const properties = body.filter((m) => m.type === 'PropertyDefinition');
 
+      // Extract constructor parameters for DI detection
+      const constructor = methods.find(
+        (m: any) => m.kind === 'constructor'
+      ) as any;
+      const parameters = constructor
+        ? constructor.value.params.map((p: any) => {
+            if (p.type === 'Identifier') return p.name;
+            if (
+              p.type === 'TSParameterProperty' &&
+              p.parameter.type === 'Identifier'
+            )
+              return p.parameter.name;
+            return 'unknown';
+          })
+        : [];
+
       exports.push({
         name: declaration.id.name,
         type: 'class',
         methodCount: methods.length,
         propertyCount: properties.length,
+        parameters,
         loc: declaration.loc
           ? {
               start: {

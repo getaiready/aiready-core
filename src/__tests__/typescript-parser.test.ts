@@ -47,4 +47,16 @@ describe('TypeScript Parser', () => {
     expect(result.exports[0].isPure).toBe(false);
     expect(result.exports[1].isPure).toBe(true);
   });
+
+  it('should extract class constructor parameters', () => {
+    const code = `
+      export class Service {
+        constructor(public db: any, private logger: Logger) {}
+      }
+    `;
+    const result = parser.parse(code, 'test.ts');
+    expect(result.exports[0].name).toBe('Service');
+    expect(result.exports[0].type).toBe('class');
+    expect(result.exports[0].parameters).toEqual(['db', 'logger']);
+  });
 });
