@@ -11,6 +11,7 @@ describe('AI Signal Clarity Metric', () => {
       deepCallbacks: 0,
       ambiguousNames: 0,
       undocumentedExports: 0,
+      largeFiles: 0,
       totalSymbols: 100,
       totalExports: 20,
     });
@@ -22,12 +23,13 @@ describe('AI Signal Clarity Metric', () => {
   it('should calculate high risk for messy code', () => {
     const result = calculateAiSignalClarity({
       overloadedSymbols: 50,
-      magicLiterals: 100,
-      booleanTraps: 20,
-      implicitSideEffects: 10,
-      deepCallbacks: 5,
-      ambiguousNames: 30,
+      magicLiterals: 200,
+      booleanTraps: 50,
+      implicitSideEffects: 15,
+      deepCallbacks: 10,
+      ambiguousNames: 40,
       undocumentedExports: 15,
+      largeFiles: 10,
       totalSymbols: 100,
       totalExports: 20,
     });

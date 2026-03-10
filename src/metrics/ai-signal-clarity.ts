@@ -27,7 +27,7 @@ export function calculateAiSignalClarity(params: {
   deepCallbacks: number;
   ambiguousNames: number;
   undocumentedExports: number;
-  largeFiles: number;
+  largeFiles?: number; // Optional with default below
   totalSymbols: number;
   totalExports: number;
 }): AiSignalClarity {
@@ -39,7 +39,7 @@ export function calculateAiSignalClarity(params: {
     deepCallbacks,
     ambiguousNames,
     undocumentedExports,
-    largeFiles,
+    largeFiles = 0, // Default to 0 to prevent NaN
     totalSymbols,
     totalExports,
   } = params;
