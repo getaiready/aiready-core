@@ -154,6 +154,61 @@ export type ModelContextTier =
   | 'frontier'; // 200k+
 
 /**
+ * Scoring profiles for project-type-aware weighting.
+ */
+export enum ScoringProfile {
+  Default = 'default',
+  Agentic = 'agentic', // Focus on AI agent navigation and signal
+  Logic = 'logic', // Focus on testability and complexity
+  UI = 'ui', // Focus on consistency and context (lower penalty for magic literals)
+  Cost = 'cost', // Focus on token waste (duplication and fragmentation)
+  Security = 'security', // Focus on consistency and testability
+}
+
+/**
+ * Project-type-aware tool weight presets.
+ */
+export const SCORING_PROFILES: Record<
+  ScoringProfile,
+  Record<string, number>
+> = {
+  [ScoringProfile.Default]: DEFAULT_TOOL_WEIGHTS,
+  [ScoringProfile.Agentic]: {
+    [ToolName.AiSignalClarity]: 30,
+    [ToolName.AgentGrounding]: 30,
+    [ToolName.TestabilityIndex]: 20,
+    [ToolName.ContextAnalyzer]: 10,
+    [ToolName.NamingConsistency]: 10,
+  },
+  [ScoringProfile.Logic]: {
+    [ToolName.TestabilityIndex]: 40,
+    [ToolName.NamingConsistency]: 20,
+    [ToolName.ContextAnalyzer]: 20,
+    [ToolName.PatternDetect]: 10,
+    [ToolName.ChangeAmplification]: 10,
+  },
+  [ScoringProfile.UI]: {
+    [ToolName.NamingConsistency]: 30,
+    [ToolName.ContextAnalyzer]: 30,
+    [ToolName.PatternDetect]: 20,
+    [ToolName.DocDrift]: 10,
+    [ToolName.AiSignalClarity]: 10,
+  },
+  [ScoringProfile.Cost]: {
+    [ToolName.PatternDetect]: 50,
+    [ToolName.ContextAnalyzer]: 30,
+    [ToolName.ChangeAmplification]: 10,
+    [ToolName.DependencyHealth]: 10,
+  },
+  [ScoringProfile.Security]: {
+    [ToolName.NamingConsistency]: 40,
+    [ToolName.TestabilityIndex]: 30,
+    [ToolName.DependencyHealth]: 20,
+    [ToolName.ContextAnalyzer]: 10,
+  },
+};
+
+/**
  * Context budget thresholds per tier.
  */
 export const CONTEXT_TIER_THRESHOLDS: Record<
@@ -226,21 +281,25 @@ export function normalizeToolName(shortName: string): string {
 }
 
 /**
- * Retrieve the weight for a specific tool, considering overrides
+ * Retrieve the weight for a specific tool, considering overrides and profiles
  *
  * @param toolName The canonical tool ID
  * @param toolConfig Optional configuration for the tool containing a weight
  * @param cliOverride Optional weight override from the CLI
+ * @param profile Optional scoring profile to use
  * @returns The weight to be used for this tool in overall scoring
  */
 export function getToolWeight(
   toolName: string,
   toolConfig?: { scoreWeight?: number },
-  cliOverride?: number
+  cliOverride?: number,
+  profile: ScoringProfile = ScoringProfile.Default
 ): number {
   if (cliOverride !== undefined) return cliOverride;
   if (toolConfig?.scoreWeight !== undefined) return toolConfig.scoreWeight;
-  return DEFAULT_TOOL_WEIGHTS[toolName] || 5;
+
+  const profileWeights = SCORING_PROFILES[profile] || DEFAULT_TOOL_WEIGHTS;
+  return profileWeights[toolName] ?? DEFAULT_TOOL_WEIGHTS[toolName] ?? 5;
 }
 
 /**
@@ -284,12 +343,18 @@ export function calculateOverallScore(
     throw new Error('No tool outputs provided for scoring');
   }
 
+  // Determine profile from config or use default
+  const profile =
+    (config?.scoring?.profile as ScoringProfile) || ScoringProfile.Default;
+
   const weights = new Map<string, number>();
   for (const [toolName] of toolOutputs.entries()) {
     const cliWeight = cliWeights?.get(toolName);
     const configWeight = config?.tools?.[toolName]?.scoreWeight;
     const weight =
-      cliWeight ?? configWeight ?? DEFAULT_TOOL_WEIGHTS[toolName] ?? 5;
+      cliWeight ??
+      configWeight ??
+      getToolWeight(toolName, undefined, undefined, profile);
     weights.set(toolName, weight);
   }
 
