@@ -96,14 +96,21 @@ export default function DocsPage() {
             </h2>
             <p className="text-lg text-slate-600 mb-6">
               AIReady is open source. We welcome contributions to our analysis
-              tools and core methodology.
+              tools and core methodology. Want to build a new metric for your
+              team?
             </p>
             <div className="flex gap-4">
               <a
                 href="https://github.com/caopengau/aiready"
-                className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-slate-800 transition-all"
+                className="bg-slate-900 text-white px-8 py-4 rounded-xl font-bold hover:bg-slate-800 transition-all shadow-lg"
               >
                 View on GitHub
+              </a>
+              <a
+                href="https://github.com/caopengau/aiready/blob/main/packages/cli/docs/SPOKE_GUIDE.md"
+                className="bg-white text-slate-900 border-2 border-slate-900 px-8 py-4 rounded-xl font-bold hover:bg-slate-50 transition-all shadow-lg"
+              >
+                Build New Metrics
               </a>
             </div>
           </section>

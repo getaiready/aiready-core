@@ -111,11 +111,43 @@ export default function MetricsClient({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
-            className="mt-20 text-center"
+            className="mt-20 space-y-12"
           >
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/50 rounded-3xl p-10 md:p-16 text-center shadow-2xl relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 blur-[100px] -z-10 group-hover:bg-cyan-500/20 transition-all duration-700" />
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/10 blur-[100px] -z-10 group-hover:bg-purple-500/20 transition-all duration-700" />
+
+              <h2 className="text-3xl md:text-4xl font-black text-white mb-6">
+                Build New Metrics with Us
+              </h2>
+              <p className="text-slate-400 text-lg mb-10 max-w-2xl mx-auto">
+                Need to measure data engineering standards, pipeline quality, or
+                security? Our Hub-and-Spoke architecture allows you to plug in
+                your own tools.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+                <a
+                  href="https://github.com/caopengau/aiready/blob/main/packages/cli/docs/SPOKE_GUIDE.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-primary px-10 py-4 text-lg"
+                >
+                  Build New Metrics →
+                </a>
+                <a
+                  href="https://github.com/caopengau/aiready"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-400 hover:text-white transition-all font-medium flex items-center gap-2"
+                >
+                  View Repo on GitHub
+                </a>
+              </div>
+            </div>
+
             <Link
               href="/dashboard"
-              className="btn-primary inline-flex items-center justify-center gap-2"
+              className="text-slate-500 hover:text-white inline-flex items-center justify-center gap-2 transition-all"
             >
               <span>←</span> Back to Dashboard
             </Link>

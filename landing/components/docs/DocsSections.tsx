@@ -130,6 +130,23 @@ export function MetricsSection() {
           </div>
         </div>
       </div>
+      <div className="mt-8 bg-gradient-to-r from-slate-900 to-slate-800 rounded-2xl p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+        <div>
+          <h3 className="text-2xl font-bold text-white mb-2">
+            Measure what matters to your team
+          </h3>
+          <p className="text-slate-400">
+            Need a custom metric for data quality, pipeline standards, or
+            security?
+          </p>
+        </div>
+        <a
+          href="https://github.com/caopengau/aiready/blob/main/packages/cli/docs/SPOKE_GUIDE.md"
+          className="bg-white text-slate-900 px-8 py-4 rounded-xl font-bold hover:bg-slate-100 transition-all whitespace-nowrap"
+        >
+          Build New Metrics →
+        </a>
+      </div>
     </section>
   );
 }

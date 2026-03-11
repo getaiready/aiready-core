@@ -50,9 +50,14 @@ aiready scan .
 
 # Run a specific tool
 aiready patterns . --similarity 0.6
-````
+```
+
+## 🛠️ Building Your Own Tool (Spokes)
+
+Want to build your own analysis tool that integrates with the AIReady ecosystem? Check out our [Spoke Development Guide](./docs/SPOKE_GUIDE.md).
 
 ## 🌐 Platform Integration
+
 
 Connect your local scans to the [AIReady Dashboard](https://platform.getaiready.dev/dashboard).
 
@@ -85,3 +90,4 @@ MIT
 ```
 
 ```
+````

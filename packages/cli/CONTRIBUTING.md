@@ -196,7 +196,7 @@ src/
 Great places to start:
 
 - **New commands**: Add new CLI commands
-- **Tool integration**: Integrate new analysis tools
+- **Tool integration**: Integrate new analysis tools. Follow the [Spoke Development Guide](./docs/SPOKE_GUIDE.md) for more details.
 - **Output formats**: Add new output options (XML, CSV, HTML)
 - **Configuration**: Improve config file handling
 - **Performance**: Optimize for large codebases
