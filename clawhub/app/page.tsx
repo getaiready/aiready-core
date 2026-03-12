@@ -76,23 +76,23 @@ export default function ClawHubPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-32 overflow-hidden border-b border-white/5">
-        {/* Cinematic Background Image */}
-        <div className="absolute inset-0 -z-10 bg-black">
+      <section className="relative pt-32 pb-48 overflow-hidden border-b border-white/5">
+        {/* Cinematic Background Image - HIGH VISIBILITY */}
+        <div className="absolute inset-0 -z-10">
           <Image
             src="/hero.png"
             alt="Hero Background"
             fill
-            className="object-cover opacity-60 transition-all duration-1000"
+            className="object-cover opacity-85"
             priority
           />
-          {/* VIBRANT Blue/Purple Gradients to blend image */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(0,224,255,0.15)_0%,_#0a0a0a_90%)]" />
-          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-cyber-purple/10 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-cyber-blue/10 blur-[120px] rounded-full translate-y-1/2 -translate-x-1/2" />
+          {/* Subtle overlay for contrast */}
+          <div className="absolute inset-0 bg-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-[#0a0a0a] opacity-80" />
 
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0a] via-transparent to-[#0a0a0a]" />
+          {/* Subtle Color Mesh */}
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-cyber-purple/20 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-cyber-blue/20 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
         </div>
 
         <div className="container mx-auto px-4 text-center relative">
@@ -101,13 +101,13 @@ export default function ClawHubPage() {
             <span>Autonomous Infrastructure Synthesis</span>
           </div>
 
-          <h1 className="text-6xl md:text-9xl font-black tracking-tighter mb-10 bg-gradient-to-r from-cyber-blue via-white to-cyber-purple bg-clip-text text-transparent leading-[1.0] drop-shadow-[0_0_60px_rgba(0,224,255,0.4)]">
+          <h1 className="text-6xl md:text-9xl font-black tracking-tighter mb-10 bg-gradient-to-r from-cyber-blue via-white to-cyber-purple bg-clip-text text-transparent leading-[1.1] pb-2 drop-shadow-[0_10px_40px_rgba(0,0,0,0.9)]">
             Never-Dying,
             <br />
             <span className="italic">Self-Evolving</span> Claw
           </h1>
 
-          <p className="text-xl text-zinc-300 max-w-3xl mx-auto mb-14 leading-relaxed font-light drop-shadow-xl">
+          <p className="text-xl text-zinc-100 max-w-3xl mx-auto mb-14 leading-relaxed font-light drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)]">
             ClawHub is the world&apos;s first autonomous agentic system built on
             AWS Ion. It interprets intent, synthesizes infrastructure, and{' '}
             <span className="text-cyber-blue font-mono text-sm underline decoration-cyber-blue/30 underline-offset-4">
