@@ -12,7 +12,6 @@ interface LeadFormProps {
 export default function LeadForm({ type, onSuccess }: LeadFormProps) {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
-  const [repoUrl, setRepoUrl] = useState('');
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<
     'idle' | 'loading' | 'success' | 'error'
@@ -36,7 +35,6 @@ export default function LeadForm({ type, onSuccess }: LeadFormProps) {
         body: JSON.stringify({
           email,
           name,
-          repoUrl,
           interest: type.toUpperCase(),
           notes,
         }),
@@ -104,21 +102,6 @@ export default function LeadForm({ type, onSuccess }: LeadFormProps) {
             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-cyber-blue/50 transition-colors"
           />
         </div>
-
-        {isBeta && (
-          <div>
-            <label className="block text-[10px] font-mono uppercase tracking-widest text-white/40 mb-1.5 ml-1">
-              GitHub Repository URL
-            </label>
-            <input
-              type="url"
-              value={repoUrl}
-              onChange={(e) => setRepoUrl(e.target.value)}
-              placeholder="https://github.com/..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-white/20 focus:outline-none focus:border-cyber-blue/50 transition-colors"
-            />
-          </div>
-        )}
 
         <div>
           <label className="block text-[10px] font-mono uppercase tracking-widest text-white/40 mb-1.5 ml-1">
