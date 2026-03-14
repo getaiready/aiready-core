@@ -139,6 +139,7 @@ export async function scanFiles(options: ScanOptions): Promise<string[]> {
     cwd: rootDir,
     ignore: finalExclude,
     absolute: true,
+    nodir: true,
   });
 
   // If a .gitignore exists, apply its rules (including negations) using the
