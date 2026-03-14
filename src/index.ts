@@ -32,3 +32,5 @@ export * from './utils/history-git';
 
 // CI/CD Utilities
 export * from './utils/github-utils';
+export * from './types/contract';
+export * from './types/schema';
