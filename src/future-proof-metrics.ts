@@ -41,7 +41,11 @@ import {
   calculateChangeAmplification,
   ChangeAmplificationScore,
 } from './metrics/change-amplification';
-import { collectFutureProofRecommendations } from './metrics/remediation-utils';
+import {
+  collectBaseFutureProofRecommendations,
+  collectFutureProofRecommendations,
+  type FutureProofRecommendationParams,
+} from './metrics/remediation-utils';
 
 export * from './metrics/cognitive-load';
 export * from './metrics/semantic-distance';
@@ -88,21 +92,10 @@ export function calculateFutureProofScore(params: {
     },
   ];
 
-  const recommendations: ToolScoringOutput['recommendations'] = [];
-  for (const rec of params.patternEntropy.recommendations) {
-    recommendations.push({
-      action: rec,
-      estimatedImpact: 5,
-      priority: 'medium',
-    });
-  }
-  if (params.conceptCohesion.rating === 'poor') {
-    recommendations.push({
-      action: 'Improve concept cohesion by grouping related exports',
-      estimatedImpact: 8,
-      priority: 'high',
-    });
-  }
+  const recommendations = collectBaseFutureProofRecommendations({
+    patternEntropy: params.patternEntropy,
+    conceptCohesion: params.conceptCohesion,
+  });
 
   const semanticDistanceAvg = params.semanticDistances?.length
     ? params.semanticDistances.reduce((s, d) => s + d.distance, 0) /
@@ -126,17 +119,11 @@ export function calculateFutureProofScore(params: {
 /**
  * Complete Extended Future-Proof Score
  */
-export function calculateExtendedFutureProofScore(params: {
-  cognitiveLoad: CognitiveLoad;
-  patternEntropy: PatternEntropy;
-  conceptCohesion: ConceptCohesion;
-  aiSignalClarity: AiSignalClarity;
-  agentGrounding: AgentGroundingScore;
-  testability: TestabilityIndex;
-  docDrift?: DocDriftRisk;
-  dependencyHealth?: DependencyHealthScore;
-  semanticDistances?: SemanticDistance[];
-}): ToolScoringOutput {
+export function calculateExtendedFutureProofScore(
+  params: FutureProofRecommendationParams & {
+    semanticDistances?: SemanticDistance[];
+  }
+): ToolScoringOutput {
   const loadScore = 100 - params.cognitiveLoad.score;
   const entropyScore = 100 - params.patternEntropy.entropy * 100;
   const cohesionScore = params.conceptCohesion.score * 100;

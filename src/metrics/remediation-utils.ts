@@ -7,10 +7,7 @@ import type { TestabilityIndex } from './testability-index';
 import type { DocDriftRisk } from './doc-drift';
 import type { DependencyHealthScore } from './dependency-health';
 
-/**
- * Collect and prioritize recommendations from all metric dimensions
- */
-export function collectFutureProofRecommendations(params: {
+export interface FutureProofRecommendationParams {
   cognitiveLoad: CognitiveLoad;
   patternEntropy: PatternEntropy;
   conceptCohesion: ConceptCohesion;
@@ -19,7 +16,14 @@ export function collectFutureProofRecommendations(params: {
   testability: TestabilityIndex;
   docDrift?: DocDriftRisk;
   dependencyHealth?: DependencyHealthScore;
-}): ToolScoringOutput['recommendations'] {
+}
+
+/**
+ * Collect and prioritize recommendations from all metric dimensions
+ */
+export function collectFutureProofRecommendations(
+  params: FutureProofRecommendationParams
+): ToolScoringOutput['recommendations'] {
   const recommendations: ToolScoringOutput['recommendations'] = [];
 
   for (const rec of params.aiSignalClarity.recommendations) {
@@ -72,6 +76,34 @@ export function collectFutureProofRecommendations(params: {
         priority: 'medium',
       });
     }
+  }
+
+  return recommendations;
+}
+
+/**
+ * Collect recommendations for the base future-proof score variant.
+ */
+export function collectBaseFutureProofRecommendations(params: {
+  patternEntropy: PatternEntropy;
+  conceptCohesion: ConceptCohesion;
+}): ToolScoringOutput['recommendations'] {
+  const recommendations: ToolScoringOutput['recommendations'] = [];
+
+  for (const rec of params.patternEntropy.recommendations) {
+    recommendations.push({
+      action: rec,
+      estimatedImpact: 5,
+      priority: 'medium',
+    });
+  }
+
+  if (params.conceptCohesion.rating === 'poor') {
+    recommendations.push({
+      action: 'Improve concept cohesion by grouping related exports',
+      estimatedImpact: 8,
+      priority: 'high',
+    });
   }
 
   return recommendations;
