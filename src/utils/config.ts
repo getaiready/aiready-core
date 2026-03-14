@@ -19,44 +19,60 @@ export async function loadConfig(
   let currentDir = resolve(rootDir);
 
   while (true) {
+    const foundConfigs: string[] = [];
     for (const configFile of CONFIG_FILES) {
+      if (existsSync(join(currentDir, configFile))) {
+        foundConfigs.push(configFile);
+      }
+    }
+
+    if (foundConfigs.length > 0) {
+      if (foundConfigs.length > 1) {
+        console.warn(
+          `⚠️ Multiple configuration files found in ${currentDir}: ${foundConfigs.join(
+            ', '
+          )}. Using ${foundConfigs[0]}.`
+        );
+      } else {
+        // console.log(`ℹ️ Loading configuration from ${join(currentDir, foundConfigs[0])}`);
+      }
+
+      const configFile = foundConfigs[0];
       const configPath = join(currentDir, configFile);
 
-      if (existsSync(configPath)) {
-        try {
-          let config: AIReadyConfig;
+      try {
+        let config: AIReadyConfig;
 
-          if (configFile.endsWith('.js')) {
-            // For JS files, use dynamic ES import
-            const fileUrl = pathToFileURL(configPath).href;
-            const module = await import(`${fileUrl}?t=${Date.now()}`);
-            config = module.default || module;
-          } else {
-            // For JSON files, parse them
-            const content = readFileSync(configPath, 'utf-8');
-            config = JSON.parse(content);
-          }
-
-          // Basic validation
-          if (typeof config !== 'object' || config === null) {
-            throw new Error('Config must be an object');
-          }
-
-          return config;
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : String(error);
-          const e = new Error(
-            `Failed to load config from ${configPath}: ${errorMessage}`
-          );
-          try {
-            // Attach original error as cause when supported
-            (e as any).cause = error instanceof Error ? error : undefined;
-          } catch {
-            /* ignore */
-          }
-          throw e;
+        if (configFile.endsWith('.js')) {
+          // For JS files, use dynamic ES import
+          const fileUrl = pathToFileURL(configPath).href;
+          const module = await import(`${fileUrl}?t=${Date.now()}`);
+          config = module.default || module;
+        } else {
+          // For JSON files, parse them
+          const content = readFileSync(configPath, 'utf-8');
+          config = JSON.parse(content);
         }
+
+        // Basic validation
+        if (typeof config !== 'object' || config === null) {
+          throw new Error('Config must be an object');
+        }
+
+        return config;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        const e = new Error(
+          `Failed to load config from ${configPath}: ${errorMessage}`
+        );
+        try {
+          // Attach original error as cause when supported
+          (e as any).cause = error instanceof Error ? error : undefined;
+        } catch {
+          /* ignore */
+        }
+        throw e;
       }
     }
 
