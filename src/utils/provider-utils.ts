@@ -1,4 +1,11 @@
-import type { AnalysisResult } from '../types';
+import { SpokeOutputSchema } from '../types/schema';
+import type {
+  AnalysisResult,
+  ScanOptions,
+  SpokeOutput,
+  ToolName,
+} from '../types';
+import type { ToolProvider } from '../types/contract';
 import type { ToolScoringOutput } from '../scoring';
 
 /**
@@ -42,5 +49,67 @@ export function buildSimpleProviderScore(
       estimatedImpact: 5,
       priority: 'medium' as const,
     })),
+  };
+}
+
+/**
+ * Builds and validates a `SpokeOutput` with common provider metadata.
+ * This removes repeated schema/metadata boilerplate from spoke providers.
+ */
+export function buildSpokeOutput(
+  toolName: string,
+  version: string,
+  summary: any,
+  results: AnalysisResult[],
+  metadata: Record<string, unknown> = {}
+): SpokeOutput {
+  return SpokeOutputSchema.parse({
+    results,
+    summary,
+    metadata: {
+      toolName,
+      version,
+      timestamp: new Date().toISOString(),
+      ...metadata,
+    },
+  });
+}
+
+export interface ProviderFactoryConfig<TReport> {
+  id: ToolName;
+  alias: string[];
+  version: string;
+  defaultWeight: number;
+  analyzeReport: (options: ScanOptions) => Promise<TReport>;
+  getResults: (report: TReport) => AnalysisResult[];
+  getSummary: (report: TReport) => any;
+  getMetadata?: (report: TReport) => Record<string, unknown>;
+  score: (output: SpokeOutput, options: ScanOptions) => ToolScoringOutput;
+}
+
+/**
+ * Creates a tool provider from shared analyze/score plumbing.
+ * Spokes only provide report adapters and scoring behavior.
+ */
+export function createProvider<TReport>(
+  config: ProviderFactoryConfig<TReport>
+): ToolProvider {
+  return {
+    id: config.id,
+    alias: config.alias,
+    defaultWeight: config.defaultWeight,
+    async analyze(options: ScanOptions): Promise<SpokeOutput> {
+      const report = await config.analyzeReport(options);
+      return buildSpokeOutput(
+        config.id,
+        config.version,
+        config.getSummary(report),
+        config.getResults(report),
+        config.getMetadata?.(report) ?? {}
+      );
+    },
+    score(output: SpokeOutput, options: ScanOptions): ToolScoringOutput {
+      return config.score(output, options);
+    },
   };
 }
