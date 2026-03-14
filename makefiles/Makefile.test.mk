@@ -116,8 +116,3 @@ test-clawmore-e2e-local: ## Run ClawMore E2E tests locally
 	@$(call log_step,Running ClawMore E2E tests...)
 	@cd clawmore && pnpm exec playwright test e2e/seo.spec.ts
 	@$(call log_success,ClawMore tests passed)
-
-test-clawmore-e2e-local: ## Run ClawMore E2E tests locally
-	@$(call log_step,Running ClawMore E2E tests...)
-	@cd clawmore && pnpm exec playwright test e2e/seo.spec.ts
-	@$(call log_success,ClawMore tests passed)
