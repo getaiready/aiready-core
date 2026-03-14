@@ -1,6 +1,6 @@
 const meta = {
   title: 'Part 2: Beyond the Sidekick (Rise of the Agentic System)',
-  date: '2026-03-22',
+  date: '2026-03-03',
   excerpt:
     "Part 2 of 'The Agentic Readiness Shift' series. Moving beyond the AI 'sidekick' and into the era of the autonomous Agentic System.",
   author: 'Peng Cao',

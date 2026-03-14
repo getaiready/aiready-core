@@ -1,6 +1,6 @@
 const meta = {
   title: 'Part 4: The Neural Spine (Event-Driven Orchestration)',
-  date: '2026-03-18',
+  date: '2026-03-05',
   excerpt:
     "Mapping the Agentic mesh. How asynchronous events allow decoupled agents to coordinate without a central controller, providing 'Unlimited Breadth' to your autonomous engineering team.",
   author: 'Peng Cao',
