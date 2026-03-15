@@ -1,7 +1,128 @@
 import { TSESTree } from '@typescript-eslint/typescript-estree';
+import { ExportWithImports, FileImport } from '../types/ast';
 
 /**
- * Find which imports are used within a node
+ * Extract all imports from a TypeScript/JavaScript AST.
+ * Analyzes ImportDeclarations to identify source modules and specific symbols.
+ *
+ * @param ast - The program AST to analyze
+ * @returns Array of identified file imports
+ */
+export function extractFileImports(ast: TSESTree.Program): FileImport[] {
+  const imports: FileImport[] = [];
+
+  for (const node of ast.body) {
+    if (node.type === 'ImportDeclaration') {
+      const source = node.source.value as string;
+      const specifiers: string[] = [];
+      const isTypeOnly = node.importKind === 'type';
+
+      for (const spec of node.specifiers) {
+        if (spec.type === 'ImportSpecifier') {
+          const imported = spec.imported;
+          const importName =
+            imported.type === 'Identifier' ? imported.name : imported.value;
+          specifiers.push(importName);
+        } else if (spec.type === 'ImportDefaultSpecifier') {
+          specifiers.push('default');
+        } else if (spec.type === 'ImportNamespaceSpecifier') {
+          specifiers.push('*');
+        }
+      }
+
+      imports.push({ source, specifiers, isTypeOnly });
+    }
+  }
+
+  return imports;
+}
+
+/**
+ * Extract named and default exports from an AST along with their import dependencies.
+ *
+ * @param ast - The program AST to analyze
+ * @param fileImports - Pre-extracted imports to check for dependencies
+ * @returns Array of exports with metadata and identified dependencies
+ */
+export function extractExportsWithDependencies(
+  ast: TSESTree.Program,
+  fileImports: FileImport[]
+): ExportWithImports[] {
+  const exports: ExportWithImports[] = [];
+  const importedNames = new Set(fileImports.flatMap((imp) => imp.specifiers));
+
+  for (const node of ast.body) {
+    if (node.type === 'ExportNamedDeclaration') {
+      if (node.declaration) {
+        const exportNodes = extractFromDeclaration(node.declaration);
+        for (const exp of exportNodes) {
+          const usedImports = findUsedImports(node.declaration, importedNames);
+          const typeReferences = extractTypeReferences(node.declaration);
+          exports.push({
+            ...exp,
+            imports: usedImports,
+            dependencies: [],
+            typeReferences,
+            loc: node.loc,
+          });
+        }
+      }
+    } else if (node.type === 'ExportDefaultDeclaration') {
+      const usedImports = findUsedImports(node.declaration, importedNames);
+      const typeReferences = extractTypeReferences(node.declaration);
+      exports.push({
+        name: 'default',
+        type: 'default',
+        imports: usedImports,
+        dependencies: [],
+        typeReferences,
+        loc: node.loc,
+      });
+    }
+  }
+
+  return exports;
+}
+
+/**
+ * Extract individual export names and types from a declaration node.
+ * Handles functions, classes, variables, interfaces, and types.
+ *
+ * @param node - The declaration node within an export
+ * @returns Array of simplified export info objects
+ */
+export function extractFromDeclaration(
+  node: TSESTree.ExportNamedDeclaration['declaration']
+): Array<{ name: string; type: ExportWithImports['type'] }> {
+  if (!node) return [];
+
+  const results: Array<{ name: string; type: ExportWithImports['type'] }> = [];
+
+  if (node.type === 'FunctionDeclaration' && node.id) {
+    results.push({ name: node.id.name, type: 'function' });
+  } else if (node.type === 'ClassDeclaration' && node.id) {
+    results.push({ name: node.id.name, type: 'class' });
+  } else if (node.type === 'VariableDeclaration') {
+    for (const decl of node.declarations) {
+      if (decl.id.type === 'Identifier') {
+        results.push({ name: decl.id.name, type: 'const' });
+      }
+    }
+  } else if (node.type === 'TSInterfaceDeclaration' && node.id) {
+    results.push({ name: node.id.name, type: 'interface' });
+  } else if (node.type === 'TSTypeAliasDeclaration' && node.id) {
+    results.push({ name: node.id.name, type: 'type' });
+  }
+
+  return results;
+}
+
+/**
+ * Find which imports from the file are used within a specific code block (AST node).
+ *
+ * @param node - The AST node to scan for usages
+ * @param importedNames - Set of all identifiers imported into the file
+ * @returns Array of imported names used by the given node
  */
 export function findUsedImports(
   node: TSESTree.Node,
@@ -36,8 +157,12 @@ export function findUsedImports(
 }
 
 /**
- * Extract TypeScript type references from a node
- * Collects all type identifiers used in type annotations
+ * Extract TypeScript type references from a node.
+ * Collects all type identifiers used in type annotations to understand
+ * high-level dependency on core types or external interfaces.
+ *
+ * @param node - The AST node to scan for type references
+ * @returns Array of type identifier names found
  */
 export function extractTypeReferences(node: TSESTree.Node): string[] {
   const types = new Set<string>();
