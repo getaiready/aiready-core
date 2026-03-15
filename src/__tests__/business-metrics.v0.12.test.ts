@@ -64,9 +64,9 @@ describe('business-metrics v0.12 evolution', () => {
         severity: 'critical',
       });
 
-      expect(chain.businessOutcome.riskLevel).toBe('critical');
-      expect(chain.developerImpact.productivityLoss).toBe(0.25);
-      expect(chain.businessOutcome.opportunityCost).toBe(3750); // 0.25 * 15000
+      expect(chain.businessOutcome!.riskLevel).toBe('critical');
+      expect(chain.developerImpact!.productivityLoss).toBe(0.25);
+      expect(chain.businessOutcome!.opportunityCost).toBe(3750); // 0.25 * 15000
     });
   });
 });
