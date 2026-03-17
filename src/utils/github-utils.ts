@@ -3,8 +3,10 @@
  */
 
 /**
- * Emit a GitHub Action annotation
+ * Emit a GitHub Action annotation.
  * Format: ::(error|warning|notice) file={file},line={line},col={col},title={title}::{message}
+ *
+ * @param params - Annotation parameters including level, file, and message.
  */
 export function emitAnnotation(params: {
   level: 'error' | 'warning' | 'notice';
@@ -27,7 +29,10 @@ export function emitAnnotation(params: {
 }
 
 /**
- * Map AIReady severity to GitHub Action annotation level
+ * Map AIReady severity to GitHub Action annotation level.
+ *
+ * @param severity - AIReady severity string (e.g., 'critical', 'major').
+ * @returns GitHub Action annotation level ('error', 'warning', or 'notice').
  */
 export function severityToAnnotationLevel(
   severity: string
@@ -49,7 +54,10 @@ export function severityToAnnotationLevel(
 }
 
 /**
- * Emit multiple annotations from an array of issues
+ * Emit multiple annotations from an array of issues.
+ *
+ * @param issues - Array of issue objects to annotate.
+ * @lastUpdated 2026-03-18
  */
 export function emitIssuesAsAnnotations(issues: any[]): void {
   issues.forEach((issue) => {

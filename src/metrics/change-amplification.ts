@@ -1,6 +1,8 @@
 /**
- * Change Amplification Metrics
- * Measures how a change in one file ripples through the system.
+ * Change Amplification Metrics.
+ * Measures how a change in one file ripples through the system via dependency fan-out.
+ *
+ * @lastUpdated 2026-03-18
  */
 
 export interface ChangeAmplificationScore {
@@ -17,6 +19,13 @@ export interface ChangeAmplificationScore {
   recommendations: string[];
 }
 
+/**
+ * Calculate Change Amplification metrics for a set of files in a dependency graph.
+ *
+ * @param params - Structural metrics gathered from link analysis.
+ * @param params.files - List of files with their fan-in/fan-out counts.
+ * @returns Comprehensive ChangeAmplificationScore.
+ */
 export function calculateChangeAmplification(params: {
   files: Array<{ file: string; fanOut: number; fanIn: number }>;
 }): ChangeAmplificationScore {

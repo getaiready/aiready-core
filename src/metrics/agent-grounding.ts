@@ -1,6 +1,8 @@
 /**
- * Agent Grounding Metrics
- * Measures how well an AI agent can navigate a codebase independently.
+ * Agent Grounding Metrics.
+ * Measures how well an AI agent can navigate and understand a codebase independently.
+ *
+ * @lastUpdated 2026-03-18
  */
 
 export interface AgentGroundingScore {
@@ -16,6 +18,23 @@ export interface AgentGroundingScore {
   recommendations: string[];
 }
 
+/**
+ * Calculate Agent Grounding metrics based on repository structure and documentation quality.
+ *
+ * @param params - Structural and documentation metrics gathered during scanning.
+ * @param params.deepDirectories - Count of directories nested deeper than recommended.
+ * @param params.totalDirectories - Total number of directories analyzed.
+ * @param params.vagueFileNames - Count of files with non-descriptive names.
+ * @param params.totalFiles - Total number of files analyzed.
+ * @param params.hasRootReadme - Whether a README exists in the repository root.
+ * @param params.readmeIsFresh - Whether the root README has been updated recently.
+ * @param params.barrelExports - Count of 'index' files providing consolidated exports.
+ * @param params.untypedExports - Count of exports missing explicit type annotations.
+ * @param params.totalExports - Total number of public exports analyzed.
+ * @param params.inconsistentDomainTerms - Count of terms that conflict with the domain vocabulary.
+ * @param params.domainVocabularySize - Total number of unique domain terms identified.
+ * @returns Comprehensive AgentGroundingScore.
+ */
 export function calculateAgentGrounding(params: {
   deepDirectories: number;
   totalDirectories: number;

@@ -1,6 +1,8 @@
 /**
- * Semantic Distance Metrics
- * Measures the conceptual distance between files or domains.
+ * Semantic Distance Metrics.
+ * Measures the conceptual distance between files or domains using import overlap.
+ *
+ * @lastUpdated 2026-03-18
  */
 
 export interface SemanticDistance {
@@ -11,6 +13,19 @@ export interface SemanticDistance {
   reason: string;
 }
 
+/**
+ * Calculate the semantic distance between two files based on domain and dependency overlap.
+ *
+ * @param params - Comparison parameters.
+ * @param params.file1 - Path to the first file.
+ * @param params.file2 - Path to the second file.
+ * @param params.file1Domain - Logical domain of the first file.
+ * @param params.file2Domain - Logical domain of the second file.
+ * @param params.file1Imports - Set of imports in the first file.
+ * @param params.file2Imports - Set of imports in the second file.
+ * @param params.sharedDependencies - Intersection of imports between both files.
+ * @returns Calculated semantic distance and relationship assessment.
+ */
 export function calculateSemanticDistance(params: {
   file1: string;
   file2: string;

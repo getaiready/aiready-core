@@ -1,6 +1,8 @@
 /**
- * Documentation Drift Metrics
+ * Documentation Drift Metrics.
  * Measures the risk of documentation becoming out of sync with code.
+ *
+ * @lastUpdated 2026-03-18
  */
 
 export interface DocDriftRisk {
@@ -18,8 +20,13 @@ export interface DocDriftRisk {
 /**
  * Calculate the documentation drift risk score based on various metrics.
  *
- * @param params - The raw metrics for doc-drift analysis
- * @returns The calculated risk score and recommendations
+ * @param params - The raw metrics for doc-drift analysis gathered during scanning.
+ * @param params.uncommentedExports - Number of public exports missing documentation.
+ * @param params.totalExports - Total number of public exports analyzed.
+ * @param params.outdatedComments - Count of comments that conflict with recent code changes.
+ * @param params.undocumentedComplexity - Count of complex nodes without explanatory comments.
+ * @param params.actualDrift - Raw drift metric calculated from temporal analysis.
+ * @returns The calculated risk score and prioritized recommendations.
  */
 export function calculateDocDrift(params: {
   uncommentedExports: number;

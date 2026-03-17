@@ -17,12 +17,14 @@ import { Severity, ToolOptions } from '../types/schema';
 export type CLIOptions = ToolOptions;
 
 /**
- * Resolve output file path, defaulting to .aiready directory
+ * Resolve output file path, defaulting to .aiready directory.
  * Creates parent directories if they don't exist.
- * @param userPath - User-provided output path (optional)
- * @param defaultFilename - Default filename to use
- * @param workingDir - Working directory (default: process.cwd())
- * @returns Resolved absolute path
+ *
+ * @param userPath - User-provided output path (optional).
+ * @param defaultFilename - Default filename to use.
+ * @param workingDir - Working directory (default: process.cwd()).
+ * @returns Resolved absolute path.
+ * @lastUpdated 2026-03-18
  */
 export function resolveOutputPath(
   userPath: string | undefined,
@@ -59,11 +61,13 @@ export function resolveOutputPath(
 }
 
 /**
- * Load and merge configuration with CLI options
- * @param directory Root directory to load config from
- * @param defaults Default configuration values
- * @param cliOptions Configuration overrides from CLI arguments
- * @returns Merged configuration object
+ * Load and merge configuration with CLI options.
+ *
+ * @param directory - Root directory to load config from.
+ * @param defaults - Default configuration values.
+ * @param cliOptions - Configuration overrides from CLI arguments.
+ * @returns Merged configuration object.
+ * @lastUpdated 2026-03-18
  */
 export async function loadMergedConfig<T extends Record<string, any>>(
   directory: string,
@@ -89,9 +93,11 @@ export async function loadMergedConfig<T extends Record<string, any>>(
 /**
  * Handle JSON output for CLI commands.
  * Writes to file if outputFile is provided, otherwise logs to console.
- * @param data Data to output
- * @param outputFile Optional path to save JSON file
- * @param successMessage Optional message to show on success
+ *
+ * @param data - Data to output.
+ * @param outputFile - Optional path to save JSON file.
+ * @param successMessage - Optional message to show on success.
+ * @lastUpdated 2026-03-18
  */
 export function handleJSONOutput(
   data: any,
@@ -114,8 +120,11 @@ export function handleJSONOutput(
 /**
  * Common error handler for CLI commands.
  * Logs error and exits process with code 1.
- * @param error Error object or message
- * @param commandName Name of the command that failed
+ *
+ * @param error - Error object or message.
+ * @param commandName - Name of the command that failed.
+ * @returns Never returns as it exits the process.
+ * @lastUpdated 2026-03-18
  */
 export function handleCLIError(error: unknown, commandName: string): never {
   console.error(`❌ ${commandName} failed:`, error);
@@ -124,8 +133,10 @@ export function handleCLIError(error: unknown, commandName: string): never {
 
 /**
  * Calculate elapsed time and format for display
- * @param startTime timestamp in milliseconds
- * @returns Formatted seconds (e.g. "1.23")
+ *
+ * @param startTime - Start timestamp in milliseconds.
+ * @returns Formatted duration string in seconds.
+ * @lastUpdated 2026-03-18
  */
 export function getElapsedTime(startTime: number): string {
   return ((Date.now() - startTime) / 1000).toFixed(2);
@@ -133,8 +144,10 @@ export function getElapsedTime(startTime: number): string {
 
 /**
  * Generate a visual score bar for console output
- * @param val Score value (0-100)
- * @returns String representation of the bar (e.g. "█████░░░░░")
+ *
+ * @param val - Score value between 0 and 100.
+ * @returns String representation of the bar (e.g., "█████░░░░░").
+ * @lastUpdated 2026-03-18
  */
 export function getScoreBar(val: number): string {
   const clamped = Math.max(0, Math.min(100, val));
@@ -143,8 +156,10 @@ export function getScoreBar(val: number): string {
 
 /**
  * Get status icon for safety ratings
- * @param rating Safety rating slug
- * @returns Emoji icon representating the rating
+ *
+ * @param rating - The safety rating slug.
+ * @returns Emoji icon representing the rating.
+ * @lastUpdated 2026-03-18
  */
 export function getSafetyIcon(rating: string): string {
   switch (rating) {
@@ -187,9 +202,11 @@ export function emitProgress(
 
 /**
  * Get chalk color function for a given severity
- * @param severity Severity level string
- * @param chalkInstance Chalk instance to use
- * @returns Chalk color function
+ *
+ * @param severity - Severity level string.
+ * @param chalkInstance - Optional chalk instance to use.
+ * @returns Chalk color function.
+ * @lastUpdated 2026-03-18
  */
 export function getSeverityColor(severity: string, chalkInstance: any = chalk) {
   switch (severity.toLowerCase()) {
@@ -291,8 +308,10 @@ export function getSeverityEnum(s: string | undefined): any {
 /**
  * Find the latest aiready report in a directory by modification time.
  * Searches for both new format (aiready-report-*) and legacy format (aiready-scan-*).
- * @param dirPath - The directory path to search for .aiready directory
- * @returns The path to the latest report or null if not found
+ *
+ * @param dirPath - The directory path to search for .aiready directory.
+ * @returns The path to the latest report or null if not found.
+ * @lastUpdated 2026-03-18
  */
 export function findLatestReport(dirPath: string): string | null {
   const aireadyDir = resolvePath(dirPath, '.aiready');
@@ -328,9 +347,11 @@ export function findLatestReport(dirPath: string): string | null {
 
 /**
  * Find the latest scan report file with a specific prefix.
- * @param scanReportsDir Directory containing reports
- * @param reportFilePrefix Filename prefix to match (e.g. "report-")
- * @returns Path to the latest matching report or null
+ *
+ * @param scanReportsDir - Directory containing reports.
+ * @param reportFilePrefix - Filename prefix to match (e.g. "report-").
+ * @returns Path to the latest matching report or null.
+ * @lastUpdated 2026-03-18
  */
 export function findLatestScanReport(
   scanReportsDir: string,

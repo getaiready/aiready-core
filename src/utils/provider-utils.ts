@@ -30,9 +30,14 @@ export function groupIssuesByFile(issues: any[]): AnalysisResult[] {
 }
 
 /**
- * Builds a simple `ToolScoringOutput` from a spoke summary object.
+ * Builds a simple ToolScoringOutput from a spoke summary object.
  * Shared across providers whose scoring logic is purely pass-through
  * (score and recommendations are already computed in the analyzer).
+ *
+ * @param toolName - Identifier for the tool.
+ * @param summary - The tool's summary object containing score and recs.
+ * @param rawData - Additional raw metrics to include.
+ * @returns Standardized scoring output.
  */
 export function buildSimpleProviderScore(
   toolName: string,
@@ -53,8 +58,15 @@ export function buildSimpleProviderScore(
 }
 
 /**
- * Builds and validates a `SpokeOutput` with common provider metadata.
+ * Builds and validates a SpokeOutput with common provider metadata.
  * This removes repeated schema/metadata boilerplate from spoke providers.
+ *
+ * @param toolName - Identifier for the tool.
+ * @param version - Current version of the spoke.
+ * @param summary - Consolidated summary metrics.
+ * @param results - Array of file-level analysis results.
+ * @param metadata - Optional additional metadata.
+ * @returns Validated spoke output object.
  */
 export function buildSpokeOutput(
   toolName: string,
@@ -90,6 +102,10 @@ export interface ProviderFactoryConfig<TReport> {
 /**
  * Creates a tool provider from shared analyze/score plumbing.
  * Spokes only provide report adapters and scoring behavior.
+ *
+ * @param config - Provider factory configuration with analyze/score logic.
+ * @returns A complete ToolProvider implementation.
+ * @lastUpdated 2026-03-18
  */
 export function createProvider<TReport>(
   config: ProviderFactoryConfig<TReport>

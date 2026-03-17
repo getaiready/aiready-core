@@ -93,13 +93,10 @@ export const VAGUE_FILE_NAMES = new Set([
 ]);
 
 /**
- * Scan files in a directory using glob patterns
+ * Scan files in a directory using glob patterns, respecting .aireadyignore and defaults.
  *
- * Note: This scanner supports multiple languages (.ts, .tsx, .js, .jsx, .py, .java, etc.)
- * Individual tools can filter to their supported languages if needed.
- *
- * @param options - Scan configuration
- * @returns Array of absolute file paths matching the patterns
+ * @param options - Scan configuration including rootDir, include/exclude, and includeTests.
+ * @returns Array of absolute file paths matching the patterns.
  */
 export async function scanFiles(options: ScanOptions): Promise<string[]> {
   const {
@@ -211,8 +208,12 @@ export async function scanFiles(options: ScanOptions): Promise<string[]> {
 }
 
 /**
- * Scan for both files and directories, respecting ignore rules.
+ * Scan for both files and directories, respecting ignore rules and .gitignore.
  * Useful for tools that need to analyze directory structure.
+ *
+ * @param options - Scan configuration.
+ * @returns Object containing arrays of files and directories.
+ * @lastUpdated 2026-03-18
  */
 export async function scanEntries(
   options: ScanOptions

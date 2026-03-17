@@ -1,6 +1,8 @@
 /**
- * Structural Metrics
+ * Structural Metrics.
  * Measures pattern entropy and concept cohesion.
+ *
+ * @lastUpdated 2026-03-18
  */
 
 /**
@@ -34,8 +36,13 @@ export interface PatternEntropy {
 /**
  * A file path with its inferred domain
  */
+/**
+ * Represents a file path associated with its inferred domain.
+ */
 export interface FileWithDomain {
+  /** Relative or absolute path to the file. */
   path: string;
+  /** Logical domain the file belongs to (e.g., "auth", "api"). */
   domain: string;
 }
 
@@ -127,20 +134,21 @@ export function calculatePatternEntropy(
 }
 
 /**
- * Measures how focused a set of concepts is within a domain
+ * Measures how focused a set of concepts is within a domain.
+ * Higher cohesion indicates better semantic alignment.
  */
 export interface ConceptCohesion {
-  /** Normalized score (0-1) where 1 is perfect cohesion */
+  /** Normalized score (0-1) where 1 is perfect cohesion. */
   score: number;
-  /** Human-readable rating */
+  /** Human-readable rating. */
   rating: 'excellent' | 'good' | 'moderate' | 'poor';
-  /** Detailed cohesion metrics */
+  /** Detailed cohesion metrics. */
   analysis: {
-    /** Number of distinct domains involved */
+    /** Number of distinct domains involved. */
     uniqueDomains: number;
-    /** Percentage of exports belonging to the dominant domain */
+    /** Percentage of exports belonging to the dominant domain. */
     domainConcentration: number;
-    /** Ratio of unique domains to total exports */
+    /** Ratio of unique domains to total exports. */
     exportPurposeClarity: number;
   };
 }

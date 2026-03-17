@@ -14,7 +14,10 @@ import {
 import { BaseLanguageParser } from './base-parser';
 
 /**
- * Java Parser implementation using tree-sitter
+ * Java Parser implementation using tree-sitter.
+ * Supports AST-based and Regex-based extraction of class and method metadata.
+ *
+ * @lastUpdated 2026-03-18
  */
 export class JavaParser extends BaseLanguageParser {
   readonly language = Language.Java;
@@ -24,6 +27,13 @@ export class JavaParser extends BaseLanguageParser {
     return 'java';
   }
 
+  /**
+   * Analyze metadata for a Java node (purity, side effects).
+   *
+   * @param node - Tree-sitter node to analyze.
+   * @param code - Source code for context.
+   * @returns Partial ExportInfo containing discovered metadata.
+   */
   analyzeMetadata(node: Parser.Node, code: string): Partial<ExportInfo> {
     // Java specific side-effect signatures
     return analyzeGeneralMetadata(node, code, {
@@ -120,6 +130,12 @@ export class JavaParser extends BaseLanguageParser {
     };
   }
 
+  /**
+   * Extract import information using AST walk.
+   *
+   * @param rootNode - Root node of the Java AST.
+   * @returns Array of discovered ImportInfo objects.
+   */
   protected extractImportsAST(rootNode: Parser.Node): ImportInfo[] {
     const imports: ImportInfo[] = [];
 
@@ -164,6 +180,13 @@ export class JavaParser extends BaseLanguageParser {
     return imports;
   }
 
+  /**
+   * Extract export information (classes, interfaces, methods) using AST walk.
+   *
+   * @param rootNode - Root node of the Java AST.
+   * @param code - Source code for documentation extraction.
+   * @returns Array of discovered ExportInfo objects.
+   */
   protected extractExportsAST(
     rootNode: Parser.Node,
     code: string
@@ -207,12 +230,26 @@ export class JavaParser extends BaseLanguageParser {
     return exports;
   }
 
+  /**
+   * Extract modifiers (visibility, static, etc.) from a node.
+   *
+   * @param node - AST node to extract modifiers from.
+   * @returns Array of modifier strings.
+   */
   private getModifiers(node: Parser.Node): string[] {
     const modifiersNode = node.children.find((c) => c.type === 'modifiers');
     if (!modifiersNode) return [];
     return modifiersNode.children.map((c) => c.text);
   }
 
+  /**
+   * Extract methods and nested exports from a class or interface body.
+   *
+   * @param parentNode - Class or interface declaration node.
+   * @param parentName - Name of the parent class/interface.
+   * @param exports - Array to collect discovered exports into.
+   * @param code - Source code for context.
+   */
   private extractSubExports(
     parentNode: Parser.Node,
     parentName: string,

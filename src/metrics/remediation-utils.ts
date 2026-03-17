@@ -7,6 +7,11 @@ import type { TestabilityIndex } from './testability-index';
 import type { DocDriftRisk } from './doc-drift';
 import type { DependencyHealthScore } from './dependency-health';
 
+/**
+ * Parameters for generating comprehensive future-proof recommendations.
+ *
+ * @lastUpdated 2026-03-18
+ */
 export interface FutureProofRecommendationParams {
   cognitiveLoad: CognitiveLoad;
   patternEntropy: PatternEntropy;
@@ -86,9 +91,12 @@ export function collectFutureProofRecommendations(
 
 /**
  * Collect recommendations for the base future-proof score variant.
+ * Focuses on pattern and concept metrics for earlier-stage analysis.
  *
- * @param params - Pattern and concept metrics
- * @returns Prioritized list of recommendations
+ * @param params - Pattern and concept metrics gathered during basic scan.
+ * @param params.patternEntropy - Structural fragmentation data.
+ * @param params.conceptCohesion - Semantic alignment data.
+ * @returns Prioritized list of remediation recommendations.
  */
 export function collectBaseFutureProofRecommendations(params: {
   patternEntropy: PatternEntropy;

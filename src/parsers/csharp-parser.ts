@@ -14,7 +14,10 @@ import {
 import { BaseLanguageParser } from './base-parser';
 
 /**
- * C# Parser implementation using tree-sitter
+ * C# Parser implementation using tree-sitter.
+ * Supports AST-based and Regex-based extraction of namespace-scoped classes and methods.
+ *
+ * @lastUpdated 2026-03-18
  */
 export class CSharpParser extends BaseLanguageParser {
   readonly language = Language.CSharp;
@@ -24,6 +27,13 @@ export class CSharpParser extends BaseLanguageParser {
     return 'c_sharp';
   }
 
+  /**
+   * Analyze metadata for a C# node (purity, side effects).
+   *
+   * @param node - Tree-sitter node to analyze.
+   * @param code - Source code for context.
+   * @returns Partial ExportInfo containing discovered metadata.
+   */
   analyzeMetadata(node: Parser.Node, code: string): Partial<ExportInfo> {
     // C# specific side-effect signatures
     return analyzeGeneralMetadata(node, code, {
@@ -31,6 +41,12 @@ export class CSharpParser extends BaseLanguageParser {
     });
   }
 
+  /**
+   * Fallback regex-based parsing when tree-sitter is unavailable.
+   *
+   * @param code - Source code content.
+   * @returns Consolidated ParseResult.
+   */
   protected parseRegex(code: string): ParseResult {
     const lines = code.split('\n');
     const exports: ExportInfo[] = [];
@@ -102,6 +118,12 @@ export class CSharpParser extends BaseLanguageParser {
     };
   }
 
+  /**
+   * Extract import information (usings) using AST walk.
+   *
+   * @param rootNode - Root node of the C# AST.
+   * @returns Array of discovered ImportInfo objects.
+   */
   protected extractImportsAST(rootNode: Parser.Node): ImportInfo[] {
     const imports: ImportInfo[] = [];
 
@@ -143,6 +165,14 @@ export class CSharpParser extends BaseLanguageParser {
     return imports;
   }
 
+  /**
+   * Extract export information (classes, methods, properties) using AST walk.
+   * Handles nested namespaces and classes.
+   *
+   * @param rootNode - Root node of the C# AST.
+   * @param code - Source code for documentation extraction.
+   * @returns Array of discovered ExportInfo objects.
+   */
   protected extractExportsAST(
     rootNode: Parser.Node,
     code: string

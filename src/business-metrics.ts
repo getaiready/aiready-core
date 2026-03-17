@@ -1,7 +1,9 @@
 /**
- * Business Value Metrics Module
+ * Business Value Metrics Module.
  *
  * Provides business-aligned metrics that quantify ROI and survive technology changes.
+ *
+ * @lastUpdated 2026-03-18
  */
 
 import {
@@ -147,8 +149,9 @@ import type { TechnicalValueChain } from './types';
 
 /**
  * Format AI acceptance rate as a human-readable percentage string.
- * @param rate Rate value between 0 and 1
- * @returns Formatted percentage (e.g. "85%")
+ *
+ * @param rate - Rate value between 0 and 1 (e.g. 0.85).
+ * @returns Formatted percentage string (e.g. "85%").
  */
 export function formatAcceptanceRate(rate: number): string {
   return `${Math.round(rate * 100)}%`;

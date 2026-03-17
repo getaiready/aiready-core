@@ -1,6 +1,8 @@
 /**
- * AI Signal Clarity Metrics
+ * AI Signal Clarity Metrics.
  * Measures code patterns that increase the likelihood of AI generating incorrect code.
+ *
+ * @lastUpdated 2026-03-18
  */
 
 /**
@@ -36,9 +38,20 @@ export interface AiSignalClarity {
 }
 
 /**
- * Calculate AI Signal Clarity metrics based on various code patterns
- * @param params Object containing counts of various problematic patterns
- * @returns Clarity analysis result
+ * Calculate AI Signal Clarity metrics based on various documented and undocumented code patterns.
+ *
+ * @param params - Counts of various problematic or beneficial patterns detected during scanning.
+ * @param params.overloadedSymbols - Count of symbols with identical names in different scopes.
+ * @param params.magicLiterals - Count of unnamed constant values.
+ * @param params.booleanTraps - Count of functions with multiple boolean parameters.
+ * @param params.implicitSideEffects - Count of functions with undocumented side effects.
+ * @param params.deepCallbacks - Count of nested callback structures.
+ * @param params.ambiguousNames - Count of non-descriptive identifiers (e.g., 'data', 'info').
+ * @param params.undocumentedExports - Count of public exports missing JSDoc/docstrings.
+ * @param params.largeFiles - Optional count of files exceeding size limits.
+ * @param params.totalSymbols - Total number of symbols analyzed.
+ * @param params.totalExports - Total number of public exports analyzed.
+ * @returns Comprehensive AiSignalClarity analysis.
  */
 export function calculateAiSignalClarity(params: {
   overloadedSymbols: number;

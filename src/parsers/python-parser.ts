@@ -11,7 +11,10 @@ import { analyzeNodeMetadata } from './metadata-utils';
 import { BaseLanguageParser } from './base-parser';
 
 /**
- * Python Parser implementation using tree-sitter
+ * Python Parser implementation using tree-sitter.
+ * Handles AST-based and Regex-based extraction of imports and exports.
+ *
+ * @lastUpdated 2026-03-18
  */
 export class PythonParser extends BaseLanguageParser {
   readonly language = Language.Python;
@@ -21,12 +24,25 @@ export class PythonParser extends BaseLanguageParser {
     return 'python';
   }
 
+  /**
+   * Analyze metadata for a Python node (purity, side effects).
+   *
+   * @param node - Tree-sitter node to analyze.
+   * @param code - Source code for context.
+   * @returns Partial ExportInfo containing discovered metadata.
+   */
   analyzeMetadata(node: Parser.Node, code: string): Partial<ExportInfo> {
     return analyzeNodeMetadata(node, code, {
       sideEffectSignatures: ['print(', 'input(', 'open('],
     });
   }
 
+  /**
+   * Extract import information using AST walk.
+   *
+   * @param rootNode - Root node of the Python AST.
+   * @returns Array of discovered ImportInfo objects.
+   */
   protected extractImportsAST(rootNode: Parser.Node): ImportInfo[] {
     const imports: ImportInfo[] = [];
 
@@ -121,6 +137,13 @@ export class PythonParser extends BaseLanguageParser {
     return imports;
   }
 
+  /**
+   * Extract export information using AST walk.
+   *
+   * @param rootNode - Root node of the Python AST.
+   * @param code - Source code for documentation extraction.
+   * @returns Array of discovered ExportInfo objects.
+   */
   protected extractExportsAST(
     rootNode: Parser.Node,
     code: string
@@ -211,6 +234,12 @@ export class PythonParser extends BaseLanguageParser {
     return exports;
   }
 
+  /**
+   * Extract parameter names from a function definition node.
+   *
+   * @param node - Function definition node.
+   * @returns Array of parameter name strings.
+   */
   private extractParameters(node: Parser.Node): string[] {
     const paramsNode = node.childForFieldName('parameters');
     if (!paramsNode) return [];
@@ -231,6 +260,13 @@ export class PythonParser extends BaseLanguageParser {
       });
   }
 
+  /**
+   * Fallback regex-based parsing when tree-sitter is unavailable.
+   *
+   * @param code - Source code content.
+   * @param filePath - Path to the file being parsed.
+   * @returns Consolidated ParseResult.
+   */
   protected parseRegex(code: string, filePath: string): ParseResult {
     try {
       const imports = this.extractImportsRegex(code, filePath);

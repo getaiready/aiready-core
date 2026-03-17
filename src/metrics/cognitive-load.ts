@@ -1,8 +1,13 @@
 /**
- * Cognitive Load Metrics
+ * Cognitive Load Metrics.
  * Measures how much mental effort is required for an AI to understand a file.
+ *
+ * @lastUpdated 2026-03-18
  */
 
+/**
+ * Individual factor contributing to total cognitive load.
+ */
 export interface LoadFactor {
   name: string;
   score: number; // 0-100, higher = more load
@@ -10,6 +15,9 @@ export interface LoadFactor {
   description: string;
 }
 
+/**
+ * Consolidated Cognitive Load measurement for a source file.
+ */
 export interface CognitiveLoad {
   score: number;
   rating: 'trivial' | 'easy' | 'moderate' | 'difficult' | 'expert';
@@ -22,6 +30,17 @@ export interface CognitiveLoad {
   };
 }
 
+/**
+ * Calculate the Cognitive Load for a file based on its structural properties.
+ *
+ * @param params - Metrics gathered from parsing the file.
+ * @param params.linesOfCode - Number of lines of code.
+ * @param params.exportCount - Number of public exports.
+ * @param params.importCount - Number of external dependencies.
+ * @param params.uniqueConcepts - Number of unique semantic concepts.
+ * @param params.cyclomaticComplexity - Optional complexity score.
+ * @returns Comprehensive CognitiveLoad analysis.
+ */
 export function calculateCognitiveLoad(params: {
   linesOfCode: number;
   exportCount: number;

@@ -1,9 +1,14 @@
+/**
+ * AI Ready Scoring Engine.
+ * Responsible for calculating, normalizing, and formatting AI-readiness scores.
+ *
+ * @lastUpdated 2026-03-18
+ */
 import { ToolName } from './types/schema';
 
 /**
  * Priority levels for actionable recommendations.
- *
- * Used to Sort and display fixes for the user.
+ * Used to sort and display fixes for the user.
  */
 export enum RecommendationPriority {
   High = 'high',
@@ -13,7 +18,6 @@ export enum RecommendationPriority {
 
 /**
  * AI Readiness Rating categories.
- *
  * Provides a high-level qualitative assessment based on the numeric score.
  */
 export enum ReadinessRating {
@@ -63,9 +67,6 @@ export interface ToolScoringOutput {
 
 /**
  * Consolidated scoring result across all tools.
- *
- * This is the final report object containing the overall score,
- * rating, and detailed breakdown for all tools.
  */
 export interface ScoringResult {
   /** Overall AI Readiness Score (0-100) */
@@ -113,9 +114,6 @@ export interface ScoringConfig {
 
 /**
  * Default weights for known tools.
- *
- * Weights represent the percentage contribution of each tool to the overall score.
- * By default, they sum to 100 for a standard project.
  */
 export const DEFAULT_TOOL_WEIGHTS: Record<string, number> = {
   [ToolName.PatternDetect]: 22,
@@ -131,7 +129,6 @@ export const DEFAULT_TOOL_WEIGHTS: Record<string, number> = {
 
 /**
  * Tool name normalization map.
- *
  * Maps common shorthands and aliases to canonical tool IDs.
  */
 export const TOOL_NAME_MAP: Record<string, string> = {

@@ -30,6 +30,12 @@ export const SIDE_EFFECT_KEYWORDS = [
 /**
  * Common metadata analysis for tree-sitter nodes.
  * Consolidates purity, side-effect heuristics, and documentation extraction.
+ *
+ * @param node - Tree-sitter node to analyze.
+ * @param code - Full source code for coordinate lookup.
+ * @param options - Analysis options including side-effect signatures.
+ * @returns Partial ExportInfo containing documentation and side-effect data.
+ * @lastUpdated 2026-03-18
  */
 export function analyzeGeneralMetadata(
   node: Parser.Node,
@@ -118,6 +124,10 @@ export function analyzeGeneralMetadata(
 /**
  * Extract parameter names from a variety of tree-sitter AST shapes.
  * This helper consolidates similar logic used across language parsers.
+ *
+ * @param node - Tree-sitter node to extract parameters from.
+ * @returns Array of parameter names found in the node.
+ * @lastUpdated 2026-03-18
  */
 export function extractParameterNames(node: Parser.Node): string[] {
   const params: string[] = [];

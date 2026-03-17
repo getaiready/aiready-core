@@ -1,7 +1,10 @@
 import { execSync } from 'child_process';
 
 /**
- * Get git commit timestamps for each line in a file
+ * Get git commit timestamps for each line in a file using git blame.
+ *
+ * @param file - Absolute path to the file to blame.
+ * @returns Map of line numbers to unix timestamps.
  */
 export function getFileCommitTimestamps(file: string): Record<number, number> {
   const lineStamps: Record<number, number> = {};
@@ -27,7 +30,12 @@ export function getFileCommitTimestamps(file: string): Record<number, number> {
 }
 
 /**
- * Get the latest commit timestamp for a line range
+ * Get the latest commit timestamp for a specific line range.
+ *
+ * @param lineStamps - Pre-computed map of line timestamps.
+ * @param startLine - Start of the range (1-indexed).
+ * @param endLine - End of the range (inclusive).
+ * @returns The most recent unix timestamp in the range.
  */
 export function getLineRangeLastModifiedCached(
   lineStamps: Record<number, number>,
@@ -44,7 +52,11 @@ export function getLineRangeLastModifiedCached(
 }
 
 /**
- * Get repository metadata (URL, branch, commit, author)
+ * Get repository metadata including URL, branch, commit, and last author.
+ *
+ * @param directory - The repository root directory.
+ * @returns Metadata object with git details.
+ * @lastUpdated 2026-03-18
  */
 export function getRepoMetadata(directory: string): {
   url?: string;

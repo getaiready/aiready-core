@@ -19,8 +19,9 @@ import { GoParser } from './go-parser';
 
 /**
  * Factory for creating and managing language parsers.
- *
  * Supports both singleton usage and multiple instances for test isolation.
+ *
+ * @lastUpdated 2026-03-18
  */
 export class ParserFactory {
   private static instance: ParserFactory;
@@ -148,7 +149,11 @@ export class ParserFactory {
 }
 
 /**
- * Convenience function to get parser for a file
+ * Convenience function to get parser for a file.
+ *
+ * @param filePath - Path to the file to get a parser for.
+ * @returns LanguageParser instance or null if unsupported.
+ * @lastUpdated 2026-03-18
  */
 export function getParser(filePath: string): LanguageParser | null {
   return ParserFactory.getInstance().getParserForFile(filePath);
@@ -162,7 +167,11 @@ export async function initializeParsers(): Promise<void> {
 }
 
 /**
- * Convenience function to check if file is supported
+ * Convenience function to check if file is supported.
+ *
+ * @param filePath - Path to the file to check.
+ * @returns True if the file extension is supported.
+ * @lastUpdated 2026-03-18
  */
 export function isFileSupported(filePath: string): boolean {
   return ParserFactory.getInstance().isSupported(filePath);

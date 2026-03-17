@@ -1,6 +1,8 @@
 /**
- * Dependency Health Metrics
- * Measures the health and recency of project dependencies.
+ * Dependency Health Metrics.
+ * Measures the health, recency, and security of project dependencies.
+ *
+ * @lastUpdated 2026-03-18
  */
 
 export interface DependencyHealthScore {
@@ -15,6 +17,16 @@ export interface DependencyHealthScore {
   recommendations: string[];
 }
 
+/**
+ * Calculate Dependency Health metrics based on version freshness and package metadata.
+ *
+ * @param params - Metrics gathered from package.json and registry lookups.
+ * @param params.totalPackages - Total number of dependencies analyzed.
+ * @param params.outdatedPackages - Count of packages with newer versions available.
+ * @param params.deprecatedPackages - Count of packages marked as deprecated by maintainers.
+ * @param params.trainingCutoffSkew - Normalized skew between dependency release dates and AI training cutoffs.
+ * @returns Comprehensive DependencyHealthScore.
+ */
 export function calculateDependencyHealth(params: {
   totalPackages: number;
   outdatedPackages: number;

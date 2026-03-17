@@ -35,6 +35,10 @@ export interface ToolProvider {
 /**
  * Validation utility to ensure a spoke's output matches the expected contract.
  * Used in spoke tests to catch breakages early.
+ *
+ * @param toolName - Name of the tool being validated.
+ * @param output - The raw output data to check.
+ * @returns Validation result with boolean flag and any errors found.
  */
 export function validateSpokeOutput(
   toolName: string,
@@ -104,7 +108,12 @@ export function validateSpokeOutput(
 }
 
 /**
- * Zod-based validation (Round 1 improvement)
+ * Zod-based validation (Round 1 improvement).
+ *
+ * @param schema - Zod schema to validate against.
+ * @param data - Raw data to parse.
+ * @returns Result object with valid flag and typed data or errors.
+ * @lastUpdated 2026-03-18
  */
 export function validateWithSchema<T>(
   schema: z.ZodSchema<T>,

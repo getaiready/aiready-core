@@ -9,14 +9,20 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 
 /**
- * Path to history storage
+ * Get the path to the history storage file.
+ *
+ * @param rootDir - The root directory of the project.
+ * @returns Absolute path to history.json.
  */
 function getHistoryPath(rootDir: string): string {
   return join(rootDir, '.aiready', 'history.json');
 }
 
 /**
- * Load score history from disk
+ * Load score history from disk.
+ *
+ * @param rootDir - The project root directory.
+ * @returns Array of history entries.
  */
 export function loadScoreHistory(rootDir: string): any[] {
   const historyPath = getHistoryPath(rootDir);
@@ -35,7 +41,11 @@ export function loadScoreHistory(rootDir: string): any[] {
 }
 
 /**
- * Save score entry to history
+ * Save a new score entry to history.
+ *
+ * @param rootDir - The project root directory.
+ * @param entry - The score data to persist.
+ * @lastUpdated 2026-03-18
  */
 export function saveScoreEntry(
   rootDir: string,
@@ -77,7 +87,10 @@ export function saveScoreEntry(
 }
 
 /**
- * Get summary of recent history
+ * Get a summary of recent history metrics.
+ *
+ * @param rootDir - The project root directory.
+ * @returns Summary object with totals and averages.
  */
 export function getHistorySummary(rootDir: string): {
   totalScans: number;
@@ -109,7 +122,11 @@ export function getHistorySummary(rootDir: string): {
 }
 
 /**
- * Export history for external analysis
+ * Export history for external analysis.
+ *
+ * @param rootDir - The project root directory.
+ * @param format - Export format ('json' or 'csv').
+ * @returns Formatted history string.
  */
 export function exportHistory(
   rootDir: string,
@@ -133,7 +150,9 @@ export function exportHistory(
 }
 
 /**
- * Clear history (for testing or reset)
+ * Clear history (for testing or reset).
+ *
+ * @param rootDir - The project root directory.
  */
 export function clearHistory(rootDir: string): void {
   const historyPath = getHistoryPath(rootDir);

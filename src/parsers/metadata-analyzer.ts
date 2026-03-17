@@ -4,6 +4,10 @@ import { ExportInfo } from '../types/language';
 /**
  * Shared metadata analyzer for language parsers.
  * This helper consolidates heuristic analysis for purity, side effects, and documentation.
+ *
+ * @param node - AST node to analyze for metadata.
+ * @returns Partial ExportInfo object containing discovered metadata.
+ * @lastUpdated 2026-03-18
  */
 export function analyzeSharedMetadata(node: Parser.Node): Partial<ExportInfo> {
   const metadata: Partial<ExportInfo> = {

@@ -1,10 +1,12 @@
 /**
- * Future-Proof AI Metrics Abstraction Layer
+ * Future-Proof AI Metrics Abstraction Layer.
  *
  * This module provides technology-agnostic metric primitives that will
  * remain valid across changes in AI models, tokenization, and paradigms.
  *
  * It focuses on cognitive load, semantic cohesion, and structural entropy.
+ *
+ * @lastUpdated 2026-03-18
  */
 
 import type { ToolScoringOutput } from './scoring';
@@ -102,8 +104,8 @@ export function calculateFutureProofScore(params: {
  * Incorporates secondary signals like documentation drift, dependency health,
  * and testability index to provide a holistic view of the repository's AI readiness.
  *
- * @param params - Comprehensive set of metric outputs
- * @returns ToolScoringOutput with extended analysis results
+ * @param params - Comprehensive set of metric outputs including grounding and testability.
+ * @returns ToolScoringOutput with extended analysis results and prioritized fixes.
  */
 export function calculateExtendedFutureProofScore(
   params: FutureProofRecommendationParams & {

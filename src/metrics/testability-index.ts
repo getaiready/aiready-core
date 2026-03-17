@@ -1,6 +1,8 @@
 /**
- * Testability Index Metrics
- * Measures how verifiable AI-generated changes are.
+ * Testability Index Metrics.
+ * Measures how verifiable AI-generated changes are based on local testing infrastructure.
+ *
+ * @lastUpdated 2026-03-18
  */
 
 export interface TestabilityIndex {
@@ -17,6 +19,22 @@ export interface TestabilityIndex {
   recommendations: string[];
 }
 
+/**
+ * Calculate the Testability Index for a project.
+ *
+ * @param params - Metrics including coverage, purity, and dependency patterns.
+ * @param params.testFiles - Count of identifiable test files.
+ * @param params.sourceFiles - Total number of source files.
+ * @param params.pureFunctions - Count of functions without side effects.
+ * @param params.totalFunctions - Total number of functions analyzed.
+ * @param params.injectionPatterns - Count of classes using dependency injection.
+ * @param params.totalClasses - Total number of classes analyzed.
+ * @param params.bloatedInterfaces - Count of interfaces with too many methods.
+ * @param params.totalInterfaces - Total number of interfaces analyzed.
+ * @param params.externalStateMutations - Count of nodes that mutate external state.
+ * @param params.hasTestFramework - Whether a testing framework (e.g., Vitest) is detected.
+ * @returns Comprehensive TestabilityIndex analysis.
+ */
 export function calculateTestabilityIndex(params: {
   testFiles: number;
   sourceFiles: number;
