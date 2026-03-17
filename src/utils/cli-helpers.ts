@@ -44,7 +44,16 @@ export function resolveOutputPath(
     outputPath = userPath;
   } else {
     // Default to .aiready directory
-    const aireadyDir = join(workingDir, '.aiready');
+    // If workingDir is a file, use its parent directory
+    let baseDir = workingDir;
+    try {
+      if (statSync(workingDir).isFile()) {
+        baseDir = dirname(workingDir);
+      }
+    } catch (e) {
+      // Ignore errors (e.g. if path doesn't exist yet)
+    }
+    const aireadyDir = join(baseDir, '.aiready');
     outputPath = join(aireadyDir, defaultFilename);
   }
 

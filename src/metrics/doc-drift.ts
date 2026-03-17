@@ -29,21 +29,26 @@ export function calculateDocDrift(params: {
 
   const uncommentedRatio =
     totalExports > 0 ? uncommentedExports / totalExports : 0;
-  const outdatedScore = Math.min(100, outdatedComments * 15);
-  const uncommentedScore = Math.min(100, uncommentedRatio * 100);
-  const complexityScore = Math.min(100, undocumentedComplexity * 10);
+  const outdatedRisk = Math.min(100, outdatedComments * 15);
+  const uncommentedRisk = Math.min(100, uncommentedRatio * 100);
+  const complexityRisk = Math.min(100, undocumentedComplexity * 10);
 
-  const score = Math.round(
-    outdatedScore * 0.6 + uncommentedScore * 0.2 + complexityScore * 0.2
+  const risk = Math.round(
+    outdatedRisk * 0.6 + uncommentedRisk * 0.2 + complexityRisk * 0.2
   );
-  const finalScore = Math.min(100, Math.max(0, score));
+  const finalRisk = Math.min(100, Math.max(0, risk));
+
+  // Invert risk to get readiness score
+  // If no exports found, readiness is 100% (no drift possible)
+  const score = totalExports > 0 ? 100 - finalRisk : 100;
 
   let rating: DocDriftRisk['rating'];
-  if (finalScore < 10) rating = 'minimal';
-  else if (finalScore < 30) rating = 'low';
-  else if (finalScore < 60) rating = 'moderate';
-  else if (finalScore < 85) rating = 'high';
-  else rating = 'severe';
+  if (score >= 90)
+    rating = 'minimal'; // low risk
+  else if (score >= 75) rating = 'low';
+  else if (score >= 60) rating = 'moderate';
+  else if (score >= 40) rating = 'high';
+  else rating = 'severe'; // high risk
 
   const recommendations: string[] = [];
   if (outdatedComments > 0)
@@ -60,7 +65,7 @@ export function calculateDocDrift(params: {
     );
 
   return {
-    score: finalScore,
+    score: score,
     rating,
     dimensions: {
       uncommentedExports,
