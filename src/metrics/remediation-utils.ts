@@ -19,7 +19,10 @@ export interface FutureProofRecommendationParams {
 }
 
 /**
- * Collect and prioritize recommendations from all metric dimensions
+ * Collect and prioritize recommendations from all metric dimensions.
+ *
+ * @param params - The results from various AIReady metrics
+ * @returns A flattened and prioritized list of remediation actions
  */
 export function collectFutureProofRecommendations(
   params: FutureProofRecommendationParams
@@ -83,6 +86,9 @@ export function collectFutureProofRecommendations(
 
 /**
  * Collect recommendations for the base future-proof score variant.
+ *
+ * @param params - Pattern and concept metrics
+ * @returns Prioritized list of recommendations
  */
 export function collectBaseFutureProofRecommendations(params: {
   patternEntropy: PatternEntropy;
