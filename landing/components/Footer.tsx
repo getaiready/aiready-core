@@ -70,6 +70,29 @@ export function Footer() {
               </li>
             </ul>
           </div>
+          <div>
+            <h4 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-4">
+              Legal
+            </h4>
+            <ul className="space-y-2 text-slate-400">
+              <li>
+                <Link
+                  href="/privacy"
+                  className="hover:text-cyan-400 transition-colors"
+                >
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/terms"
+                  className="hover:text-cyan-400 transition-colors"
+                >
+                  Terms of Service
+                </Link>
+              </li>
+            </ul>
+          </div>
         </div>
         <div className="pt-8 border-t border-slate-900 text-center text-sm text-slate-500">
           AIReady © {year}. Released under the{' '}

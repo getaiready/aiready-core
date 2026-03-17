@@ -164,10 +164,10 @@ export default function PrivacyPage() {
               If you have any questions about this Privacy Policy, please
               contact us at{' '}
               <a
-                href="mailto:support@getaiready.dev"
+                href="mailto:team@getaiready.dev"
                 className="text-cyan-400 hover:text-cyan-300"
               >
-                support@getaiready.dev
+                team@getaiready.dev
               </a>
             </p>
           </section>
