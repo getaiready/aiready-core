@@ -240,6 +240,7 @@ export class TypeScriptParser implements LanguageParser {
         structNode.type === 'ClassDeclaration'
           ? structNode.body.body
           : structNode.body.body;
+
       methodCount = body.filter(
         (m: any) =>
           m.type === 'MethodDefinition' || m.type === 'TSMethodSignature'
