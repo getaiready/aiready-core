@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import {
   ToolName,
   IssueType,
@@ -12,6 +13,7 @@ import {
   AnalysisStatus,
   FRIENDLY_TOOL_NAMES,
   ToolOptions,
+  AIReadyConfigSchema,
 } from './types/schema';
 import { TokenBudget } from './types/ast';
 import { GraphNode, GraphEdge, GraphData } from './types/visualization';
@@ -54,43 +56,7 @@ export type {
 /**
  * AI readiness configuration
  */
-export interface AIReadyConfig {
-  /** Target score threshold (0-100) */
-  threshold?: number;
-  /** Files or directories to include in scan */
-  include?: string[];
-  /** Files or directories to exclude from scan */
-  exclude?: string[];
-  /** Scan-specific configuration */
-  scan?: {
-    include?: string[];
-    exclude?: string[];
-    parallel?: boolean;
-    deep?: boolean;
-  };
-  /** Output-specific configuration */
-  output?: {
-    /** Output format (json, console, html) */
-    format?: 'json' | 'console' | 'html';
-    /** Output file path */
-    path?: string;
-    /** Output directory */
-    saveTo?: string;
-    /** Whether to show score breakdown in console */
-    showBreakdown?: boolean;
-    /** Baseline report to compare against */
-    compareBaseline?: string;
-  };
-  /** Tool-specific configuration overrides */
-  tools?: Record<string, any>;
-  /** Scoring profile and weights */
-  scoring?: {
-    /** Name of the scoring profile (e.g. "strict", "balanced") */
-    profile?: string;
-    /** Custom weights for tools and metrics */
-    weights?: Record<string, number>;
-  };
-}
+export type AIReadyConfig = z.infer<typeof AIReadyConfigSchema>;
 
 /**
  * Legacy alias for Config

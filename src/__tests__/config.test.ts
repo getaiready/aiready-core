@@ -41,10 +41,10 @@ describe('Config Loader', () => {
     expect(merged.toolConfigs['context-analyzer'].maxDepth).toBe(10);
   });
 
-  it('should support legacy toolConfigs mapping', () => {
+  it('should support strict tools mapping', () => {
     const defaults = { toolConfigs: {} };
     const userConfig = {
-      toolConfigs: { patterns: { minSimilarity: 0.8 } },
+      tools: { patterns: { minSimilarity: 0.8 } },
     };
 
     const merged = mergeConfigWithDefaults(userConfig as any, defaults);

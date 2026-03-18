@@ -1,6 +1,7 @@
 import { readFileSync, existsSync } from 'fs';
 import { join, resolve, dirname } from 'path';
 import { pathToFileURL } from 'url';
+import { AIReadyConfigSchema } from '../types/schema';
 import type { AIReadyConfig } from '../types';
 
 const CONFIG_FILES = [
@@ -59,12 +60,29 @@ export async function loadConfig(
           config = JSON.parse(content);
         }
 
-        // Basic validation
-        if (typeof config !== 'object' || config === null) {
-          throw new Error('Config must be an object');
+        // Detect legacy keys to warn users
+        const legacyKeys = ['toolConfigs'];
+        const rootLevelTools = [
+          'pattern-detect',
+          'context-analyzer',
+          'naming-consistency',
+          'ai-signal-clarity',
+        ];
+        const allKeys = Object.keys(config);
+        const foundLegacy = allKeys.filter(
+          (k) => legacyKeys.includes(k) || rootLevelTools.includes(k)
+        );
+
+        if (foundLegacy.length > 0) {
+          console.warn(
+            `⚠️ Legacy configuration keys found: ${foundLegacy.join(
+              ', '
+            )}. These are deprecated and should be moved under the "tools" key.`
+          );
         }
 
-        return config;
+        // Strict schema validation
+        return AIReadyConfigSchema.parse(config);
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
@@ -112,21 +130,11 @@ export function mergeConfigWithDefaults(
     if (userConfig.scan.exclude) mergedConfig.exclude = userConfig.scan.exclude;
   }
 
-  // Merge tool-specific options (support both 'tools' and 'toolConfigs' for backward compatibility)
-  // Ensure we don't pick up the tools array by mistake
-  const toolOverrides =
-    userConfig.tools &&
-    !Array.isArray(userConfig.tools) &&
-    typeof userConfig.tools === 'object'
-      ? userConfig.tools
-      : (userConfig as any).toolConfigs;
-
-  if (toolOverrides) {
+  // Merge tool-specific options (strictly 'tools' map as per schema)
+  if (userConfig.tools) {
     if (!mergedConfig.toolConfigs) mergedConfig.toolConfigs = {};
-    for (const [toolName, toolConfig] of Object.entries(toolOverrides)) {
+    for (const [toolName, toolConfig] of Object.entries(userConfig.tools)) {
       if (typeof toolConfig === 'object' && toolConfig !== null) {
-        // Add tool configs under their names (legacy) and in the toolConfigs map
-        mergedConfig[toolName] = { ...mergedConfig[toolName], ...toolConfig };
         mergedConfig.toolConfigs[toolName] = {
           ...mergedConfig.toolConfigs[toolName],
           ...toolConfig,

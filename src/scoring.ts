@@ -293,7 +293,7 @@ export function getRecommendedThreshold(
  * @returns The canonical tool ID
  */
 export function normalizeToolName(shortName: string): string {
-  return TOOL_NAME_MAP[shortName.toLowerCase()] || shortName;
+  return TOOL_NAME_MAP[shortName.toLowerCase()] ?? shortName;
 }
 
 /**
@@ -314,7 +314,7 @@ export function getToolWeight(
   if (cliOverride !== undefined) return cliOverride;
   if (toolConfig?.scoreWeight !== undefined) return toolConfig.scoreWeight;
 
-  const profileWeights = SCORING_PROFILES[profile] || DEFAULT_TOOL_WEIGHTS;
+  const profileWeights = SCORING_PROFILES[profile] ?? DEFAULT_TOOL_WEIGHTS;
   return profileWeights[toolName] ?? DEFAULT_TOOL_WEIGHTS[toolName] ?? 5;
 }
 
@@ -386,7 +386,7 @@ export function calculateOverallScore(
   const calculationWeights: Record<string, number> = {};
 
   for (const [toolName, output] of toolOutputs.entries()) {
-    const weight = weights.get(toolName) || 5;
+    const weight = weights.get(toolName) ?? 5;
     weightedSum += output.score * weight;
     totalWeight += weight;
     toolsUsed.push(toolName);
@@ -399,7 +399,7 @@ export function calculateOverallScore(
 
   const formulaParts = Array.from(toolOutputs.entries()).map(
     ([name, output]) => {
-      const w = weights.get(name) || 5;
+      const w = weights.get(name) ?? 5;
       return `(${output.score} × ${w})`;
     }
   );
