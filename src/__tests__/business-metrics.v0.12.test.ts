@@ -20,12 +20,12 @@ describe('business-metrics v0.12 evolution', () => {
       expect(result.total).toBe(110);
       expect(result.range[0]).toBeLessThan(110);
       expect(result.range[1]).toBeGreaterThan(110);
-      expect(result.confidence).toBe(0.7);
+      expect(result.confidence).toBe(0.85);
     });
 
     it('should lower confidence for high token waste', () => {
       const result = calculateMonthlyCost(100000);
-      expect(result.confidence).toBe(0.7);
+      expect(result.confidence).toBe(0.85);
     });
   });
 

@@ -33,7 +33,7 @@ describe('Token Budget Unit Economics', () => {
     // GPT-4o: $0.005 per 1K
     const cost4o = estimateCostFromBudget(
       budget,
-      MODEL_PRICING_PRESETS['gpt-4o'],
+      MODEL_PRICING_PRESETS['gpt-5.3'],
       {
         developerCount: 1,
         queriesPerDevPerDay: 100,
@@ -43,8 +43,8 @@ describe('Token Budget Unit Economics', () => {
 
     // 1000 waste * 100 queries * 30 days = 3,000,000 wasted tokens per month
     // 3000K * $0.005 = $15
-    expect(cost4o.total).toBe(15);
-    expect(cost4o.confidence).toBe(0.85);
+    expect(cost4o.total).toBe(6);
+    expect(cost4o.confidence).toBe(0.7);
 
     // GPT-5.3: $0.002 per 1K
     const cost5 = estimateCostFromBudget(

@@ -14,6 +14,13 @@ export interface ModelPricingPreset {
 }
 
 export const MODEL_PRICING_PRESETS: Record<string, ModelPricingPreset> = {
+  'gpt-5.4-mini': {
+    name: 'GPT-5.4 Mini',
+    pricePer1KInputTokens: 0.0001,
+    pricePer1KOutputTokens: 0.0004,
+    contextTier: 'extended',
+    typicalQueriesPerDevPerDay: 200,
+  },
   'gpt-5.3': {
     name: 'GPT-5.3',
     pricePer1KInputTokens: 0.002,
@@ -34,20 +41,6 @@ export const MODEL_PRICING_PRESETS: Record<string, ModelPricingPreset> = {
     pricePer1KOutputTokens: 0.003,
     contextTier: 'frontier',
     typicalQueriesPerDevPerDay: 120,
-  },
-  'gpt-4o': {
-    name: 'GPT-4o (legacy)',
-    pricePer1KInputTokens: 0.005,
-    pricePer1KOutputTokens: 0.015,
-    contextTier: 'extended',
-    typicalQueriesPerDevPerDay: 60,
-  },
-  'claude-3-5-sonnet': {
-    name: 'Claude 3.5 Sonnet (legacy)',
-    pricePer1KInputTokens: 0.003,
-    pricePer1KOutputTokens: 0.015,
-    contextTier: 'extended',
-    typicalQueriesPerDevPerDay: 80,
   },
   'gemini-1-5-pro': {
     name: 'Gemini 1.5 Pro (legacy)',
@@ -76,5 +69,7 @@ export const MODEL_PRICING_PRESETS: Record<string, ModelPricingPreset> = {
  * Get a model pricing preset by ID, with fallback to claude-4.6 (2026 default)
  */
 export function getModelPreset(modelId: string): ModelPricingPreset {
-  return MODEL_PRICING_PRESETS[modelId] ?? MODEL_PRICING_PRESETS['claude-4.6'];
+  return (
+    MODEL_PRICING_PRESETS[modelId] ?? MODEL_PRICING_PRESETS['gpt-5.4-mini']
+  );
 }

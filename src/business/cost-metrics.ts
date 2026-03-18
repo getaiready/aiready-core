@@ -31,7 +31,7 @@ export function calculateMonthlyCost(
     },
   });
 
-  const preset = getModelPreset('claude-3.5-sonnet'); // Updated to modern default
+  const preset = getModelPreset('gpt-5.4-mini'); // Updated to 2026 standard mini model
   return estimateCostFromBudget(budget, preset, config);
 }
 
