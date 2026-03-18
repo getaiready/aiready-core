@@ -10,6 +10,7 @@ export * from './utils/ast-parser';
 export * from './utils/metrics';
 export * from './utils/config';
 export * from './utils/visualization';
+export * from './utils/normalization';
 export * from './scoring';
 
 // Business value metrics (v0.10+)

@@ -37,7 +37,7 @@ describe('CLI Helpers Advanced', () => {
     mkdirSync(projectDir);
     writeFileSync(
       join(projectDir, 'aiready.json'),
-      JSON.stringify({ tools: ['t1'], someOpt: 'file' })
+      JSON.stringify({ scan: { tools: ['t1'] }, someOpt: 'file' })
     );
 
     const defaults = { tools: ['def'], someOpt: 'def', otherOpt: 'def' };

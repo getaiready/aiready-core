@@ -6,8 +6,9 @@
 
 import { z } from 'zod';
 import { SpokeOutput, UnifiedReport, ScanOptions } from '../types';
-import { ToolName } from './schema';
+import { ToolName, SpokeOutputSchema } from './schema';
 import { ToolScoringOutput } from '../scoring';
+import { normalizeSpokeOutput } from '../utils/normalization';
 
 export type { SpokeOutput, UnifiedReport };
 
@@ -44,66 +45,30 @@ export function validateSpokeOutput(
   toolName: string,
   output: any
 ): { valid: boolean; errors: string[] } {
-  const errors: string[] = [];
-
   if (!output) {
     return { valid: false, errors: ['Output is null or undefined'] };
   }
 
-  // 1. Check results array
-  if (!Array.isArray(output.results)) {
-    errors.push(`${toolName}: 'results' must be an array`);
-  } else {
-    output.results.forEach((res: any, idx: number) => {
-      // Allow 'file' or 'filePath' as alias for 'fileName' (common in some spokes)
-      const fileName = res.fileName || res.file || res.filePath;
-      if (!fileName)
-        errors.push(
-          `${toolName}: results[${idx}] missing 'fileName', 'file' or 'filePath'`
-        );
-
-      // Some spokes (like context-analyzer) produce a list of results where each result
-      // has top-level severity/issues, OR they follow the standard AnalysisResult format.
-      const issues = res.issues;
-      if (!Array.isArray(issues)) {
-        errors.push(`${toolName}: results[${idx}] 'issues' must be an array`);
-      } else if (issues.length > 0) {
-        // Validate issue structure if issues exist
-        issues.forEach((issue: any, iidx: number) => {
-          // If it's a string array (simple issues), it's valid for some spokes
-          if (typeof issue === 'string') return;
-
-          if (!issue.type && !res.file)
-            errors.push(
-              `${toolName}: results[${idx}].issues[${iidx}] missing 'type'`
-            );
-          if (!issue.severity && !res.severity)
-            errors.push(
-              `${toolName}: results[${idx}].issues[${iidx}] missing 'severity'`
-            );
-
-          const severity = issue.severity || res.severity;
-          if (
-            severity &&
-            !['critical', 'major', 'minor', 'info'].includes(severity)
-          ) {
-            errors.push(
-              `${toolName}: results[${idx}].issues[${iidx}] has invalid severity: ${severity}`
-            );
-          }
-        });
-      }
-    });
+  // Contract strictly requires the spoke to provide a summary
+  if (!output.summary) {
+    return { valid: false, errors: [`${toolName}: missing 'summary'`] };
   }
 
-  // 2. Check summary
-  if (!output.summary) {
-    errors.push(`${toolName}: missing 'summary'`);
+  // Normalize loose aliases before schema validation
+  const normalized = normalizeSpokeOutput(output, toolName);
+
+  // Validate against canonical contract
+  const result = SpokeOutputSchema.safeParse(normalized);
+
+  if (result.success) {
+    return { valid: true, errors: [] };
   }
 
   return {
-    valid: errors.length === 0,
-    errors,
+    valid: false,
+    errors: result.error.issues.map(
+      (e) => `${toolName}: ${e.path.join('.')}: ${e.message}`
+    ),
   };
 }
 
