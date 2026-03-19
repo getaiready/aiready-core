@@ -28,29 +28,24 @@ describe('initAction', () => {
     }
   });
 
-  it('should generate aiready.json without output field by default', async () => {
+  it('should generate aiready.json with output field by default', async () => {
     await initAction({});
 
     expect(existsSync(configPath)).toBe(true);
     const config = JSON.parse(readFileSync(configPath, 'utf8'));
-    expect(config).not.toHaveProperty('output');
+    expect(config).toHaveProperty('output');
+    expect(config.output.format).toBe('console');
   });
 
-  it('should generate aiready.json without output field even with --full flag', async () => {
-    await initAction({ full: true });
-
-    expect(existsSync(configPath)).toBe(true);
-    const config = JSON.parse(readFileSync(configPath, 'utf8'));
-    expect(config).not.toHaveProperty('output');
-  });
-
-  it('should include scan, tools, and scoring sections', async () => {
+  it('should include scan, tools, scoring, and visualizer sections', async () => {
     await initAction({ full: true });
 
     const config = JSON.parse(readFileSync(configPath, 'utf8'));
     expect(config).toHaveProperty('scan');
     expect(config).toHaveProperty('tools');
     expect(config).toHaveProperty('scoring');
+    expect(config).toHaveProperty('output');
     expect(config).toHaveProperty('visualizer');
+    expect(config).toHaveProperty('threshold');
   });
 });

@@ -20,6 +20,10 @@ export async function initAction(options: {
   }
 
   const baseConfig = {
+    // Target quality score threshold (0-100)
+    threshold: 75,
+
+    // Global scan settings
     scan: {
       include: [
         'src/**/*.ts',
@@ -46,6 +50,20 @@ export async function initAction(options: {
         ToolName.ChangeAmplification,
       ],
     },
+
+    // Output preferences
+    output: {
+      format: 'console',
+      showBreakdown: true,
+      saveTo: 'aiready-report.json',
+    },
+
+    // Scoring profile and weights
+    scoring: {
+      profile: 'balanced',
+    },
+
+    // Tool-specific configurations
     tools: {
       [ToolName.PatternDetect]: {
         minSimilarity: 0.8,
@@ -73,9 +91,33 @@ export async function initAction(options: {
       },
       [ToolName.NamingConsistency]: {
         shortWords: ['id', 'db', 'ui', 'ai'],
-        ...(options.full
-          ? { acceptedAbbreviations: [], disableChecks: [] }
-          : {}),
+        acceptedAbbreviations: [
+          'API',
+          'JSON',
+          'CSV',
+          'HTML',
+          'CSS',
+          'HTTP',
+          'URL',
+          'SDK',
+          'CLI',
+          'AI',
+          'ML',
+          'ID',
+          'DB',
+          'UI',
+          'UX',
+          'DOM',
+          'UUID',
+          'GUID',
+          'DEFAULT',
+          'MAX',
+          'MIN',
+          'config',
+          'INIT',
+          'SKILL',
+        ],
+        ...(options.full ? { disableChecks: [] } : {}),
       },
       [ToolName.AiSignalClarity]: {
         checkMagicLiterals: true,
@@ -86,53 +128,45 @@ export async function initAction(options: {
           ? { checkImplicitSideEffects: false, checkDeepCallbacks: false }
           : {}),
       },
-      ...(options.full
-        ? {
-            [ToolName.AgentGrounding]: {
-              maxRecommendedDepth: 5,
-              readmeStaleDays: 30,
-            },
-            [ToolName.TestabilityIndex]: {
-              minCoverageRatio: 0.7,
-              testPatterns: ['**/*.test.ts', '**/__tests__/**'],
-            },
-            [ToolName.DocDrift]: {
-              maxCommits: 50,
-              staleMonths: 3,
-            },
-            [ToolName.DependencyHealth]: {
-              trainingCutoffYear: 2023,
-            },
-          }
-        : {}),
+      [ToolName.AgentGrounding]: {
+        maxRecommendedDepth: 5,
+        readmeStaleDays: 30,
+      },
+      [ToolName.TestabilityIndex]: {
+        minCoverageRatio: 0.7,
+        testPatterns: ['**/*.test.ts', '**/__tests__/**'],
+      },
+      [ToolName.DocDrift]: {
+        maxCommits: 50,
+        staleMonths: 3,
+      },
+      [ToolName.DependencyHealth]: {
+        trainingCutoffYear: 2023,
+      },
+      [ToolName.ChangeAmplification]: {
+        // No specific options yet, uses global scan settings
+      },
     },
-    scoring: {
-      threshold: 70,
-      showBreakdown: true,
-      ...(options.full ? { profile: 'default' } : {}),
+
+    // Visualizer settings (interactive graph)
+    visualizer: {
+      groupingDirs: ['packages', 'src', 'lib'],
+      graph: {
+        maxNodes: 5000,
+        maxEdges: 10000,
+      },
     },
-    ...(options.full
-      ? {
-          visualizer: {
-            groupingDirs: ['packages', 'src', 'lib'],
-            graph: {
-              maxNodes: 5000,
-              maxEdges: 10000,
-            },
-          },
-        }
-      : {}),
   };
 
   const defaultConfig = baseConfig;
 
   let content: string;
   if (fileExt === 'js') {
-    content = `/** @type {import('@aiready/core').AIReadyConfig} */\nmodule.exports = ${JSON.stringify(
-      defaultConfig,
-      null,
-      2
-    )};\n`;
+    content = `/** 
+ * AIReady Configuration
+ * @type {import('@aiready/core').AIReadyConfig} 
+ */
+module.exports = ${JSON.stringify(defaultConfig, null, 2)};\n`;
   } else {
     content = JSON.stringify(defaultConfig, null, 2);
   }
