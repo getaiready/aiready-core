@@ -20,7 +20,15 @@ export interface SourceRange {
 
 export interface ExportWithImports {
   name: string;
-  type: 'function' | 'class' | 'const' | 'type' | 'interface' | 'default';
+  type:
+    | 'function'
+    | 'class'
+    | 'const'
+    | 'type'
+    | 'interface'
+    | 'default'
+    | 'all';
+  source?: string; // Module being re-exported from
   imports: string[]; // Imports used within this export's scope
   dependencies: string[]; // Other exports from same file this depends on
   typeReferences: string[]; // TypeScript types referenced in this export

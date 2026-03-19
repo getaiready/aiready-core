@@ -53,6 +53,8 @@ export function extractExportsWithDependencies(
 
   for (const node of ast.body) {
     if (node.type === 'ExportNamedDeclaration') {
+      const source = node.source?.value as string | undefined;
+
       if (node.declaration) {
         const exportNodes = extractFromDeclaration(node.declaration);
         for (const exp of exportNodes) {
@@ -60,11 +62,31 @@ export function extractExportsWithDependencies(
           const typeReferences = extractTypeReferences(node.declaration);
           exports.push({
             ...exp,
+            source,
             imports: usedImports,
             dependencies: [],
             typeReferences,
             loc: node.loc,
           });
+        }
+      } else if (node.specifiers.length > 0) {
+        // Handle re-exports like: export { x } from './y'
+        for (const spec of node.specifiers) {
+          if (spec.type === 'ExportSpecifier') {
+            const name =
+              spec.exported.type === 'Identifier'
+                ? spec.exported.name
+                : (spec.exported as any).value;
+            exports.push({
+              name,
+              type: 'const', // Simplified, could be any type from source
+              source,
+              imports: [],
+              dependencies: [],
+              typeReferences: [],
+              loc: node.loc,
+            });
+          }
         }
       }
     } else if (node.type === 'ExportDefaultDeclaration') {
@@ -76,6 +98,27 @@ export function extractExportsWithDependencies(
         imports: usedImports,
         dependencies: [],
         typeReferences,
+        loc: node.loc,
+      });
+    } else if (node.type === 'ExportAllDeclaration') {
+      // Handle export * from './y'
+      const source = node.source.value as string;
+      let name = '*';
+
+      if (node.exported) {
+        name =
+          node.exported.type === 'Identifier'
+            ? node.exported.name
+            : (node.exported as any).value;
+      }
+
+      exports.push({
+        name,
+        type: 'all',
+        source,
+        imports: [],
+        dependencies: [],
+        typeReferences: [],
         loc: node.loc,
       });
     }
