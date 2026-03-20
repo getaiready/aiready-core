@@ -1,6 +1,6 @@
 {
   "name": "@aiready/components",
-  "version": "0.13.12",
+  "version": "0.13.13",
   "description": "Unified shared components library (UI, charts, hooks, utilities) for AIReady",
   "type": "module",
   "main": "./dist/index.js",

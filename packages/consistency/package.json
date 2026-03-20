@@ -1,6 +1,6 @@
 {
   "name": "@aiready/consistency",
-  "version": "0.20.12",
+  "version": "0.20.13",
   "description": "Detects consistency issues in naming, patterns, and architecture that confuse AI models",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
