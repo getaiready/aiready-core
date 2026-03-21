@@ -20,3 +20,12 @@ export * from './scoring';
 
 // Visualization helpers - pure functions
 export * from './utils/visualization';
+
+// Re-export visualization types explicitly to ensure they're included in client bundle
+export type {
+  BaseGraphNode,
+  BaseGraphLink,
+  GraphNode,
+  GraphEdge,
+  GraphData,
+} from './types/visualization';

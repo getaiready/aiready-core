@@ -2,8 +2,32 @@
  * Shared types for graph-based visualizations
  */
 
-export interface GraphNode {
+/**
+ * Base graph node compatible with d3-force simulation
+ */
+export interface BaseGraphNode {
   id: string;
+  x?: number;
+  y?: number;
+  vx?: number;
+  vy?: number;
+  fx?: number | null;
+  fy?: number | null;
+}
+
+/**
+ * Base graph link compatible with d3-force simulation
+ */
+export interface BaseGraphLink {
+  source: string | BaseGraphNode;
+  target: string | BaseGraphNode;
+  index?: number;
+}
+
+/**
+ * Full graph node with all metadata
+ */
+export interface GraphNode extends BaseGraphNode {
   label: string;
   path?: string;
   size?: number;
@@ -11,8 +35,6 @@ export interface GraphNode {
   color?: string;
   group?: string;
   title?: string;
-  x?: number;
-  y?: number;
   duplicates?: number;
   tokenCost?: number;
   severity?: string;

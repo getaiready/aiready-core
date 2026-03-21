@@ -36,3 +36,12 @@ export {
 
 // Config schema
 export { AIReadyConfigSchema } from './schemas/config';
+
+// Visualization types
+export {
+  BaseGraphNode,
+  BaseGraphLink,
+  GraphNode,
+  GraphEdge,
+  GraphData,
+} from './visualization';
