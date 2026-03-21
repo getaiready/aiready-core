@@ -146,6 +146,8 @@ export default $config({
         LEADS_BUCKET: leads.name,
         DYNAMO_TABLE: table.name,
         STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
+        STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '',
         OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY || '',
         CLAW_MORE_BUS: bus.name,
         GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID || '',

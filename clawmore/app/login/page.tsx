@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -200,6 +201,15 @@ export default function LoginPage() {
               Google
             </button>
           </div>
+        </div>
+
+        <div className="mt-12 text-center">
+          <Link 
+            href="/admin/login"
+            className="text-[10px] font-mono text-zinc-800 hover:text-zinc-600 transition-colors uppercase tracking-[0.2em]"
+          >
+            System Administrator? Access Root
+          </Link>
         </div>
       </div>
     </div>
