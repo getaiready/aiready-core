@@ -107,6 +107,8 @@ export function calculateBusinessROI(params: {
   };
 }
 
+export { calculateDetailedTokenROI } from './business/cost-metrics';
+
 /**
  * Format currency value for display in console or reports.
  *

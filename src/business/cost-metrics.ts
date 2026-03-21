@@ -16,23 +16,89 @@ export const DEFAULT_COST_CONFIG: CostConfig = {
  */
 export function calculateMonthlyCost(
   tokenWaste: number,
-  config: Partial<CostConfig> = {}
+  config: Partial<CostConfig> = {},
+  options?: {
+    avgContextBudget?: number;
+    fragmentationScore?: number;
+    potentialSavings?: number;
+  }
 ): { total: number; range: [number, number]; confidence: number } {
-  // Use representative context multipliers based on project size
-  // More waste in larger projects due to deeper dependencies
-  const multiplier = tokenWaste > 50000 ? 5.0 : tokenWaste > 10000 ? 3.5 : 2.5;
+  // If we have detailed metrics, use them to calculate a more precise multiplier
+  const baseMultiplier =
+    tokenWaste > 50000 ? 5.0 : tokenWaste > 10000 ? 3.5 : 2.5;
+  const contextMultiplier = options?.avgContextBudget
+    ? options.avgContextBudget / Math.max(1, tokenWaste)
+    : baseMultiplier;
+
+  const fragRatio = options?.fragmentationScore ?? 0.3;
+  const dupRatio = 1 - fragRatio;
 
   const budget = calculateTokenBudget({
-    totalContextTokens: tokenWaste * multiplier,
+    totalContextTokens: tokenWaste * contextMultiplier,
     wastedTokens: {
-      duplication: tokenWaste * 0.7,
-      fragmentation: tokenWaste * 0.3,
-      chattiness: 0.1 * tokenWaste, // Added baseline chattiness
+      duplication: tokenWaste * dupRatio * (options?.potentialSavings ? 1.2 : 1),
+      fragmentation: tokenWaste * fragRatio,
+      chattiness: 0.1 * tokenWaste,
     },
   });
 
-  const preset = getModelPreset('gpt-5.4-mini'); // Updated to 2026 standard mini model
+  const preset = getModelPreset('claude-3.5-sonnet'); // Default to current industry workhorse
   return estimateCostFromBudget(budget, preset, config);
+}
+
+/**
+ * Calculate precise Token ROI from analyzer metrics.
+ * 
+ * This is the "Value-Led" monetization engine that quantifies the 
+ * "Context Tax" savings for a team.
+ */
+export function calculateDetailedTokenROI(params: {
+  totalTokens: number;
+  avgContextBudget: number;
+  potentialSavings: number;
+  fragmentationScore: number;
+  developerCount: number;
+  queriesPerDevPerDay?: number;
+}): {
+  monthlySavings: number;
+  contextTaxPerDev: number;
+  efficiencyGain: number;
+} {
+  const {
+    totalTokens,
+    avgContextBudget,
+    potentialSavings,
+    fragmentationScore,
+    developerCount,
+    queriesPerDevPerDay = 60,
+  } = params;
+
+  // 1. Calculate the "Context Tax" (Tokens paid per feature/query)
+  // Tax = (Context required - Code analyzed) = dependencies + noise
+  const contextTaxTokens = Math.max(0, avgContextBudget - totalTokens);
+
+  // 2. Budget for waste
+  const budget = calculateTokenBudget({
+    totalContextTokens: avgContextBudget,
+    wastedTokens: {
+      duplication: potentialSavings * 0.8, // 80% of potential savings are duplication-based
+      fragmentation: totalTokens * fragmentationScore * 0.5, // fragmentation impact
+      chattiness: totalTokens * 0.1,
+    },
+  });
+
+  // 3. Estimate monthly cost
+  const model = getModelPreset('claude-3.5-sonnet');
+  const cost = estimateCostFromBudget(budget, model, {
+    developerCount,
+    queriesPerDevPerDay,
+  });
+
+  return {
+    monthlySavings: Math.round(cost.total),
+    contextTaxPerDev: Math.round((cost.total / (developerCount || 1)) * 100) / 100,
+    efficiencyGain: Math.round(budget.efficiencyRatio * 100) / 100,
+  };
 }
 
 /**
