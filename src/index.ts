@@ -9,6 +9,7 @@ export * from './utils/ast-parser';
 export * from './utils/metrics';
 export * from './utils/config';
 export * from './utils/visualization';
+export * from './utils/html-report-builder';
 export * from './utils/normalization';
 export * from './scoring';
 
