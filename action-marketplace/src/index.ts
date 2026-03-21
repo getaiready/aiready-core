@@ -7,12 +7,12 @@
 import * as core from '@actions/core';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { existsSync, mkdirSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
 const execAsync = promisify(exec);
 
-interface AnalysisResult {
+export interface AnalysisResult {
   summary: {
     totalIssues: number;
     criticalIssues?: number;
@@ -31,7 +31,132 @@ interface AnalysisResult {
   };
 }
 
-async function run(): Promise<void> {
+export interface ActionInputs {
+  directory: string;
+  include: string;
+  exclude: string;
+  threshold: number;
+  failOn: string;
+  tools: string;
+  uploadToSaas: boolean;
+  apiKey: string;
+  repoId?: string;
+}
+
+export function getInputs(): ActionInputs {
+  return {
+    directory: core.getInput('directory') || '.',
+    include: core.getInput('include'),
+    exclude: core.getInput('exclude'),
+    threshold: parseInt(core.getInput('threshold') || '70', 10),
+    failOn: core.getInput('fail-on') || 'critical',
+    tools: core.getInput('tools') || 'patterns,context,consistency,ai-signal,grounding,testability,doc-drift,deps,change-amp',
+    uploadToSaas: core.getInput('upload-to-saas') === 'true',
+    apiKey: core.getInput('api-key'),
+    repoId: core.getInput('repo-id'),
+  };
+}
+
+export function buildCliCommand(inputs: ActionInputs, outputFile: string): string {
+  let cliCommand = `npx @aiready/cli scan "${inputs.directory}" --tools ${inputs.tools} --output json --output-file "${outputFile}" --score --ci`;
+  
+  if (inputs.include) cliCommand += ` --include "${inputs.include}"`;
+  if (inputs.exclude) cliCommand += ` --exclude "${inputs.exclude}"`;
+  
+  return cliCommand;
+}
+
+export function parseResults(outputFile: string): AnalysisResult | null {
+  if (!existsSync(outputFile)) {
+    return null;
+  }
+  return JSON.parse(readFileSync(outputFile, 'utf8'));
+}
+
+export function calculatePassFail(
+  results: AnalysisResult,
+  threshold: number,
+  failOn: string
+): { passed: boolean; failReason: string } {
+  const score = results.scoring?.overall || 0;
+  const rating = results.scoring?.rating || 'Unknown';
+  const totalIssues = results.summary.totalIssues || 0;
+  const criticalCount = results.summary.criticalIssues || 0;
+  const majorCount = results.summary.majorIssues || 0;
+
+  let passed = true;
+  let failReason = '';
+
+  if (score < threshold) {
+    passed = false;
+    failReason = `AI Readiness Score ${score} is below threshold ${threshold}`;
+  }
+
+  if (failOnLevel(failOn, criticalCount, majorCount, totalIssues)) {
+    passed = false;
+    failReason = `Found issues exceeding ${failOn} threshold (critical: ${criticalCount}, major: ${majorCount})`;
+  }
+
+  return { passed, failReason };
+}
+
+export async function uploadToSaas(
+  results: AnalysisResult,
+  apiKey: string,
+  baseUrl: string,
+  repoId?: string
+): Promise<{ success: boolean; error?: string }> {
+  const uploadUrl = `${baseUrl}/api/analysis/upload`;
+  
+  try {
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        repoId,
+        data: results
+      }),
+    });
+    
+    if (response.ok) {
+      return { success: true };
+    } else {
+      const errText = await response.text();
+      return { success: false, error: `${response.status} ${errText}` };
+    }
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export function setOutputs(
+  results: AnalysisResult,
+  passed: boolean
+): void {
+  const score = results.scoring?.overall || 0;
+  const totalIssues = results.summary.totalIssues || 0;
+  const criticalCount = results.summary.criticalIssues || 0;
+  const majorCount = results.summary.majorIssues || 0;
+
+  core.setOutput('score', score);
+  core.setOutput('issues', totalIssues);
+  core.setOutput('critical', criticalCount);
+  core.setOutput('major', majorCount);
+  core.setOutput('passed', passed);
+}
+
+export function failOnLevel(level: string, critical: number, major: number, total: number): boolean {
+  if (level === 'none') return false;
+  if (level === 'critical') return critical > 0;
+  if (level === 'major') return (critical + major) > 0;
+  if (level === 'any') return total > 0;
+  return false;
+}
+
+export async function run(): Promise<void> {
   try {
     const directory = core.getInput('directory') || '.';
     const include = core.getInput('include');
@@ -171,14 +296,6 @@ async function run(): Promise<void> {
       core.setFailed('Unknown error occurred');
     }
   }
-}
-
-function failOnLevel(level: string, critical: number, major: number, total: number): boolean {
-  if (level === 'none') return false;
-  if (level === 'critical') return critical > 0;
-  if (level === 'major') return (critical + major) > 0;
-  if (level === 'any') return total > 0;
-  return false;
 }
 
 run();
