@@ -15,6 +15,7 @@ export {
 
 // Common types
 export { ToolOptions, LocationSchema, Location } from './common';
+export { IssueOverlay } from './contract';
 
 // Issue schema
 export { IssueSchema, Issue } from './schemas/issue';
@@ -38,10 +39,4 @@ export {
 export { AIReadyConfigSchema } from './schemas/config';
 
 // Visualization types
-export {
-  BaseGraphNode,
-  BaseGraphLink,
-  GraphNode,
-  GraphEdge,
-  GraphData,
-} from './visualization';
+export * from './visualization';

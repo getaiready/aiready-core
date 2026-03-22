@@ -1,11 +1,11 @@
 import { z } from 'zod';
-import { IssueTypeSchema } from '../enums';
-import { SeveritySchema } from '../enums';
+import { IssueTypeSchema, SeveritySchema } from '../enums';
 import { LocationSchema } from '../common';
 
 /**
- * Standard Issue schema.
+ * Standard Issue schema used across all tools.
  */
+
 /** Zod schema for Issue object */
 export const IssueSchema = z.object({
   type: IssueTypeSchema,

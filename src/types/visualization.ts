@@ -1,6 +1,7 @@
 /**
  * Shared types for graph-based visualizations
  */
+import { IssueOverlay } from './contract';
 
 /**
  * Base graph node compatible with d3-force simulation
@@ -51,14 +52,8 @@ export interface GraphData {
   nodes: GraphNode[];
   edges: GraphEdge[];
   clusters?: { id: string; name: string; nodeIds: string[] }[];
-  issues?: {
-    id: string;
-    type: string;
-    severity: string;
-    nodeIds: string[];
-    message: string;
-  }[];
-  metadata?: any;
+  issues?: IssueOverlay[];
+  metadata?: GraphMetadata;
   /** Whether the graph was truncated due to size limits */
   truncated?: {
     nodes: boolean;
@@ -68,4 +63,34 @@ export interface GraphData {
     nodeLimit?: number;
     edgeLimit?: number;
   };
+}
+
+/**
+ * Metadata about the graph
+ */
+export interface GraphMetadata {
+  projectName?: string;
+  timestamp?: string;
+  totalFiles?: number;
+  totalDependencies?: number;
+  analysisTypes?: string[];
+
+  // Aggregate metrics
+  totalLinesOfCode?: number;
+  totalTokenCost?: number;
+  averageComplexity?: number;
+
+  // Issue counts
+  criticalIssues?: number;
+  majorIssues?: number;
+  minorIssues?: number;
+  infoIssues?: number;
+
+  // Business metrics (v0.10+)
+  estimatedMonthlyCost?: number;
+  estimatedDeveloperHours?: number;
+  aiAcceptanceRate?: number;
+  aiReadinessScore?: number;
+  /** AI token budget unit economics (v0.13+) */
+  tokenBudget?: any; // Avoid circular dependency with ast.ts if possible, or use a more generic type
 }

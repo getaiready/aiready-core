@@ -16,6 +16,8 @@ export * from './scoring';
 export * from './utils/rating-helpers';
 export * from './utils/scoring-helpers';
 export * from './utils/similarity';
+export * from './utils/reporting';
+export * from './utils/code-extractor';
 
 // Business value metrics (v0.10+)
 export * from './business-metrics';

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { buildStandardToolScore } from '../utils/scoring-helpers';
-import { RecommendationPriority } from '../scoring';
+
 import { ToolName } from '../types';
 import { ReadinessRating } from '../utils/rating-helpers';
 

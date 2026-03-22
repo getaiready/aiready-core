@@ -13,6 +13,19 @@ import { normalizeSpokeOutput } from '../utils/normalization';
 export type { SpokeOutput, UnifiedReport };
 
 /**
+ * Issue overlay on the graph
+ */
+export interface IssueOverlay {
+  id: string;
+  type: string;
+  severity: string;
+  nodeIds: string[];
+  edgeIds?: string[];
+  message: string;
+  details?: string;
+}
+
+/**
  * Tool Provider Interface
  * Every AIReady spoke must implement this interface to be integrated into the CLI registry.
  */
