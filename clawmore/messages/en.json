@@ -29,7 +29,7 @@
   },
   "evolution": {
     "title": "The Mutation Cycle",
-    "desc": "Standard agents are transient. ClawMore treats its primary logic as Mutable State. When a capability gap is detected, the Planner sintetizes a patch and the Coder commits it directly to the monorepo branch.",
+    "desc": "Standard agents are transient. ClawMore treats its primary logic as Mutable State. When a capability gap is detected, the Planner synthesizes a patch and the Coder commits it directly to the monorepo branch.",
     "visualizer": "Core_Process_Visualizer",
     "logTitle": "Evolution_Stream.log",
     "logStatus": "SYNCHRONIZED",

@@ -79,12 +79,10 @@ function analyzeIdentifiers(
             );
           } else if (param.type === 'ObjectPattern') {
             // Handle destructured parameters: { id, name }
-            extractDestructuredIdentifiers(
-              param,
-              true,
-              scopeTracker,
-              isArrowParameter
-            );
+            extractDestructuredIdentifiers(param, scopeTracker, {
+              isParameter: true,
+              isArrowParameter,
+            });
           }
         });
       }
@@ -299,10 +297,14 @@ class ScopeTracker {
  */
 function extractDestructuredIdentifiers(
   node: TSESTree.ObjectPattern | TSESTree.ArrayPattern,
-  isParameter: boolean,
   scopeTracker: ScopeTracker,
-  isArrowParameter: boolean = false
+  options: {
+    isParameter?: boolean;
+    isArrowParameter?: boolean;
+  } = {}
 ) {
+  const { isParameter = false, isArrowParameter = false } = options;
+
   if (node.type === 'ObjectPattern') {
     node.properties.forEach((prop) => {
       if (prop.type === 'Property' && prop.value.type === 'Identifier') {

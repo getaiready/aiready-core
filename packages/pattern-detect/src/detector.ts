@@ -10,29 +10,7 @@ import type {
 
 export type { PatternType, DuplicatePattern };
 
-/**
- * Standardize code for similarity comparison
- *
- * @param code - The raw source code string.
- * @param isPython - Whether the file is a Python file (influences comment removal).
- * @returns Normalized code string for robust comparison.
- */
-function normalizeCode(code: string, isPython: boolean = false): string {
-  let normalized = code;
-  if (isPython) {
-    normalized = normalized.replace(/#.*/g, ''); // remove python comments
-  } else {
-    normalized = normalized
-      .replace(/\/\/.*/g, '') // remove single line comments
-      .replace(/\/\*[\s\S]*?\*\//g, ''); // remove block comments
-  }
-
-  return normalized
-    .replace(/['"`]/g, '"') // unify quotes
-    .replace(/\s+/g, ' ') // unify whitespace
-    .trim()
-    .toLowerCase();
-}
+import { normalizeCode } from './core/normalizer';
 
 /**
  * Split file content into logical blocks (functions, classes, methods)

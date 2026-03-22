@@ -118,7 +118,39 @@ export function handleJSONOutput(
 }
 
 /**
- * Common error handler for CLI commands.
+ * Get a formatted terminal divider string based on current terminal width.
+ *
+ * @param color - Chalk color function to use for the divider.
+ * @param maxWidth - Maximum width for the divider (default: 60).
+ * @returns String representation of the divider.
+ */
+export function getTerminalDivider(
+  color: any = chalk.cyan,
+  maxWidth: number = 60
+): string {
+  const terminalWidth = process.stdout.columns || 80;
+  const dividerWidth = Math.min(maxWidth, terminalWidth - 2);
+  return color('━'.repeat(dividerWidth));
+}
+
+/**
+ * Print a standard terminal header with dividers.
+ *
+ * @param title - Header title text.
+ * @param color - Chalk color function for the dividers.
+ */
+export function printTerminalHeader(
+  title: string,
+  color: any = chalk.cyan
+): void {
+  const divider = getTerminalDivider(color);
+  console.log(divider);
+  console.log(chalk.bold.white(`  ${title.toUpperCase()}`));
+  console.log(divider + '\n');
+}
+
+/**
+ * Common CLI error handler for CLI commands.
  * Logs error and exits process with code 1.
  *
  * @param error - Error object or message.

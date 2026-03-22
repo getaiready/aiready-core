@@ -395,8 +395,8 @@ export function calculateOverallScore(
 
   const formulaParts = Array.from(toolOutputs.entries()).map(
     ([name, output]) => {
-      const w = weights.get(name) ?? 5;
-      return `(${output.score} × ${w})`;
+      const weight = weights.get(name) ?? 5;
+      return `(${output.score} × ${weight})`;
     }
   );
   const formulaStr = `[${formulaParts.join(' + ')}] / ${totalWeight} = ${overall}`;

@@ -27,6 +27,12 @@ export interface MappingOptions {
 
 /**
  * Maps a single dependency node to a comprehensive ContextAnalysisResult.
+ *
+ * @param node - The dependency node to map
+ * @param graph - The full dependency graph
+ * @param clusters - All identified module clusters
+ * @param allCircularDeps - All identified circular dependencies
+ * @param options - Mapping options for detailed analysis
  */
 export function mapNodeToResult(
   node: DependencyNode,

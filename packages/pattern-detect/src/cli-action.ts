@@ -11,6 +11,8 @@ import {
   Severity,
   getSeverityBadge,
   getSeverityValue,
+  printTerminalHeader,
+  getTerminalDivider,
 } from '@aiready/core';
 import { getPatternIcon, generateHTMLReport } from './cli-output';
 import {
@@ -209,13 +211,7 @@ export async function patternActionHandler(directory: string, options: any) {
   }
 
   // Console output
-  const terminalWidth = process.stdout.columns || 80;
-  const dividerWidth = Math.min(60, terminalWidth - 2);
-  const divider = '━'.repeat(dividerWidth);
-
-  console.log(chalk.cyan(divider));
-  console.log(chalk.bold.white('  PATTERN ANALYSIS SUMMARY'));
-  console.log(chalk.cyan(divider) + '\n');
+  printTerminalHeader('PATTERN ANALYSIS SUMMARY');
 
   console.log(chalk.white(`📁 Files analyzed: ${chalk.bold(results.length)}`));
   console.log(
@@ -233,12 +229,12 @@ export async function patternActionHandler(directory: string, options: any) {
   // Show breakdown by pattern type (only if duplicates exist)
   const sortedTypes = Object.entries(summary.patternsByType)
     .filter(([, count]) => count > 0)
-    .sort(([, a], [, b]) => b - a);
+    .sort(([, a], [, b]) => (b as number) - (a as number));
 
   if (sortedTypes.length > 0) {
-    console.log(chalk.cyan('\n' + divider));
+    console.log('\n' + getTerminalDivider());
     console.log(chalk.bold.white('  PATTERNS BY TYPE'));
-    console.log(chalk.cyan(divider) + '\n');
+    console.log(getTerminalDivider() + '\n');
 
     sortedTypes.forEach(([type, count]) => {
       const icon = getPatternIcon(type as PatternType);
@@ -250,11 +246,11 @@ export async function patternActionHandler(directory: string, options: any) {
 
   // Show grouped duplicates by file pair (reduces noise)
   if (!finalOptions.showRawDuplicates && groups && groups.length > 0) {
-    console.log(chalk.cyan('\n' + divider));
+    console.log('\n' + getTerminalDivider());
     console.log(
       chalk.bold.white(`  📦 DUPLICATE GROUPS (${groups.length} file pairs)`)
     );
-    console.log(chalk.cyan(divider) + '\n');
+    console.log(getTerminalDivider() + '\n');
 
     const topGroups = groups
       .sort((a, b) => {
@@ -306,11 +302,11 @@ export async function patternActionHandler(directory: string, options: any) {
 
   // Show refactor clusters (high-level patterns)
   if (!finalOptions.showRawDuplicates && clusters && clusters.length > 0) {
-    console.log(chalk.cyan('\n' + divider));
+    console.log('\n' + getTerminalDivider());
     console.log(
       chalk.bold.white(`  🎯 REFACTOR CLUSTERS (${clusters.length} patterns)`)
     );
-    console.log(chalk.cyan(divider) + '\n');
+    console.log(getTerminalDivider() + '\n');
 
     clusters
       .sort((a, b) => b.totalTokenCost - a.totalTokenCost)
@@ -349,9 +345,9 @@ export async function patternActionHandler(directory: string, options: any) {
     totalIssues > 0 &&
     (finalOptions.showRawDuplicates || !groups || groups.length === 0)
   ) {
-    console.log(chalk.cyan('\n' + divider));
+    console.log('\n' + getTerminalDivider());
     console.log(chalk.bold.white('  TOP DUPLICATE PATTERNS'));
-    console.log(chalk.cyan(divider) + '\n');
+    console.log(getTerminalDivider() + '\n');
 
     const topDuplicates = filteredDuplicates
       .sort((a, b) => {
@@ -412,9 +408,9 @@ export async function patternActionHandler(directory: string, options: any) {
   );
 
   if (criticalIssues.length > 0) {
-    console.log(chalk.cyan(divider));
+    console.log(getTerminalDivider());
     console.log(chalk.bold.white('  CRITICAL ISSUES (>95% similar)'));
-    console.log(chalk.cyan(divider) + '\n');
+    console.log(getTerminalDivider() + '\n');
 
     criticalIssues.slice(0, 5).forEach((issue) => {
       console.log(
@@ -456,7 +452,7 @@ export async function patternActionHandler(directory: string, options: any) {
     console.log('');
   }
 
-  console.log(chalk.cyan(divider));
+  console.log(getTerminalDivider());
 
   if (totalIssues > 0) {
     console.log(

@@ -3,14 +3,22 @@
  * This makes the comparison focus on code structure rather than naming.
  *
  * @param code - The raw source code to normalize
+ * @param isPython - Whether the file is a Python file (influences comment removal)
  * @returns Normalized code with strings replaced by placeholder, numbers removed, and comments stripped
  */
-export function normalizeCode(code: string): string {
+export function normalizeCode(code: string, isPython: boolean = false): string {
   if (!code) return '';
 
-  return code
-    .replace(/\/\/.*$/gm, '')
-    .replace(/\/\*[\s\S]*?\*\//g, '')
+  let normalized = code;
+  if (isPython) {
+    normalized = normalized.replace(/#.*/g, ''); // remove python comments
+  } else {
+    normalized = normalized
+      .replace(/\/\/.*$/gm, '')
+      .replace(/\/\*[\s\S]*?\*\//g, ''); // remove block comments
+  }
+
+  return normalized
     .replace(/"[^"]*"/g, '"STR"')
     .replace(/'[^']*'/g, "'STR'")
     .replace(/`[^`]*`/g, '`STR`')
