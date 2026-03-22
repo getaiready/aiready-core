@@ -16,16 +16,70 @@ export enum ReadinessRating {
 }
 
 /**
+ * Metadata for a given score range.
+ */
+interface RatingMetadata {
+  label: string;
+  slug: string;
+  emoji: string;
+  rating: ReadinessRating;
+}
+
+/**
+ * Get all metadata for a specific score.
+ * Unified to remove structural duplication.
+ *
+ * @param score The numerical AI readiness score (0-100)
+ * @returns Metadata object including label, slug, emoji, and rating category
+ */
+export function getRatingMetadata(score: number): RatingMetadata {
+  if (score >= 90) {
+    return {
+      label: 'Excellent',
+      slug: 'excellent',
+      emoji: '✅',
+      rating: ReadinessRating.Excellent,
+    };
+  }
+  if (score >= 75) {
+    return {
+      label: 'Good',
+      slug: 'good',
+      emoji: '👍',
+      rating: ReadinessRating.Good,
+    };
+  }
+  if (score >= 60) {
+    return {
+      label: 'Fair',
+      slug: 'fair',
+      emoji: '👌',
+      rating: ReadinessRating.Fair,
+    };
+  }
+  if (score >= 40) {
+    return {
+      label: 'Needs Work',
+      slug: 'needs-work',
+      emoji: '🔨',
+      rating: ReadinessRating.NeedsWork,
+    };
+  }
+  return {
+    label: 'Critical',
+    slug: 'critical',
+    emoji: '🚨',
+    rating: ReadinessRating.Critical,
+  };
+}
+
+/**
  * Get rating label from score
  * @param score The numerical AI readiness score (0-100)
  * @returns Human-readable rating label
  */
 export function getRatingLabel(score: number): string {
-  if (score >= 90) return 'Excellent';
-  if (score >= 75) return 'Good';
-  if (score >= 60) return 'Fair';
-  if (score >= 40) return 'Needs Work';
-  return 'Critical';
+  return getRatingMetadata(score).label;
 }
 
 /**
@@ -34,11 +88,7 @@ export function getRatingLabel(score: number): string {
  * @returns A kebab-case string (e.g., 'excellent', 'needs-work')
  */
 export function getRatingSlug(score: number): string {
-  if (score >= 90) return 'excellent';
-  if (score >= 75) return 'good';
-  if (score >= 60) return 'fair';
-  if (score >= 40) return 'needs-work';
-  return 'critical';
+  return getRatingMetadata(score).slug;
 }
 
 /**
@@ -47,11 +97,7 @@ export function getRatingSlug(score: number): string {
  * @returns Emoji string for display
  */
 export function getRatingEmoji(score: number): string {
-  if (score >= 90) return '✅';
-  if (score >= 75) return '👍';
-  if (score >= 60) return '👌';
-  if (score >= 40) return '🔨';
-  return '🚨';
+  return getRatingMetadata(score).emoji;
 }
 
 /**
@@ -89,9 +135,5 @@ export function getPriorityIcon(priority: string): string {
  * @returns The corresponding ReadinessRating category
  */
 export function getRating(score: number): ReadinessRating {
-  if (score >= 90) return ReadinessRating.Excellent;
-  if (score >= 75) return ReadinessRating.Good;
-  if (score >= 60) return ReadinessRating.Fair;
-  if (score >= 40) return ReadinessRating.NeedsWork;
-  return ReadinessRating.Critical;
+  return getRatingMetadata(score).rating;
 }

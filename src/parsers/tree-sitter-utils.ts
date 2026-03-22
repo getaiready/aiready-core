@@ -1,6 +1,18 @@
 import * as Parser from 'web-tree-sitter';
 import * as path from 'path';
 import * as fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const getDirname = (): string => {
+  try {
+    if (typeof __dirname !== 'undefined') return __dirname;
+    return path.dirname(fileURLToPath(import.meta.url));
+  } catch {
+    return process.cwd();
+  }
+};
+
+const __dirname: string = getDirname();
 
 let isTreeSitterInitialized = false;
 
