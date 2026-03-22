@@ -16,3 +16,16 @@ export const IssueSchema = z.object({
 });
 
 export type Issue = z.infer<typeof IssueSchema>;
+
+/**
+ * Issue overlay on the graph
+ */
+export interface IssueOverlay {
+  id: string;
+  type: string;
+  severity: string;
+  nodeIds: string[];
+  edgeIds?: string[];
+  message: string;
+  details?: string;
+}

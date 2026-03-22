@@ -1,48 +1,63 @@
-/**
- * Parser Factory - Manages language-specific parsers
- *
- * This factory provides a centralized way to access the appropriate parser
- * for a given file based on its extension.
- */
-
 import {
   Language,
   LanguageParser,
   LANGUAGE_EXTENSIONS,
 } from '../types/language';
 export { Language, LanguageParser, LANGUAGE_EXTENSIONS };
-import { TypeScriptParser } from './typescript-parser';
-import { PythonParser } from './python-parser';
-import { JavaParser } from './java-parser';
-import { CSharpParser } from './csharp-parser';
-import { GoParser } from './go-parser';
 
 /**
  * Factory for creating and managing language parsers.
  * Supports both singleton usage and multiple instances for test isolation.
  *
- * @lastUpdated 2026-03-18
+ * @lastUpdated 2026-03-22
  */
 export class ParserFactory {
   private static instance: ParserFactory;
   private parsers: Map<Language, LanguageParser>;
   private extensionMap: Map<string, Language>;
+  private registeredParsers: Map<Language, () => Promise<LanguageParser>>;
 
   /**
    * Create a new ParserFactory instance
    */
   constructor() {
     this.parsers = new Map();
+    this.registeredParsers = new Map();
     this.extensionMap = new Map(
       Object.entries(LANGUAGE_EXTENSIONS).map(([ext, lang]) => [ext, lang])
     );
 
-    // Register default parsers
-    this.registerParser(new TypeScriptParser());
-    this.registerParser(new PythonParser());
-    this.registerParser(new JavaParser());
-    this.registerParser(new CSharpParser());
-    this.registerParser(new GoParser());
+    // Register lazy-loaded parsers
+    this.registerLazyParser(Language.TypeScript, async () => {
+      const { TypeScriptParser } = await import('./typescript-parser');
+      return new TypeScriptParser();
+    });
+    this.registerLazyParser(Language.Python, async () => {
+      const { PythonParser } = await import('./python-parser');
+      return new PythonParser();
+    });
+    this.registerLazyParser(Language.Java, async () => {
+      const { JavaParser } = await import('./java-parser');
+      return new JavaParser();
+    });
+    this.registerLazyParser(Language.CSharp, async () => {
+      const { CSharpParser } = await import('./csharp-parser');
+      return new CSharpParser();
+    });
+    this.registerLazyParser(Language.Go, async () => {
+      const { GoParser } = await import('./go-parser');
+      return new GoParser();
+    });
+  }
+
+  /**
+   * Register a lazy-loaded parser
+   */
+  public registerLazyParser(
+    language: Language,
+    loader: () => Promise<LanguageParser>
+  ): void {
+    this.registeredParsers.set(language, loader);
   }
 
   /**
@@ -75,14 +90,28 @@ export class ParserFactory {
   /**
    * Get parser for a specific language
    */
-  public getParserForLanguage(language: Language): LanguageParser | null {
-    return this.parsers.get(language) || null;
+  public async getParserForLanguage(
+    language: Language
+  ): Promise<LanguageParser | null> {
+    const parser = this.parsers.get(language);
+    if (parser) return parser;
+
+    const loader = this.registeredParsers.get(language);
+    if (loader) {
+      const loadedParser = await loader();
+      this.parsers.set(language, loadedParser);
+      return loadedParser;
+    }
+
+    return null;
   }
 
   /**
    * Get parser for a file based on its extension
    */
-  public getParserForFile(filePath: string): LanguageParser | null {
+  public async getParserForFile(
+    filePath: string
+  ): Promise<LanguageParser | null> {
     const ext = this.getFileExtension(filePath);
     const language = this.extensionMap.get(ext);
 
@@ -90,7 +119,7 @@ export class ParserFactory {
       return null;
     }
 
-    return this.parsers.get(language) || null;
+    return this.getParserForLanguage(language);
   }
 
   /**
@@ -153,9 +182,11 @@ export class ParserFactory {
  *
  * @param filePath - Path to the file to get a parser for.
  * @returns LanguageParser instance or null if unsupported.
- * @lastUpdated 2026-03-18
+ * @lastUpdated 2026-03-22
  */
-export function getParser(filePath: string): LanguageParser | null {
+export async function getParser(
+  filePath: string
+): Promise<LanguageParser | null> {
   return ParserFactory.getInstance().getParserForFile(filePath);
 }
 

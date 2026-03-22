@@ -103,11 +103,11 @@ func ImpureFunc(s string) {
 
   testCases.forEach(({ language, extension, code }) => {
     describe(`Language: ${language}`, () => {
-      it('should extract purity and documentation metadata correctly', () => {
-        const parser = factory.getParserForLanguage(language);
+      it('should extract purity and documentation metadata correctly', async () => {
+        const parser = await factory.getParserForLanguage(language);
         expect(parser).toBeDefined();
 
-        const result = parser!.parse(code, `test${extension}`);
+        const result = await parser!.parse(code, `test${extension}`);
 
         if (result.exports.length === 0) {
           console.log(`[DEBUG] No exports found for ${language}.`);
@@ -115,13 +115,13 @@ func ImpureFunc(s string) {
         } else {
           console.log(
             `[DEBUG] Exports for ${language}:`,
-            result.exports.map((e) => e.name)
+            result.exports.map((e: any) => e.name)
           );
         }
 
         // Find pure function
         const pureFunc = result.exports.find(
-          (e) =>
+          (e: any) =>
             e.name.toLowerCase().includes('purefunc') ||
             e.name.toLowerCase().includes('pure_func')
         );
@@ -146,7 +146,7 @@ func ImpureFunc(s string) {
 
         // Find impure function
         const impureFunc = result.exports.find(
-          (e) =>
+          (e: any) =>
             e.name.toLowerCase().includes('impurefunc') ||
             e.name.toLowerCase().includes('impure_func')
         );

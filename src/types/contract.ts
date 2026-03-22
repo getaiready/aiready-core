@@ -5,25 +5,17 @@
  */
 
 import { z } from 'zod';
-import { SpokeOutput, UnifiedReport, ScanOptions } from '../types';
-import { ToolName, SpokeOutputSchema } from '.';
+import { ScanOptions } from './common';
+import { ToolName } from './enums';
+import {
+  SpokeOutput,
+  UnifiedReport,
+  SpokeOutputSchema,
+} from './schemas/report';
 import { ToolScoringOutput } from '../scoring';
 import { normalizeSpokeOutput } from '../utils/normalization';
 
 export type { SpokeOutput, UnifiedReport };
-
-/**
- * Issue overlay on the graph
- */
-export interface IssueOverlay {
-  id: string;
-  type: string;
-  severity: string;
-  nodeIds: string[];
-  edgeIds?: string[];
-  message: string;
-  details?: string;
-}
 
 /**
  * Tool Provider Interface

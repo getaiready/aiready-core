@@ -1,7 +1,7 @@
 /**
  * Shared types for graph-based visualizations
  */
-import { IssueOverlay } from './contract';
+import { IssueOverlay } from './schemas/issue';
 
 /**
  * Base graph node compatible with d3-force simulation

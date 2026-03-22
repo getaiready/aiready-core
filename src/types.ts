@@ -26,9 +26,10 @@ import {
   ModelTierSchema,
 } from './types/enums';
 
-import { ToolOptions, LocationSchema } from './types/common';
+import { ToolOptions, ScanOptions, LocationSchema } from './types/common';
 
 import { IssueSchema } from './types/schemas/issue';
+import type { Issue, IssueOverlay } from './types/schemas/issue';
 
 import { MetricsSchema } from './types/schemas/metrics';
 
@@ -42,8 +43,6 @@ import {
 import { AIReadyConfigSchema } from './types/schemas/config';
 
 import type { Location } from './types/common';
-
-import type { Issue } from './types/schemas/issue';
 
 import type { Metrics } from './types/schemas/metrics';
 
@@ -70,6 +69,7 @@ export {
   FRIENDLY_TOOL_NAMES,
   // Common types
   ToolOptions,
+  ScanOptions,
   LocationSchema,
   // Issue
   IssueSchema,
@@ -103,6 +103,7 @@ export type {
   SpokeSummary,
   SpokeOutput,
   UnifiedReport,
+  IssueOverlay,
 };
 
 /**
@@ -114,18 +115,6 @@ export type AIReadyConfig = z.infer<typeof AIReadyConfigSchema>;
  * Legacy alias for Config
  */
 export type Config = AIReadyConfig;
-
-/**
- * Scan options for tool providers
- */
-export interface ScanOptions extends ToolOptions {
-  /** Target output format */
-  output?: string | { format: string; file?: string };
-  /** Visual format (json/console/html) */
-  format?: 'json' | 'console' | 'html';
-  /** Whether to run in parallel */
-  parallel?: boolean;
-}
 
 /**
  * Result of a single tool execution

@@ -12,32 +12,32 @@ import {
 } from '../parsers/parser-factory';
 
 describe('ParserFactory', () => {
-  it('should return TypeScript parser for .ts files', () => {
-    const parser = getParser('test.ts');
+  it('should return TypeScript parser for .ts files', async () => {
+    const parser = await getParser('test.ts');
     expect(parser).toBeDefined();
     expect(parser?.language).toBe(Language.TypeScript);
   });
 
-  it('should return TypeScript parser for .tsx files', () => {
-    const parser = getParser('component.tsx');
+  it('should return TypeScript parser for .tsx files', async () => {
+    const parser = await getParser('component.tsx');
     expect(parser).toBeDefined();
     expect(parser?.language).toBe(Language.TypeScript);
   });
 
-  it('should return JavaScript parser for .js files', () => {
-    const parser = getParser('script.js');
+  it('should return JavaScript parser for .js files', async () => {
+    const parser = await getParser('script.js');
     expect(parser).toBeDefined();
     expect(parser?.language).toBe(Language.TypeScript); // TS parser handles JS too
   });
 
-  it('should return Python parser for .py files', () => {
-    const parser = getParser('script.py');
+  it('should return Python parser for .py files', async () => {
+    const parser = await getParser('script.py');
     expect(parser).toBeDefined();
     expect(parser?.language).toBe(Language.Python);
   });
 
-  it('should return null for unsupported files', () => {
-    const parser = getParser('README.md');
+  it('should return null for unsupported files', async () => {
+    const parser = await getParser('README.md');
     expect(parser).toBeNull();
   });
 

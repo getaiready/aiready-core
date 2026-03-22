@@ -14,11 +14,9 @@ export {
 } from './enums';
 
 // Common types
-export { ToolOptions, LocationSchema, Location } from './common';
-export { IssueOverlay } from './contract';
-
+export { ToolOptions, ScanOptions, LocationSchema, Location } from './common';
 // Issue schema
-export { IssueSchema, Issue } from './schemas/issue';
+export { IssueSchema, Issue, IssueOverlay } from './schemas/issue';
 
 // Metrics schema
 export { MetricsSchema, Metrics } from './schemas/metrics';

@@ -29,3 +29,15 @@ export const LocationSchema = z.object({
 });
 
 export type Location = z.infer<typeof LocationSchema>;
+
+/**
+ * Scan options for tool providers
+ */
+export interface ScanOptions extends ToolOptions {
+  /** Target output format */
+  output?: string | { format: string; file?: string };
+  /** Visual format (json/console/html) */
+  format?: 'json' | 'console' | 'html';
+  /** Whether to run in parallel */
+  parallel?: boolean;
+}

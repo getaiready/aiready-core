@@ -6,7 +6,7 @@ import {
 
 describe('AST Parser', () => {
   describe('parseFileExports', () => {
-    it('should extract exports from TypeScript code', () => {
+    it('should extract exports from TypeScript code', async () => {
       const code = `
         import { someFunc } from './utils';
         export const myConst = 1;
@@ -14,7 +14,7 @@ describe('AST Parser', () => {
         export class MyClass {}
         export default function() {}
       `;
-      const result = parseFileExports(code, 'test.ts');
+      const result = await parseFileExports(code, 'test.ts');
 
       expect(result.exports).toHaveLength(4); // myConst, myFunc, MyClass, default
       expect(result.imports).toHaveLength(1);
@@ -24,15 +24,15 @@ describe('AST Parser', () => {
       expect(myFunc?.imports).toContain('someFunc');
     });
 
-    it('should handle interfaces and types', () => {
+    it('should handle interfaces and types', async () => {
       const code = `
         export interface MyInterface { prop: string; }
         export type MyType = string | number;
       `;
-      const result = parseFileExports(code, 'test.ts');
+      const result = await parseFileExports(code, 'test.ts');
 
-      expect(result.exports.map((e) => e.type)).toContain('interface');
-      expect(result.exports.map((e) => e.type)).toContain('type');
+      expect(result.exports.map((e: any) => e.type)).toContain('interface');
+      expect(result.exports.map((e: any) => e.type)).toContain('type');
     });
   });
 

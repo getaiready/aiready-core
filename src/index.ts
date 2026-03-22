@@ -16,6 +16,7 @@ export * from './scoring';
 export * from './utils/rating-helpers';
 export * from './utils/scoring-helpers';
 export * from './utils/similarity';
+export * from './utils/cli-factory';
 export * from './utils/reporting';
 export * from './utils/code-extractor';
 

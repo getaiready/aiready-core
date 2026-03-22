@@ -15,14 +15,14 @@ import {
  * @param filePath - Path to the file (used for language detection and AST metadata)
  * @returns Object containing all identified exports and imports
  */
-export function parseFileExports(
+export async function parseFileExports(
   code: string,
   filePath: string
-): {
+): Promise<{
   exports: ExportWithImports[];
   imports: FileImport[];
-} {
-  const parser = getParser(filePath);
+}> {
+  const parser = await getParser(filePath);
 
   // Use professional multi-language parser if it's not TypeScript
   // (We keep the legacy TS/JS parser logic below for now as it has specific dependency extraction)
@@ -32,6 +32,7 @@ export function parseFileExports(
     parser.language !== Language.JavaScript
   ) {
     try {
+      await parser.initialize();
       const result = parser.parse(code, filePath);
       return {
         exports: result.exports.map((e) => ({
