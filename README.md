@@ -9,11 +9,11 @@
                       │
                       ▼
          🎛️  @aiready/cli (orchestrator)
-          │     │     │     │     │     │     │     │     │
-          ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼
-        [PAT] [CTX] [CON] [AMP] [DEP] [DOC] [SIG] [AGT] [TST]
-          │     │     │     │     │     │     │     │     │
-          └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
+          │     │     │     │     │     │     │     │     │     │
+          ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼     ▼
+        [PAT] [CTX] [CON] [AMP] [DEP] [DOC] [SIG] [AGT] [TST] [CTR]
+          │     │     │     │     │     │     │     │     │     │
+          └─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┴─────┘
                                │
                                ▼
                       🏢 @aiready/core  ← YOU ARE HERE
@@ -23,7 +23,7 @@ Legend:
   CON = consistency           AMP = change-amplification
   DEP = deps-health           DOC = doc-drift
   SIG = ai-signal-clarity     AGT = agent-grounding
-  TST = testability
+  TST = testability           CTR = contract-enforcement
 ```
 
 ## Overview
