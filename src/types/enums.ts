@@ -54,6 +54,7 @@ export const FRIENDLY_TOOL_NAMES: Record<ToolName, string> = {
   [ToolName.PatternEntropy]: 'Pattern Entropy',
   [ToolName.ConceptCohesion]: 'Concept Cohesion',
   [ToolName.SemanticDistance]: 'Semantic Distance',
+  [ToolName.ContractEnforcement]: 'Contract Enforcement',
 };
 
 /**
@@ -85,6 +86,7 @@ export enum IssueType {
   AgentNavigationFailure = 'agent-navigation-failure',
   AmbiguousApi = 'ambiguous-api',
   ChangeAmplification = 'change-amplification',
+  ContractGap = 'contract-gap',
 }
 
 /** Zod schema for IssueType enum */

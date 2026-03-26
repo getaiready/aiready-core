@@ -37,6 +37,7 @@ export const DEFAULT_TOOL_WEIGHTS: Record<string, number> = {
   [ToolName.DocDrift]: 8,
   [ToolName.DependencyHealth]: 6,
   [ToolName.ChangeAmplification]: 8,
+  [ToolName.ContractEnforcement]: 10,
 };
 
 /**
@@ -61,6 +62,8 @@ export const TOOL_NAME_MAP: Record<string, string> = {
   'dependency-health': ToolName.DependencyHealth,
   'change-amp': ToolName.ChangeAmplification,
   'change-amplification': ToolName.ChangeAmplification,
+  contract: ToolName.ContractEnforcement,
+  'contract-enforcement': ToolName.ContractEnforcement,
 };
 
 /**
@@ -96,9 +99,10 @@ export const SCORING_PROFILES: Record<
 > = {
   [ScoringProfile.Default]: DEFAULT_TOOL_WEIGHTS,
   [ScoringProfile.Agentic]: {
-    [ToolName.AiSignalClarity]: 30,
-    [ToolName.AgentGrounding]: 30,
-    [ToolName.TestabilityIndex]: 20,
+    [ToolName.AiSignalClarity]: 25,
+    [ToolName.AgentGrounding]: 25,
+    [ToolName.TestabilityIndex]: 15,
+    [ToolName.ContractEnforcement]: 15,
     [ToolName.ContextAnalyzer]: 10,
     [ToolName.NamingConsistency]: 10,
   },
@@ -123,8 +127,9 @@ export const SCORING_PROFILES: Record<
     [ToolName.DependencyHealth]: 10,
   },
   [ScoringProfile.Security]: {
-    [ToolName.NamingConsistency]: 40,
-    [ToolName.TestabilityIndex]: 30,
+    [ToolName.NamingConsistency]: 30,
+    [ToolName.TestabilityIndex]: 25,
+    [ToolName.ContractEnforcement]: 15,
     [ToolName.DependencyHealth]: 20,
     [ToolName.ContextAnalyzer]: 10,
   },
