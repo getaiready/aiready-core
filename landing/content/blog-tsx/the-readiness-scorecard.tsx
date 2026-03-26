@@ -96,7 +96,7 @@ const Post = () => (
     <ul className="list-disc pl-6 mb-4 space-y-2">
       <li>
         <a
-          href="https://clawmore.getaiready.dev/"
+          href="https://clawmore.ai/"
           className="text-indigo-400 hover:text-indigo-300 transition-colors"
         >
           <strong>ClawMore:</strong> Launch your first mutation today.

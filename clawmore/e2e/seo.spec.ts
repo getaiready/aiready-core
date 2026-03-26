@@ -19,9 +19,7 @@ test.describe('ClawMore SEO Metadata', () => {
     expect(response?.status()).toBe(200);
     const text = await response?.text();
     expect(text).toContain('Allow: /');
-    expect(text).toContain(
-      'Sitemap: https://clawmore.getaiready.dev/sitemap.xml'
-    );
+    expect(text).toContain('Sitemap: https://clawmore.ai/sitemap.xml');
   });
 
   test('sitemap.xml returns correctly', async ({ page }) => {
@@ -30,7 +28,7 @@ test.describe('ClawMore SEO Metadata', () => {
     expect(response?.status()).toBe(200);
     const text = await response?.text();
     expect(text).toContain('<urlset');
-    expect(text).toContain('https://clawmore.getaiready.dev/blog');
+    expect(text).toContain('https://clawmore.ai/blog');
   });
 
   test.skip('blog index has correct SEO tags', async ({ page }) => {

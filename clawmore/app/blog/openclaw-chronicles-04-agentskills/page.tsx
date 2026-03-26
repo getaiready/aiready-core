@@ -75,7 +75,7 @@ export default function BlogPost() {
       name: 'Architect of Evolution',
     },
     image: '/blog-assets/openclaw-chronicles-04-agentskills.png',
-    url: 'https://clawmore.getaiready.dev/blog/openclaw-chronicles-04-agentskills',
+    url: 'https://clawmore.ai/blog/openclaw-chronicles-04-agentskills',
   };
 
   return (

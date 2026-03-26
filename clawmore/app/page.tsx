@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     title: 'ClawMore | Autonomous Infrastructure Evolution',
     description:
       "The world's first autonomous agentic system for AWS. Real-time infrastructure synthesis and self-healing.",
-    url: 'https://clawmore.getaiready.dev',
+    url: 'https://clawmore.ai',
     siteName: 'ClawMore',
     locale: 'en_US',
     type: 'website',
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     images: ['/og-home.png'],
   },
   alternates: {
-    canonical: 'https://clawmore.getaiready.dev',
+    canonical: 'https://clawmore.ai',
   },
 };
 

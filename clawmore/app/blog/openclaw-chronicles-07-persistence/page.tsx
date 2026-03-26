@@ -74,7 +74,7 @@ export default function BlogPost() {
       name: 'Architect of Evolution',
     },
     image: '/blog-assets/openclaw-chronicles-07-persistence.png',
-    url: 'https://clawmore.getaiready.dev/blog/openclaw-chronicles-07-persistence',
+    url: 'https://clawmore.ai/blog/openclaw-chronicles-07-persistence',
   };
 
   return (

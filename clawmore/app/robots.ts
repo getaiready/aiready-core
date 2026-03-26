@@ -6,6 +6,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: '*',
       allow: '/',
     },
-    sitemap: 'https://clawmore.getaiready.dev/sitemap.xml',
+    sitemap: 'https://clawmore.ai/sitemap.xml',
   };
 }

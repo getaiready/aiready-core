@@ -67,7 +67,7 @@ export default function BlogPost() {
       name: 'The Decoupling Architect',
     },
     image: '/blog-assets/the-great-decoupling-02-first-cut.png',
-    url: 'https://clawmore.getaiready.dev/blog/the-great-decoupling-02-first-cut',
+    url: 'https://clawmore.ai/blog/the-great-decoupling-02-first-cut',
   };
 
   return (

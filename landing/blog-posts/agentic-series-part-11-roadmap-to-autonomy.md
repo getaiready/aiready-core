@@ -40,4 +40,4 @@ _Next up: Part 12: "The Living Repository (Infrastructure Blueprint)"_
 
 > [!TIP]
 > **Ready for Autonomous Infrastructure?**
-> Check out our open-source project [serverlessclaw](https://github.com/caopengau/serverlessclaw) or try the managed [ClawMore](https://clawmore.getaiready.dev/) service for instant agentic readiness.
+> Check out our open-source project [serverlessclaw](https://github.com/caopengau/serverlessclaw) or try the managed [ClawMore](https://clawmore.ai/) service for instant agentic readiness.

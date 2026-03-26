@@ -30,14 +30,14 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'ClawMore Team' }],
   creator: 'ClawMore',
-  metadataBase: new URL('https://clawmore.getaiready.dev'),
+  metadataBase: new URL('https://clawmore.ai'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://clawmore.getaiready.dev',
+    url: 'https://clawmore.ai',
     siteName: 'ClawMore',
     title: 'ClawMore | Autonomous Infrastructure Evolution',
     description:

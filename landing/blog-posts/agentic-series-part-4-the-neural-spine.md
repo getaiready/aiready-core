@@ -43,4 +43,4 @@ _Next up: Part 5: "The Reflector: Machines that Self-Critique"_
 
 > [!TIP]
 > **Ready for Autonomous Infrastructure?**
-> Check out our open-source project [serverlessclaw](https://github.com/caopengau/serverlessclaw) or try the managed [ClawMore](https://clawmore.getaiready.dev/) service for instant agentic readiness.
+> Check out our open-source project [serverlessclaw](https://github.com/caopengau/serverlessclaw) or try the managed [ClawMore](https://clawmore.ai/) service for instant agentic readiness.

@@ -55,7 +55,7 @@ export default function BlogPost() {
       name: 'Architect of Evolution',
     },
     image: '/blog-assets/openclaw-chronicles-12-future.png',
-    url: 'https://clawmore.getaiready.dev/blog/openclaw-chronicles-12-future',
+    url: 'https://clawmore.ai/blog/openclaw-chronicles-12-future',
   };
 
   return (

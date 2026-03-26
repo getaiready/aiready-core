@@ -67,7 +67,7 @@ export default function BlogPost() {
       name: 'Architect of Evolution',
     },
     image: '/blog-assets/openclaw-chronicles-05-heartbeat.png',
-    url: 'https://clawmore.getaiready.dev/blog/openclaw-chronicles-05-heartbeat',
+    url: 'https://clawmore.ai/blog/openclaw-chronicles-05-heartbeat',
   };
 
   return (

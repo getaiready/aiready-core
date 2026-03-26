@@ -36,7 +36,7 @@ const Post = () => (
 
     <p>
       <Link
-        href="https://clawmore.getaiready.dev/"
+        href="https://clawmore.ai/"
         className="text-indigo-400 font-bold hover:underline"
       >
         ClawMore
@@ -125,7 +125,7 @@ const Post = () => (
         Ready to start <br /> your first mutation?
       </h3>
       <Link
-        href="https://clawmore.getaiready.dev/"
+        href="https://clawmore.ai/"
         className="inline-block py-4 px-10 bg-white text-indigo-600 font-bold rounded-full hover:scale-105 transition-transform"
       >
         Get Started for Free

@@ -31,9 +31,7 @@ export default $config({
       apiKey: process.env.STRIPE_SECRET_KEY!,
     });
 
-    const domainName = isProd
-      ? 'clawmore.getaiready.dev'
-      : `${$app.stage}.clawmore.getaiready.dev`;
+    const domainName = isProd ? 'clawmore.ai' : `${$app.stage}.clawmore.ai`;
 
     // --- Stripe Products & Prices (IaC) ---
 

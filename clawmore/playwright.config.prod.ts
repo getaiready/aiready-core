@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const baseURL = process.env.BASE_URL ?? 'https://clawmore.getaiready.dev';
+const baseURL = process.env.BASE_URL ?? 'https://clawmore.ai';
 
 export default defineConfig({
   testDir: './e2e',

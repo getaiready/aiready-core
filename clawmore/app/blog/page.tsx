@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: 'ClawMore Blog - Agentic Insights & Infrastructure Evolution',
     description:
       'Deep dives into autonomous agentic systems, infrastructure evolution, and the future of agentic AWS operations.',
-    url: 'https://clawmore.getaiready.dev/blog',
+    url: 'https://clawmore.ai/blog',
     images: [
       {
         url: '/og-blog.png',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     images: ['/og-blog.png'],
   },
   alternates: {
-    canonical: 'https://clawmore.getaiready.dev/blog',
+    canonical: 'https://clawmore.ai/blog',
   },
 };
 

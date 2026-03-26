@@ -71,4 +71,4 @@ _In Part 2, we'll dive into **Zero-Shot Discovery**: How to use naming conventio
 
 > [!TIP]
 > **Ready for Autonomous Infrastructure?**
-> Check out our open-source project [serverlessclaw](https://github.com/caopengau/serverlessclaw) or try the managed [ClawMore](https://clawmore.getaiready.dev/) service for instant agentic readiness.
+> Check out our open-source project [serverlessclaw](https://github.com/caopengau/serverlessclaw) or try the managed [ClawMore](https://clawmore.ai/) service for instant agentic readiness.

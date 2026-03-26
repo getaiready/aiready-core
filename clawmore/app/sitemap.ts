@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://clawmore.getaiready.dev';
+  const baseUrl = 'https://clawmore.ai';
 
   const blogPosts = [
     { slug: 'openclaw-chronicles-12-future', date: '2026-05-02' },

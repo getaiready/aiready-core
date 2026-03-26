@@ -191,7 +191,7 @@ export default function BlogPost() {
                   Stop solving problems that have already been solved.
                 </p>
                 <Link
-                  href="https://clawmore.getaiready.dev/"
+                  href="https://clawmore.ai/"
                   className="inline-block py-3 px-8 bg-black text-white font-bold rounded-full"
                 >
                   Sync Your Repo

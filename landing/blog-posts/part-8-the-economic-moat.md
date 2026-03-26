@@ -50,4 +50,4 @@ _Peng Cao is the founder of [aiready](https://github.com/caopengau/aiready-cli).
 
 > [!TIP]
 > **Ready for Autonomous Infrastructure?**
-> Check out our open-source project [serverlessclaw](https://github.com/caopengau/serverlessclaw) or try the managed [ClawMore](https://clawmore.getaiready.dev/) service for instant agentic readiness.
+> Check out our open-source project [serverlessclaw](https://github.com/caopengau/serverlessclaw) or try the managed [ClawMore](https://clawmore.ai/) service for instant agentic readiness.

@@ -12,7 +12,7 @@ Most businesses don't want to be "AI Operators." They want **Results.**
 
 ## ClawMore: The Evolutionary Hub
 
-[ClawMore](https://clawmore.getaiready.dev/) is the managed service that bridges the gap between Open Source and Enterprise Reliability. It operates on a **Hub-and-Spoke** architecture, specifically designed to lower the knowledge barrier we discussed in Part 1.
+[ClawMore](https://clawmore.ai/) is the managed service that bridges the gap between Open Source and Enterprise Reliability. It operates on a **Hub-and-Spoke** architecture, specifically designed to lower the knowledge barrier we discussed in Part 1.
 
 ### 1. Account Vending & Isolation
 
@@ -43,7 +43,7 @@ The "IT Department" is no longer a cost center. It’s a **subscription to conti
 
 **Next Steps:**
 
-- Learn more about the [ClawMore Platform](https://clawmore.getaiready.dev/).
-- [Connect your GitHub](https://clawmore.getaiready.dev/) and start your first mutation.
+- Learn more about the [ClawMore Platform](https://clawmore.ai/).
+- [Connect your GitHub](https://clawmore.ai/) and start your first mutation.
 
 _Peng Cao is the founder of [aiready](https://getaiready.dev/), the creator of the **serverlessclaw** framework and the term **Eclawnomy**._
