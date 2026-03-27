@@ -5,16 +5,40 @@ import { join } from 'path';
  * Common test file patterns for multiple languages.
  */
 export const TEST_PATTERNS = [
+  // TypeScript/JavaScript test files
   /\.(test|spec)\.(ts|tsx|js|jsx)$/,
+  // Go test files
   /_test\.go$/,
+  // Python test files
   /test_.*\.py$/,
   /.*_test\.py$/,
+  // Java test files
   /.*Test\.java$/,
+  // C# test files
   /.*Tests\.cs$/,
-  /__tests__\//,
-  /\/tests?\//,
-  /\/e2e\//,
-  /\/fixtures\//,
+  // __tests__ directories (any file inside)
+  /__tests__[/\\]/,
+  // tests or test directories
+  /[/\\]tests?[/\\]/,
+  // e2e directories
+  /[/\\]e2e[/\\]/,
+  // fixtures directories
+  /[/\\]fixtures?[/\\]/,
+  // __mocks__ directories
+  /[/\\]__mocks__[/\\]/,
+  // Cypress test files
+  /[/\\]cypress[/\\]/,
+  // Playwright test files
+  /[/\\]playwright[/\\]/,
+  // Vitest workspace files
+  /\.vitest\.(ts|js)$/,
+  // Jest config files that indicate test setup
+  /jest\.config\.(ts|js|json)$/,
+  // Vitest config files
+  /vitest\.config\.(ts|js)$/,
+  // Test setup files
+  /setup\.(ts|js)$/,
+  /test-setup\.(ts|js)$/,
 ];
 
 /**
