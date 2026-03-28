@@ -131,14 +131,25 @@ export function countIssues(result: AIReadyResult): {
   minor: number;
   info: number;
   total: number;
+  score: number;
+  rating: string;
 } {
-  const counts = { critical: 0, major: 0, minor: 0, info: 0, total: 0 };
+  const counts = {
+    critical: 0,
+    major: 0,
+    minor: 0,
+    info: 0,
+    total: 0,
+    score: 100,
+    rating: 'Excellent',
+  };
 
   if (Array.isArray(result.patterns)) {
     result.patterns.forEach((p) => {
       if (Array.isArray(p.issues)) {
         p.issues.forEach((issue) => {
-          counts[issue.severity] = (counts[issue.severity] || 0) + 1;
+          const sev = issue.severity as 'critical' | 'major' | 'minor' | 'info';
+          counts[sev] = counts[sev] + 1;
           counts.total++;
         });
       }
@@ -150,14 +161,14 @@ export function countIssues(result: AIReadyResult): {
     result.context.forEach((issue: any) => {
       // Some formats have root level issues, some have nested
       if (issue.severity) {
-        counts[issue.severity as keyof typeof counts] =
-          (counts[issue.severity as keyof typeof counts] || 0) + 1;
+        const sev = issue.severity as 'critical' | 'major' | 'minor' | 'info';
+        counts[sev] = counts[sev] + 1;
         counts.total++;
       }
       if (Array.isArray(issue.issues)) {
         issue.issues.forEach((nested: any) => {
-          counts[nested.severity as keyof typeof counts] =
-            (counts[nested.severity as keyof typeof counts] || 0) + 1;
+          const sev = nested.severity as 'critical' | 'major' | 'minor' | 'info';
+          counts[sev] = counts[sev] + 1;
           counts.total++;
         });
       }
@@ -169,7 +180,8 @@ export function countIssues(result: AIReadyResult): {
     result.consistency.results.forEach((r) => {
       if (Array.isArray(r.issues)) {
         r.issues.forEach((issue) => {
-          counts[issue.severity] = (counts[issue.severity] || 0) + 1;
+          const sev = issue.severity as 'critical' | 'major' | 'minor' | 'info';
+          counts[sev] = counts[sev] + 1;
           counts.total++;
         });
       }
@@ -179,7 +191,8 @@ export function countIssues(result: AIReadyResult): {
   // Count doc drift issues
   if (result.docDrift && Array.isArray(result.docDrift.issues)) {
     result.docDrift.issues.forEach((issue) => {
-      counts[issue.severity] = (counts[issue.severity] || 0) + 1;
+      const sev = issue.severity as 'critical' | 'major' | 'minor' | 'info';
+      counts[sev] = counts[sev] + 1;
       counts.total++;
     });
   }
@@ -187,7 +200,8 @@ export function countIssues(result: AIReadyResult): {
   // Count dependency issues
   if (result.deps && Array.isArray(result.deps.issues)) {
     result.deps.issues.forEach((issue) => {
-      counts[issue.severity] = (counts[issue.severity] || 0) + 1;
+      const sev = issue.severity as 'critical' | 'major' | 'minor' | 'info';
+      counts[sev] = counts[sev] + 1;
       counts.total++;
     });
   }
@@ -201,8 +215,8 @@ export function countIssues(result: AIReadyResult): {
     clarity.results.forEach((r: any) => {
       if (Array.isArray(r.issues)) {
         r.issues.forEach((issue: any) => {
-          const sev = issue.severity as keyof typeof counts;
-          counts[sev] = (counts[sev] || 0) + 1;
+          const sev = issue.severity as 'critical' | 'major' | 'minor' | 'info';
+          counts[sev] = counts[sev] + 1;
           counts.total++;
         });
       }
@@ -215,11 +229,17 @@ export function countIssues(result: AIReadyResult): {
     (result as any)['contractEnforcement'];
   if (contractEnforcement && Array.isArray(contractEnforcement.issues)) {
     contractEnforcement.issues.forEach((issue: any) => {
-      const sev = issue.severity as keyof typeof counts;
-      counts[sev] = (counts[sev] || 0) + 1;
+      const sev = issue.severity as 'critical' | 'major' | 'minor' | 'info';
+      counts[sev] = counts[sev] + 1;
       counts.total++;
     });
   }
+
+  // Fallback scoring calculation
+  const totalDeduction =
+    counts.critical * 15 + counts.major * 5 + counts.minor * 1 + counts.info * 0.1;
+  counts.score = Math.max(0, Math.round(100 - totalDeduction));
+  counts.rating = getRatingFromScore(counts.score);
 
   return counts;
 }

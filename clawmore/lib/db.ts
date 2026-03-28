@@ -391,10 +391,84 @@ export async function addCredits(
   return { newBalance, wasSuspended };
 }
 
-/**
- * Check if a user account is suspended.
- */
-export async function isAccountSuspended(email: string): Promise<boolean> {
-  const metadata = await getUserMetadata(email);
-  return (metadata as any)?.accountStatus === 'SUSPENDED';
+export interface InnovationPatternRecord {
+  PK: 'INNOVATION';
+  SK: string; // PATTERN#<timestamp>#<repoName>
+  EntityType: 'InnovationPattern';
+  title: string;
+  rationale: string;
+  logic: string;
+  category: 'performance' | 'security' | 'cost' | 'reliability';
+  filesAffected: string[];
+  sourceRepo: string;
+  sourceOwner: string;
+  status: 'PENDING' | 'PROMOTED' | 'REJECTED';
+  createdAt: string;
+}
+
+export async function createInnovationPatternRecord(data: {
+  pattern: any;
+  sourceRepo: string;
+  sourceOwner: string;
+}) {
+  const { pattern, sourceRepo, sourceOwner } = data;
+  const timestamp = new Date().toISOString();
+  const PK = 'INNOVATION';
+  const SK = `PATTERN#${timestamp}#${sourceRepo}`;
+
+  await docClient.send(
+    new UpdateCommand({
+      TableName: process.env.DYNAMO_TABLE,
+      Key: { PK, SK },
+      UpdateExpression:
+        'SET EntityType = :type, title = :title, rationale = :rationale, logic = :logic, category = :category, filesAffected = :files, sourceRepo = :repo, sourceOwner = :owner, #status = :status, createdAt = :now',
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: {
+        ':type': 'InnovationPattern',
+        ':title': pattern.title,
+        ':rationale': pattern.rationale,
+        ':logic': pattern.logic,
+        ':category': pattern.category,
+        ':files': pattern.filesAffected,
+        ':repo': sourceRepo,
+        ':owner': sourceOwner,
+        ':status': 'PENDING',
+        ':now': timestamp,
+      },
+    })
+  );
+}
+
+export async function getPendingInnovations() {
+  const response = await docClient.send(
+    new QueryCommand({
+      TableName: process.env.DYNAMO_TABLE,
+      KeyConditionExpression: 'PK = :pk AND begins_with(SK, :sk_prefix)',
+      ExpressionAttributeValues: {
+        ':pk': 'INNOVATION',
+        ':sk_prefix': 'PATTERN#',
+      },
+      ScanIndexForward: false, // Recent first
+    })
+  );
+
+  return (response.Items || []) as InnovationPatternRecord[];
+}
+
+export async function updateInnovationStatus(
+  sk: string,
+  status: 'PROMOTED' | 'REJECTED'
+) {
+  await docClient.send(
+    new UpdateCommand({
+      TableName: process.env.DYNAMO_TABLE,
+      Key: { PK: 'INNOVATION', SK: sk },
+      UpdateExpression: 'SET #status = :status, updatedAt = :now',
+      ExpressionAttributeNames: { '#status': 'status' },
+      ExpressionAttributeValues: {
+        ':status': status,
+        ':now': new Date().toISOString(),
+      },
+    })
+  );
 }

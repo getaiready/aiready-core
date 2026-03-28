@@ -170,31 +170,54 @@ export async function assignAccountToOwner(
 
 /**
  * Assumes the OrganizationAccountAccessRole in the sub-account and returns temporary credentials.
+ * Includes a retry loop to handle propagation delay after account creation.
  *
  * @param accountId - The AWS Account Id of the sub-account to assume into.
  * @returns Temporary credentials object `{ accessKeyId, secretAccessKey, sessionToken }`.
- * @throws When the STS assume-role call does not return credentials.
+ * @throws When the STS assume-role call does not return credentials after retries.
  */
 export async function assumeSubAccountRole(accountId: string) {
   const roleArn = `arn:aws:iam::${accountId}:role/OrganizationAccountAccessRole`;
+  const maxRetries = 10;
+  const delayMs = 15000; // 15 seconds between retries
 
-  const command = new AssumeRoleCommand({
-    RoleArn: roleArn,
-    RoleSessionName: 'ClawMoreBootstrapSession',
-    DurationSeconds: 3600, // 1 hour
-  });
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const command = new AssumeRoleCommand({
+        RoleArn: roleArn,
+        RoleSessionName: 'ClawMoreBootstrapSession',
+        DurationSeconds: 3600, // 1 hour
+      });
 
-  const response = await stsClient.send(command);
+      const response = await stsClient.send(command);
 
-  if (!response.Credentials) {
-    throw new Error('Failed to assume sub-account role');
+      if (!response.Credentials) {
+        throw new Error('Failed to assume sub-account role: No credentials');
+      }
+
+      return {
+        accessKeyId: response.Credentials.AccessKeyId!,
+        secretAccessKey: response.Credentials.SecretAccessKey!,
+        sessionToken: response.Credentials.SessionToken!,
+      };
+    } catch (error: any) {
+      if (
+        error.name === 'AccessDenied' ||
+        error.name === 'InvalidIdentityToken'
+      ) {
+        console.log(
+          `[AWS] Role ${roleArn} not yet assume-able (attempt ${i + 1}/${maxRetries}). Waiting...`
+        );
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        continue;
+      }
+      throw error;
+    }
   }
 
-  return {
-    accessKeyId: response.Credentials.AccessKeyId!,
-    secretAccessKey: response.Credentials.SecretAccessKey!,
-    sessionToken: response.Credentials.SessionToken!,
-  };
+  throw new Error(
+    `Failed to assume sub-account role ${roleArn} after ${maxRetries} attempts`
+  );
 }
 
 /**

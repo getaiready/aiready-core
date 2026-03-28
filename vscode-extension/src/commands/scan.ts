@@ -130,7 +130,7 @@ export function createScanCommands(
     try {
       // Build CLI command - the CLI saves JSON to .aiready/ directory
       const toolsArg = tools.join(',');
-      let cmd = `npx @aiready/cli scan --output json --tools ${toolsArg}`;
+      let cmd = `npx @aiready/cli scan --output json --tools ${toolsArg} --score`;
 
       // Add path argument
       cmd += ` "${path}"`;
@@ -174,12 +174,12 @@ export function createScanCommands(
       const jsonContent = readFileSync(reportPath, 'utf8');
       const result: AIReadyResult = JSON.parse(jsonContent);
 
-      // Determine score - use scoring.overall if available
-      const score = result.scoring?.overall ?? 0;
-      const overallRating = result.scoring?.rating ?? 'Unknown';
-
       // Count issues by severity
       const issueCounts = countIssues(result);
+
+      // Determine score - use scoring.overall if available, otherwise calculate from issues
+      const score = result.scoring?.overall ?? issueCounts.score;
+      const overallRating = result.scoring?.rating ?? issueCounts.rating;
 
       // Update status bar
       const passed = score >= threshold;

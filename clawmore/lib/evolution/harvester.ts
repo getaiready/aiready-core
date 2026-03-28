@@ -1,5 +1,6 @@
 import { Octokit } from '@octokit/rest';
 import { z } from 'zod';
+import { getUserMetadata, createInnovationPatternRecord } from '../db';
 
 export const InnovationPatternSchema = z.object({
   title: z.string().describe('Short, descriptive title of the optimization'),
@@ -28,11 +29,23 @@ export class Harvester {
    */
   public async harvestInnovation(
     owner: string,
-    repo: string
+    repo: string,
+    userEmail: string
   ): Promise<InnovationPattern[]> {
+    console.log(`[Harvester] Checking opt-in status for ${userEmail}...`);
+
+    // 1. Check if user has opted into co-evolution
+    const metadata = await getUserMetadata(userEmail);
+    if (!metadata?.coEvolutionOptIn) {
+      console.log(
+        `[Harvester] Skipping ${owner}/${repo} - User has NOT opted into co-evolution.`
+      );
+      return [];
+    }
+
     console.log(`[Harvester] Scanning ${owner}/${repo} for innovation DNA...`);
 
-    // 1. Get recent commits within the core blueprint prefix
+    // 2. Get recent commits within the core blueprint prefix
     const { data: commits } = await this.octokit.repos.listCommits({
       owner,
       repo,
@@ -42,22 +55,29 @@ export class Harvester {
 
     if (commits.length === 0) return [];
 
-    // 2. Extract Diffs (Simulated for this implementation)
-    // In a real implementation, we would pull the patch and feed it to gpt-5.4-mini
-    // to perform Structured Extraction against InnovationPatternSchema.
+    // 3. AI Extraction (Simulated for now, would use OpenAI/Anthropic)
+    // We would fetch the commit diffs and feed them to an LLM with the Zod schema
+    const extractedPatterns: InnovationPattern[] = [
+      {
+        title: 'Global EventBridge Error Handling Pattern',
+        rationale:
+          'Standardizes dead-letter queue attachment for all cross-account events',
+        logic: 'export const withDLQ = (bus) => { ... }',
+        category: 'reliability',
+        filesAffected: ['infrastructure/core/bus.ts'],
+      },
+    ];
 
-    const samplePattern: InnovationPattern = {
-      title: 'Global EventBridge Error Handling Pattern',
-      rationale:
-        'Standardizes dead-letter queue attachment for all cross-account events',
-      logic: 'export const withDLQ = (bus) => { ... }',
-      category: 'reliability',
-      filesAffected: ['infrastructure/core/bus.ts'],
-    };
+    // 4. Persistence for Curation
+    for (const pattern of extractedPatterns) {
+      await createInnovationPatternRecord({
+        pattern,
+        sourceRepo: repo,
+        sourceOwner: owner,
+      });
+      console.log(`[Harvester] Recorded pending innovation: ${pattern.title}`);
+    }
 
-    console.log(
-      `[Harvester] Successfully extracted innovation: ${samplePattern.title}`
-    );
-    return [samplePattern];
+    return extractedPatterns;
   }
 }

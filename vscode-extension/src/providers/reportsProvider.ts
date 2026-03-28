@@ -54,21 +54,21 @@ function findReportsInDir(dir: string): ScanReport[] {
         const data = JSON.parse(content);
         if (!data) continue;
 
-        const score = data.scoring?.overall ?? 0;
-        const rating = data.scoring?.rating ?? 'Unknown';
-
-        const timestamp = data.scoring?.timestamp
-          ? new Date(data.scoring.timestamp)
-          : file.mtime;
-
-        // countIssues can be expensive or throw if data is malformed
+        // countIssues now returns fallback score/rating if scoring is missing
         let counts;
         try {
           counts = countIssues(data);
         } catch (err) {
           console.warn(`Failed to count issues for ${file.path}:`, err);
-          counts = { total: 0, critical: 0, major: 0, minor: 0, info: 0 };
+          counts = { total: 0, critical: 0, major: 0, minor: 0, info: 0, score: 0, rating: 'Unknown' };
         }
+
+        const score = data.scoring?.overall ?? counts.score;
+        const rating = data.scoring?.rating ?? counts.rating;
+
+        const timestamp = data.scoring?.timestamp
+          ? new Date(data.scoring.timestamp)
+          : file.mtime;
 
         const tools: Array<{ name: string; score: number; rating: string }> =
           [];

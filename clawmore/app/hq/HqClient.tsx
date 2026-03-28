@@ -320,6 +320,32 @@ export default function HqClient({ stats }: HqProps) {
               </div>
             </div>
 
+            {/* Innovation Curation Panel */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6">
+              <h3 className="text-sm font-bold mb-4 italic flex items-center gap-2">
+                <Zap className="w-4 h-4 text-amber-500" />
+                Innovation Curation
+              </h3>
+              <div className="space-y-3">
+                <button className="w-full p-4 bg-zinc-800 hover:bg-amber-500/10 border border-zinc-700 hover:border-amber-500/30 rounded-2xl flex items-center justify-between transition-all group">
+                  <div className="flex flex-col items-start gap-1">
+                    <span className="text-[10px] font-black uppercase text-white">
+                      Pending Patterns
+                    </span>
+                    <span className="text-[9px] font-mono text-zinc-500">
+                      Wait-list for promotion
+                    </span>
+                  </div>
+                  <span className="px-2 py-1 bg-amber-500/20 text-amber-500 rounded-lg text-[10px] font-black">
+                    3 New
+                  </span>
+                </button>
+                <p className="text-[9px] text-zinc-600 font-mono text-center uppercase tracking-widest pt-2">
+                  Promotion triggers global sync
+                </p>
+              </div>
+            </div>
+
             <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6">
               <h3 className="text-sm font-bold mb-4 italic">
                 Platform Actions

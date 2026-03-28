@@ -9,7 +9,7 @@
     "test": "vitest run",
     "start": "next start",
     "lint": "eslint",
-    "warm-pool": "npx ts-node scripts/warm-account-pool.ts"
+    "warm-pool": "npx tsx scripts/warm-account-pool.ts"
   },
   "dependencies": {
     "@aiready/core": "workspace:*",
