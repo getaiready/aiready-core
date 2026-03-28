@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 
 describe('checkHealth', () => {
   afterEach(() => {
@@ -95,7 +95,7 @@ describe('reportFailure', () => {
     vi.restoreAllMocks();
   });
 
-  it('POSTs to alert endpoint with correct payload on unhealthy', async () => {
+  it('signs and publishes to SNS on unhealthy', async () => {
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(new Response('OK', { status: 200 }));
@@ -108,45 +108,36 @@ describe('reportFailure', () => {
       timestamp: '2025-01-01T00:00:00.000Z',
     };
 
-    await reportFailure(result, 'https://alert-api.example.com', 'TestApp');
+    const env = {
+      SNS_TOPIC_ARN:
+        'arn:aws:sns:ap-southeast-2:316759592139:aiready-health-alerts',
+      PROJECT_NAME: 'TestApp',
+      AWS_REGION: 'ap-southeast-2',
+      AWS_ACCESS_KEY_ID: 'test-key',
+      AWS_SECRET_ACCESS_KEY: 'test-secret',
+    };
+
+    await reportFailure(result, env);
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      'https://alert-api.example.com/alert',
+      'https://sns.ap-southeast-2.amazonaws.com/',
       expect.objectContaining({
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: expect.objectContaining({
+          Authorization: expect.stringContaining('AWS4-HMAC-SHA256'),
+        }),
       })
     );
 
-    const body = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string);
-    expect(body.site).toBe('TestApp');
-    expect(body.status).toBe('unhealthy');
-    expect(body.message).toBeDefined();
-    expect(body.timestamp).toBe('2025-01-01T00:00:00.000Z');
+    const body = fetchSpy.mock.calls[0][1]!.body as string;
+    expect(body).toContain('Action=Publish');
+    expect(body).toContain(
+      'TopicArn=arn%3Aaws%3Asns%3Aap-southeast-2%3A316759592139%3Aaiready-health-alerts'
+    );
+    expect(body).toContain('Subject=TestApp+is+unhealthy');
   });
 
-  it('POSTs error message when result has error field', async () => {
-    const fetchSpy = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValue(new Response('OK', { status: 200 }));
-
-    const { reportFailure } = await import('../monitoring/health-check');
-    const result = {
-      url: 'https://example.com',
-      status: 'error' as const,
-      error: 'Connection timeout',
-      timestamp: '2025-01-01T00:00:00.000Z',
-    };
-
-    await reportFailure(result, 'https://alert-api.example.com', 'TestApp');
-
-    const body = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string);
-    expect(body.site).toBe('TestApp');
-    expect(body.status).toBe('error');
-    expect(body.message).toBe('Connection timeout');
-  });
-
-  it('does NOT call fetch for healthy results', async () => {
+  it('does NOT call SNS for healthy results', async () => {
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
 
     const { reportFailure } = await import('../monitoring/health-check');
@@ -157,14 +148,14 @@ describe('reportFailure', () => {
       timestamp: '2025-01-01T00:00:00.000Z',
     };
 
-    await reportFailure(result, 'https://alert-api.example.com', 'TestApp');
+    await reportFailure(result, { SNS_TOPIC_ARN: 'arn:test' });
 
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it('handles fetch errors gracefully without throwing', async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(
-      new Error('Alert endpoint down')
+      new Error('SNS endpoint down')
     );
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -177,11 +168,15 @@ describe('reportFailure', () => {
     };
 
     await expect(
-      reportFailure(result, 'https://alert-api.example.com', 'TestApp')
+      reportFailure(result, {
+        SNS_TOPIC_ARN: 'arn:test',
+        AWS_ACCESS_KEY_ID: 'k',
+        AWS_SECRET_ACCESS_KEY: 's',
+      })
     ).resolves.not.toThrow();
 
     expect(consoleSpy).toHaveBeenCalledWith(
-      'Failed to report failure:',
+      'Failed to publish to SNS:',
       expect.any(Error)
     );
   });
@@ -204,7 +199,7 @@ describe('scheduled handler', () => {
       {
         URL_TO_CHECK: 'https://example.com',
         PROJECT_NAME: 'TestApp',
-        HEALTH_API_URL: 'https://alert-api.example.com',
+        SNS_TOPIC_ARN: 'arn:test',
       },
       {}
     );
@@ -213,9 +208,10 @@ describe('scheduled handler', () => {
   });
 
   it('checks health and reports on unhealthy', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response('Down', { status: 500 })
-    );
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response('Down', { status: 500 })) // health check
+      .mockResolvedValueOnce(new Response('OK', { status: 200 })); // SNS publish
+
     vi.spyOn(console, 'log').mockImplementation(() => {});
 
     const { default: handler } = await import('../monitoring/health-check');
@@ -224,17 +220,17 @@ describe('scheduled handler', () => {
       {
         URL_TO_CHECK: 'https://example.com',
         PROJECT_NAME: 'TestApp',
-        HEALTH_API_URL: 'https://alert-api.example.com',
+        SNS_TOPIC_ARN: 'arn:test',
+        AWS_ACCESS_KEY_ID: 'k',
+        AWS_SECRET_ACCESS_KEY: 's',
       },
       {}
     );
 
-    // Verify reportFailure was called (fetch called with /alert path)
+    // Verify SNS publish was called
     const fetchCalls = vi.mocked(globalThis.fetch).mock.calls;
-    const alertCall = fetchCalls.find(
-      (call) => call[0] === 'https://alert-api.example.com/alert'
-    );
-    expect(alertCall).toBeDefined();
+    expect(fetchCalls.length).toBe(2);
+    expect(fetchCalls[1][0]).toBe('https://sns.ap-southeast-2.amazonaws.com/');
   });
 
   it('logs error and returns when URL_TO_CHECK is missing', async () => {
@@ -246,7 +242,7 @@ describe('scheduled handler', () => {
       {},
       {
         PROJECT_NAME: 'TestApp',
-        HEALTH_API_URL: 'https://alert-api.example.com',
+        SNS_TOPIC_ARN: 'arn:test',
       },
       {}
     );

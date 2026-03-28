@@ -1,5 +1,30 @@
 import { REPORT_STYLES } from './report-styles';
 
+export interface StatCard {
+  value: string | number;
+  label: string;
+  color?: string;
+}
+
+export interface TableConfig {
+  headers: string[];
+  rows: string[][];
+}
+
+export interface HtmlReportSection {
+  title: string;
+  content: string;
+}
+
+export interface ReportOptions {
+  title: string;
+  packageName: string;
+  packageUrl?: string;
+  bugUrl?: string;
+  version?: string;
+  emoji?: string;
+}
+
 /**
  * Generic HTML tag builder to reduce string template noise.
  */
@@ -27,7 +52,7 @@ export function generateReportHero(title: string, subtitle?: string): string {
   });
 }
 
-export function generateStatCards(cards: any[]): string {
+export function generateStatCards(cards: StatCard[]): string {
   const cardsHtml = cards
     .map((c) =>
       tag(
@@ -43,7 +68,7 @@ export function generateStatCards(cards: any[]): string {
   return tag('div', cardsHtml, { class: 'stats' });
 }
 
-export function generateTable(config: any): string {
+export function generateTable(config: TableConfig): string {
   const head = tag(
     'thead',
     tag('tr', config.headers.map((h: string) => tag('th', h)).join(''))
@@ -87,7 +112,7 @@ export function generateIssueSummary(
   );
 }
 
-export function generateReportFooter(options: any): string {
+export function generateReportFooter(options: ReportOptions): string {
   const version = options.version ? ` v${options.version}` : '';
   const links = [];
   if (options.packageUrl)
@@ -122,31 +147,14 @@ export function wrapInCard(content: string, title?: string): string {
   });
 }
 
-export function generateCompleteReport(options: any, body: string): string {
+export function generateCompleteReport(
+  options: ReportOptions,
+  body: string
+): string {
   return (
     generateReportHead(options.title) +
     tag('body', body + generateReportFooter(options))
   );
-}
-
-export interface StatCard {
-  value: string | number;
-  label: string;
-  color?: string;
-}
-
-export interface HtmlReportSection {
-  title: string;
-  content: string;
-}
-
-export interface ReportOptions {
-  title: string;
-  packageName: string;
-  packageUrl?: string;
-  bugUrl?: string;
-  version?: string;
-  emoji?: string;
 }
 
 export function generateStandardHtmlReport(

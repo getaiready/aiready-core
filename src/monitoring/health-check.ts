@@ -4,6 +4,8 @@
  * Configuration is driven by Environment Variables in wrangler.toml
  */
 
+import { signAndFetch, type AwsCredentials } from './aws-signer';
+
 export interface HealthCheckResult {
   url: string;
   status: 'healthy' | 'unhealthy' | 'error';
@@ -51,30 +53,63 @@ export async function checkHealth(
   }
 }
 
+export interface MonitorEnv {
+  URL_TO_CHECK?: string;
+  PROJECT_NAME?: string;
+  SNS_TOPIC_ARN?: string;
+  AWS_REGION?: string;
+  AWS_ACCESS_KEY_ID?: string;
+  AWS_SECRET_ACCESS_KEY?: string;
+}
+
 export async function reportFailure(
   result: HealthCheckResult,
-  healthApiUrl: string,
-  projectName: string
+  env: MonitorEnv
 ) {
   if (result.status === 'healthy') return;
 
-  const payload = {
-    site: projectName,
-    status: result.status,
-    message:
-      result.error ||
-      `Health check failed: ${result.statusCode || 'unknown error'}`,
-    timestamp: result.timestamp,
+  const topicArn = env.SNS_TOPIC_ARN;
+  if (!topicArn) {
+    console.error('SNS_TOPIC_ARN not configured');
+    return;
+  }
+
+  const projectName = env.PROJECT_NAME || 'Unknown';
+  const region = env.AWS_REGION || 'ap-southeast-2';
+
+  const subject = `${projectName} is ${result.status}`;
+  const message = [
+    `Site: ${projectName}`,
+    `URL: ${result.url}`,
+    `Status: ${result.status}`,
+    result.error ? `Error: ${result.error}` : `HTTP ${result.statusCode}`,
+    `Timestamp: ${result.timestamp}`,
+  ].join('\n');
+
+  const body = new URLSearchParams({
+    Action: 'Publish',
+    Version: '2010-03-31',
+    TopicArn: topicArn,
+    Subject: subject,
+    Message: message,
+  }).toString();
+
+  const credentials: AwsCredentials = {
+    accessKeyId: env.AWS_ACCESS_KEY_ID || '',
+    secretAccessKey: env.AWS_SECRET_ACCESS_KEY || '',
+    region,
   };
 
   try {
-    await fetch(`${healthApiUrl}/alert`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
+    const snsUrl = `https://sns.${region}.amazonaws.com/`;
+    const response = await signAndFetch(snsUrl, body, credentials);
+
+    if (!response.ok) {
+      const text = await response.text();
+      console.error(`SNS publish failed (${response.status}): ${text}`);
+    }
   } catch (e) {
-    console.error('Failed to report failure:', e);
+    console.error('Failed to publish to SNS:', e);
   }
 }
 
@@ -84,7 +119,7 @@ interface WorkerHandler {
 }
 
 const handler: WorkerHandler = {
-  async scheduled(_event: any, env: any) {
+  async scheduled(_event: any, env: MonitorEnv) {
     const url = env.URL_TO_CHECK;
     const projectName = env.PROJECT_NAME || 'Unknown Project';
 
@@ -99,11 +134,11 @@ const handler: WorkerHandler = {
     );
 
     if (result.status !== 'healthy') {
-      await reportFailure(result, env.HEALTH_API_URL, projectName);
+      await reportFailure(result, env);
     }
   },
 
-  async fetch(_request: Request, env: any) {
+  async fetch(_request: Request, env: MonitorEnv) {
     const url = env.URL_TO_CHECK;
     if (!url)
       return new Response('URL_TO_CHECK not configured', { status: 500 });

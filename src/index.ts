@@ -13,6 +13,7 @@ export * from './utils/config';
 export * from './utils/visualization';
 export * from './utils/report-formatters';
 export * from './utils/normalization';
+export * from './utils/severity-utils';
 export * from './scoring';
 export * from './utils/rating-helpers';
 export * from './utils/scoring-helpers';
