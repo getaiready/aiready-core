@@ -4,7 +4,7 @@
  * Configuration is driven by Environment Variables in wrangler.toml
  */
 
-interface HealthCheckResult {
+export interface HealthCheckResult {
   url: string;
   status: 'healthy' | 'unhealthy' | 'error';
   statusCode?: number;
@@ -15,7 +15,7 @@ interface HealthCheckResult {
 
 const DEFAULT_TIMEOUT = 10000;
 
-async function checkHealth(
+export async function checkHealth(
   url: string,
   timeout: number = DEFAULT_TIMEOUT
 ): Promise<HealthCheckResult> {
@@ -51,7 +51,7 @@ async function checkHealth(
   }
 }
 
-async function reportFailure(
+export async function reportFailure(
   result: HealthCheckResult,
   healthApiUrl: string,
   projectName: string
@@ -59,10 +59,12 @@ async function reportFailure(
   if (result.status === 'healthy') return;
 
   const payload = {
-    subject: `⚠️ ${projectName} Outage: ${result.url}`,
-    message: `Health check failed for ${projectName} at ${result.timestamp}`,
-    failedUrls: [result.url],
-    details: [result],
+    site: projectName,
+    status: result.status,
+    message:
+      result.error ||
+      `Health check failed: ${result.statusCode || 'unknown error'}`,
+    timestamp: result.timestamp,
   };
 
   try {
