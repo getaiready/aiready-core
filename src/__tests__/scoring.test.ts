@@ -5,8 +5,16 @@ import {
   parseWeightString,
   normalizeToolName,
   getToolWeight,
+  getProjectSizeTier,
+  getRecommendedThreshold,
+  getRatingWithContext,
+  getRatingDisplay,
+  formatScore,
+  formatToolScore,
   DEFAULT_TOOL_WEIGHTS,
+  ScoringProfile,
   type ToolScoringOutput,
+  type ScoringResult,
 } from '../scoring';
 
 describe('Core Scoring Infrastructure', () => {
@@ -137,6 +145,41 @@ describe('Core Scoring Infrastructure', () => {
         'No tool outputs provided for scoring'
       );
     });
+
+    it('should respect scoring profiles', () => {
+      const toolOutputs = new Map<string, ToolScoringOutput>([
+        [
+          'ai-signal-clarity',
+          {
+            toolName: 'ai-signal-clarity',
+            score: 100,
+            rawMetrics: {},
+            factors: [],
+            recommendations: [],
+          },
+        ],
+        [
+          'agent-grounding',
+          {
+            toolName: 'agent-grounding',
+            score: 50,
+            rawMetrics: {},
+            factors: [],
+            recommendations: [],
+          },
+        ],
+      ]);
+
+      const config = { profile: ScoringProfile.Agentic };
+      
+      // Agentic weights: ai-signal-clarity=25, agent-grounding=25
+      // (100 * 25 + 50 * 25) / 50 = (2500 + 1250) / 50 = 3750 / 50 = 75
+      const result = calculateOverallScore(toolOutputs, config);
+
+      expect(result.overall).toBe(75);
+      expect(result.calculation.weights['ai-signal-clarity']).toBe(25);
+      expect(result.calculation.weights['agent-grounding']).toBe(25);
+    });
   });
 
   describe('getRating', () => {
@@ -226,6 +269,70 @@ describe('Core Scoring Infrastructure', () => {
       const weight = getToolWeight('unknown-tool', undefined, undefined);
 
       expect(weight).toBe(5);
+    });
+  });
+
+  describe('Project Size and Thresholds', () => {
+    it('should determine correct project size tier', () => {
+      expect(getProjectSizeTier(10)).toBe('xs');
+      expect(getProjectSizeTier(100)).toBe('small');
+      expect(getProjectSizeTier(300)).toBe('medium');
+      expect(getProjectSizeTier(1000)).toBe('large');
+      expect(getProjectSizeTier(5000)).toBe('enterprise');
+    });
+
+    it('should calculate recommended threshold based on size and tier', () => {
+      expect(getRecommendedThreshold(10, 'standard')).toBe(80);
+      expect(getRecommendedThreshold(100, 'standard')).toBe(75);
+      expect(getRecommendedThreshold(5000, 'standard')).toBe(58);
+      
+      // Model bonuses
+      expect(getRecommendedThreshold(100, 'extended')).toBe(73); // 75 - 2
+      expect(getRecommendedThreshold(100, 'frontier')).toBe(72); // 75 - 3
+    });
+
+    it('should provide size-aware ratings', () => {
+      // Small project (80 threshold): 85 is Excellent? 
+      // Rating with context: score - threshold + 70
+      // 85 - 80 + 70 = 75 -> Good
+      expect(getRatingWithContext(85, 10, 'standard')).toBe('Good');
+      
+      // Large project (58 threshold): 65
+      // 65 - 58 + 70 = 77 -> Good
+      expect(getRatingWithContext(65, 5000, 'standard')).toBe('Good');
+    });
+  });
+
+  describe('Formatting and Display', () => {
+    it('should get correct display properties for ratings', () => {
+      expect(getRatingDisplay('Excellent')).toEqual({ emoji: '✅', color: 'green' });
+      expect(getRatingDisplay('Critical')).toEqual({ emoji: '❌', color: 'red' });
+      expect(getRatingDisplay('Unknown')).toEqual({ emoji: '❓', color: 'gray' });
+    });
+
+    it('should format overall score correctly', () => {
+      const result: any = { overall: 85, rating: 'Good' };
+      expect(formatScore(result)).toBe('85/100 (Good) 👍');
+    });
+
+    it('should format tool score with factors and recommendations', () => {
+      const output: ToolScoringOutput = {
+        toolName: 'test-tool',
+        score: 70,
+        rawMetrics: {},
+        factors: [
+          { name: 'Test Factor', impact: -5, description: 'Negative impact' }
+        ],
+        recommendations: [
+          { action: 'Fix this', priority: 'high', estimatedImpact: 10 }
+        ]
+      };
+
+      const formatted = formatToolScore(output);
+      expect(formatted).toContain('Score: 70/100');
+      expect(formatted).toContain('Test Factor: -5');
+      expect(formatted).toContain('🔴 Fix this');
+      expect(formatted).toContain('Impact: +10 points');
     });
   });
 });

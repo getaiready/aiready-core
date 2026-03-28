@@ -17,7 +17,7 @@ export function analyzeNodeMetadata(
 
   // Collect documentation/comments immediately above the node
   try {
-    let prev: Parser.Node | null = (node as any).previousSibling || null;
+    let prev: Parser.Node | null = node.previousSibling;
     while (prev && /comment/i.test(prev.type)) {
       const text = prev.text || '';
       const loc = {
@@ -64,9 +64,8 @@ export function analyzeNodeMetadata(
       node.type === 'function_definition' ||
       node.type === 'class_definition'
     ) {
-      const body = (node as any).childForFieldName
-        ? (node as any).childForFieldName('body')
-        : node.children.find((c) => c.type === 'block');
+      const body = node.childForFieldName('body') || 
+                   node.children.find((c) => c.type === 'block');
 
       if (body && body.children.length > 0) {
         const firstStmt = body.children[0];
@@ -148,11 +147,11 @@ export function analyzeNodeMetadata(
 
   // Find likely function/body node
   const body =
-    (node as any).childForFieldName?.('body') ||
+    node.childForFieldName('body') ||
     node.children.find((c) =>
       /body|block|class_body|declaration_list|function_body/.test(c.type)
     );
-  if (body) walk(body as Parser.Node);
+  if (body) walk(body);
 
   return metadata;
 }

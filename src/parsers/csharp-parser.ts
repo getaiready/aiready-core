@@ -49,7 +49,7 @@ export class CSharpParser extends BaseLanguageParser {
    */
   protected parseRegex(code: string): ParseResult {
     const lines = code.split('\n');
-    const exports: ExportInfo[] = [];
+    const exports: any[] = [];
     const imports: FileImport[] = [];
 
     const usingRegex = /^using\s+([a-zA-Z0-9_.]+);/;
@@ -86,7 +86,7 @@ export class CSharpParser extends BaseLanguageParser {
             start: { line: idx + 1, column: 0 },
             end: { line: idx + 1, column: line.length },
           },
-        });
+        } as any);
       }
 
       const methodMatch = line.match(methodRegex);
@@ -106,7 +106,7 @@ export class CSharpParser extends BaseLanguageParser {
             start: { line: idx + 1, column: 0 },
             end: { line: idx + 1, column: line.length },
           },
-        });
+        } as any);
       }
     });
 
@@ -177,7 +177,7 @@ export class CSharpParser extends BaseLanguageParser {
     rootNode: Parser.Node,
     code: string
   ): ExportInfo[] {
-    const exports: ExportInfo[] = [];
+    const exports: any[] = [];
 
     const traverse = (
       node: Parser.Node,
@@ -218,16 +218,23 @@ export class CSharpParser extends BaseLanguageParser {
 
           if (isPublic) {
             const metadata = this.analyzeMetadata(node, code);
-            const type = node.type.replace('_declaration', '') as any;
+            const nodeType = node.type.replace('_declaration', '');
+            let exportType: any = 'class';
+            if (nodeType === 'record' || nodeType === 'struct' || nodeType === 'enum') {
+              exportType = 'class';
+            } else if (nodeType === 'interface' || nodeType === 'interface_declaration') {
+              exportType = 'interface';
+            }
+
             const fullName = nextClass
               ? `${nextClass}.${nameNode.text}`
               : nextNamespace
                 ? `${nextNamespace}.${nameNode.text}`
                 : nameNode.text;
 
-            exports.push({
+            const exportItem: any = {
               name: fullName,
-              type: type === 'record' ? 'class' : type,
+              type: exportType,
               loc: {
                 start: {
                   line: node.startPosition.row + 1,
@@ -240,7 +247,8 @@ export class CSharpParser extends BaseLanguageParser {
               },
               visibility: modifiers.includes('public') ? 'public' : 'protected',
               ...metadata,
-            });
+            };
+            exports.push(exportItem);
             nextClass = fullName;
           }
         }
@@ -258,12 +266,12 @@ export class CSharpParser extends BaseLanguageParser {
 
           if (isPublic) {
             const metadata = this.analyzeMetadata(node, code);
-            exports.push({
+            const methodItem: any = {
               name: nameNode.text,
               type:
                 node.type === 'method_declaration'
                   ? 'function'
-                  : ('property' as any),
+                  : 'variable',
               parentClass: currentClass,
               loc: {
                 start: {
@@ -281,7 +289,8 @@ export class CSharpParser extends BaseLanguageParser {
                   ? this.extractParameters(node)
                   : undefined,
               ...metadata,
-            });
+            };
+            exports.push(methodItem);
           }
         }
       }

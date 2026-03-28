@@ -27,7 +27,7 @@ export class TypeScriptParser implements LanguageParser {
     return this.extensions.some((ext) => filePath.endsWith(ext));
   }
 
-  async getAST(code: string, filePath: string): Promise<any> {
+  async getAST(code: string, filePath: string): Promise<TSESTree.Program> {
     try {
       return parse(code, {
         filePath,
@@ -37,10 +37,11 @@ export class TypeScriptParser implements LanguageParser {
         comment: true,
         jsx: filePath.endsWith('x'),
       });
-    } catch (error: any) {
-      throw new ParseError(error.message, filePath, {
-        line: error.lineNumber || 1,
-        column: error.column || 0,
+    } catch (error) {
+      const err = error as any;
+      throw new ParseError(err.message || 'Unknown error', filePath, {
+        line: err.lineNumber || 1,
+        column: err.column || 0,
       });
     }
   }
@@ -83,7 +84,7 @@ export class TypeScriptParser implements LanguageParser {
     };
   }
 
-  analyzeMetadata(node: any, code: string): Partial<ExportInfo> {
+  analyzeMetadata(node: TSESTree.Node, code: string): Partial<ExportInfo> {
     if (!code) return {};
     // Implementation for behavioral analysis (purity, etc.)
     return {
@@ -100,7 +101,7 @@ export class TypeScriptParser implements LanguageParser {
         const specifiers: string[] = [];
         let isTypeOnly = false;
 
-        if ((node as any).importKind === 'type') {
+        if (node.importKind === 'type') {
           isTypeOnly = true;
         }
 
@@ -204,7 +205,7 @@ export class TypeScriptParser implements LanguageParser {
                   this.createExport(
                     decl.id.name,
                     'const',
-                    node, // Pass the outer ExportNamedDeclaration
+                    node,
                     code,
                     filePath,
                     decl.init
@@ -228,11 +229,11 @@ export class TypeScriptParser implements LanguageParser {
 
   private createExport(
     name: string,
-    type: any,
-    node: any,
+    type: ExportInfo['type'] | 'interface' | 'type',
+    node: TSESTree.Node,
     code: string,
     filePath: string,
-    initializer?: any
+    initializer?: TSESTree.Expression | null
   ): ExportInfo {
     const documentation = this.extractDocumentation(node, code);
     let methodCount: number | undefined;
@@ -253,12 +254,14 @@ export class TypeScriptParser implements LanguageParser {
     }
 
     // Resolve internal node if this is an export declaration
-    const structNode =
-      node.type === 'ExportNamedDeclaration'
+    let structNode: TSESTree.Node =
+      node.type === 'ExportNamedDeclaration' && node.declaration
         ? node.declaration
         : node.type === 'ExportDefaultDeclaration'
-          ? node.declaration
+          ? (node.declaration as TSESTree.Node)
           : node;
+
+    if (!structNode) structNode = node;
 
     // Type detection for TypeScript/JavaScript
     if (filePath.endsWith('.ts') || filePath.endsWith('.tsx')) {
@@ -272,16 +275,20 @@ export class TypeScriptParser implements LanguageParser {
         structNode.type === 'FunctionDeclaration' ||
         structNode.type === 'TSDeclareFunction'
       ) {
+        const func = structNode as
+          | TSESTree.FunctionDeclaration
+          | TSESTree.TSDeclareFunction;
         // Check return type and parameters
-        const hasReturnType = !!structNode.returnType;
+        const hasReturnType = !!func.returnType;
         const allParamsTyped =
-          structNode.params.length === 0 ||
-          structNode.params.every((p: any) => !!p.typeAnnotation);
+          func.params.length === 0 ||
+          func.params.every((p: any) => !!p.typeAnnotation);
         isTyped = hasReturnType && allParamsTyped;
       } else if (structNode.type === 'VariableDeclaration') {
+        const variable = structNode as TSESTree.VariableDeclaration;
         // For variables, check if the identifier has a type annotation
         // or if it's a simple literal (implicit type)
-        isTyped = structNode.declarations.every(
+        isTyped = variable.declarations.every(
           (d: any) => !!d.id.typeAnnotation || !!d.init
         );
       } else if (structNode.type === 'ClassDeclaration') {
@@ -302,22 +309,24 @@ export class TypeScriptParser implements LanguageParser {
           : structNode.body.body;
 
       methodCount = body.filter(
-        (m: any) =>
+        (m) =>
           m.type === 'MethodDefinition' || m.type === 'TSMethodSignature'
       ).length;
       propertyCount = body.filter(
-        (m: any) =>
+        (m) =>
           m.type === 'PropertyDefinition' || m.type === 'TSPropertySignature'
       ).length;
 
       // Extract constructor parameters for classes
       if (structNode.type === 'ClassDeclaration') {
         const constructor = body.find(
-          (m: any) => m.type === 'MethodDefinition' && m.kind === 'constructor'
-        );
+          (m) =>
+            m.type === 'MethodDefinition' &&
+            m.kind === 'constructor'
+        ) as TSESTree.MethodDefinition | undefined;
         if (constructor && constructor.value && constructor.value.params) {
           parameters = constructor.value.params
-            .map((p: any) => {
+            .map((p) => {
               if (p.type === 'Identifier') return p.name;
               if (
                 p.type === 'TSParameterProperty' &&
@@ -327,7 +336,7 @@ export class TypeScriptParser implements LanguageParser {
               }
               return undefined;
             })
-            .filter(Boolean);
+            .filter((p): p is string => !!p);
         }
       }
     }
@@ -343,17 +352,17 @@ export class TypeScriptParser implements LanguageParser {
         structNode.type === 'MethodDefinition' ? structNode.value : structNode;
       if (funcNode && funcNode.params) {
         parameters = funcNode.params
-          .map((p: any) => {
+          .map((p) => {
             if (p.type === 'Identifier') return p.name;
             return undefined;
           })
-          .filter(Boolean);
+          .filter((p): p is string => !!p);
       }
     }
 
     return {
       name,
-      type,
+      type: type as ExportInfo['type'],
       isPrimitive,
       loc: node.loc
         ? {
@@ -371,7 +380,7 @@ export class TypeScriptParser implements LanguageParser {
     };
   }
 
-  private extractDocumentation(node: any, code: string): any {
+  private extractDocumentation(node: TSESTree.Node, code: string): any {
     // Look for JSDoc style comments in the code before the node
     if (node.range) {
       const start = node.range[0];
@@ -389,31 +398,31 @@ export class TypeScriptParser implements LanguageParser {
     return undefined;
   }
 
-  private isLikelyPure(node: any): boolean {
-    const structNode =
-      node.type === 'ExportNamedDeclaration'
-        ? node.declaration
-        : node.type === 'ExportDefaultDeclaration'
-          ? node.declaration
-          : node;
+  private isLikelyPure(node: TSESTree.Node): boolean {
+    const sn: TSESTree.Node = (node.type === 'ExportNamedDeclaration' && node.declaration)
+      ? node.declaration
+      : node.type === 'ExportDefaultDeclaration'
+        ? (node.declaration as TSESTree.Node)
+        : node;
+
+    if (!sn) return false;
 
     // Constants are likely pure
     if (
-      structNode.type === 'VariableDeclaration' &&
-      structNode.kind === 'const'
+      sn.type === 'VariableDeclaration' &&
+      sn.kind === 'const'
     )
       return true;
 
     // For functions, check if the body has obvious side effects
     if (
-      structNode.type === 'FunctionDeclaration' ||
-      structNode.type === 'TSDeclareFunction' ||
-      (structNode.type === 'MethodDefinition' && structNode.value)
+      sn.type === 'FunctionDeclaration' ||
+      sn.type === 'MethodDefinition'
     ) {
-      const body =
-        structNode.type === 'MethodDefinition'
-          ? structNode.value.body
-          : structNode.body;
+      const body = sn.type === 'MethodDefinition' 
+        ? (sn.value as TSESTree.FunctionExpression).body
+        : (sn as TSESTree.FunctionDeclaration).body;
+
       if (body && body.type === 'BlockStatement') {
         const bodyContent = JSON.stringify(body);
         // Look for common side-effect indicators in the stringified AST

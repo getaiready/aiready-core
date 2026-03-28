@@ -76,6 +76,9 @@ export class PythonParser extends BaseLanguageParser {
   readonly language = Language.Python;
   readonly extensions = ['.py'];
 
+  /**
+   * Returns the canonical name of this parser.
+   */
   protected getParserName(): string {
     return 'python';
   }
@@ -308,20 +311,14 @@ export class PythonParser extends BaseLanguageParser {
 
     return paramsNode.children
       .filter(
-        (c: Parser.Node) =>
+        (c: Parser.Node): c is Parser.Node =>
           c.type === PYTHON_CONSTANTS.NODES.IDENTIFIER ||
           c.type === PYTHON_CONSTANTS.NODES.TYPED_PARAMETER ||
           c.type === PYTHON_CONSTANTS.NODES.DEFAULT_PARAMETER
       )
       .map((c: Parser.Node) => {
         if (c.type === PYTHON_CONSTANTS.NODES.IDENTIFIER) return c.text;
-        if (
-          c.type === PYTHON_CONSTANTS.NODES.TYPED_PARAMETER ||
-          c.type === PYTHON_CONSTANTS.NODES.DEFAULT_PARAMETER
-        ) {
-          return c.firstChild?.text || 'unknown';
-        }
-        return 'unknown';
+        return c.firstChild?.text || 'unknown';
       });
   }
 
@@ -342,10 +339,13 @@ export class PythonParser extends BaseLanguageParser {
         ],
       };
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
       const wrapper = new Error(
-        `Failed to parse Python file ${filePath}: ${(error as Error).message}`
+        `Failed to parse Python file ${filePath}: ${message}`
       );
-      (wrapper as any).cause = error;
+      if (error instanceof Error) {
+        (wrapper as any).cause = error;
+      }
       throw wrapper;
     }
   }

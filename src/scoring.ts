@@ -25,6 +25,35 @@ export { RecommendationPriority };
 export type { ToolScoringOutput, ScoringResult, ScoringConfig };
 
 /**
+ * Constants for the scoring engine to eliminate magic literals.
+ */
+const SCORING_CONSTANTS = {
+  WEIGHTS: {
+    DEFAULT: 5,
+    MAX: 100,
+  },
+  THRESHOLDS: {
+    XS: 80,
+    SMALL: 75,
+    MEDIUM: 70,
+    LARGE: 65,
+    ENTERPRISE: 58,
+    NORMALIZATION_OFFSET: 70,
+  },
+  FILE_COUNTS: {
+    XS: 50,
+    SMALL: 200,
+    MEDIUM: 500,
+    LARGE: 2000,
+  },
+  DELIMITERS: {
+    LIST: ',',
+    PAIR: ':',
+    FORMULA_JOIN: ' + ',
+  },
+};
+
+/**
  * Default weights for known tools.
  */
 export const DEFAULT_TOOL_WEIGHTS: Record<string, number> = {
@@ -160,11 +189,11 @@ export const CONTEXT_TIER_THRESHOLDS: Record<
  * Larger projects have slightly lower thresholds due to inherent complexity.
  */
 export const SIZE_ADJUSTED_THRESHOLDS: Record<string, number> = {
-  xs: 80, // < 50 files
-  small: 75, // 50-200 files
-  medium: 70, // 200-500 files
-  large: 65, // 500-2000 files
-  enterprise: 58, // 2000+ files
+  xs: SCORING_CONSTANTS.THRESHOLDS.XS, // < 50 files
+  small: SCORING_CONSTANTS.THRESHOLDS.SMALL, // 50-200 files
+  medium: SCORING_CONSTANTS.THRESHOLDS.MEDIUM, // 200-500 files
+  large: SCORING_CONSTANTS.THRESHOLDS.LARGE, // 500-2000 files
+  enterprise: SCORING_CONSTANTS.THRESHOLDS.ENTERPRISE, // 2000+ files
 };
 
 /**
@@ -176,10 +205,10 @@ export const SIZE_ADJUSTED_THRESHOLDS: Record<string, number> = {
 export function getProjectSizeTier(
   fileCount: number
 ): keyof typeof SIZE_ADJUSTED_THRESHOLDS {
-  if (fileCount < 50) return 'xs';
-  if (fileCount < 200) return 'small';
-  if (fileCount < 500) return 'medium';
-  if (fileCount < 2000) return 'large';
+  if (fileCount < SCORING_CONSTANTS.FILE_COUNTS.XS) return 'xs';
+  if (fileCount < SCORING_CONSTANTS.FILE_COUNTS.SMALL) return 'small';
+  if (fileCount < SCORING_CONSTANTS.FILE_COUNTS.MEDIUM) return 'medium';
+  if (fileCount < SCORING_CONSTANTS.FILE_COUNTS.LARGE) return 'large';
   return 'enterprise';
 }
 
@@ -232,7 +261,11 @@ export function getToolWeight(
   if (toolConfig?.scoreWeight !== undefined) return toolConfig.scoreWeight;
 
   const profileWeights = SCORING_PROFILES[profile] ?? DEFAULT_TOOL_WEIGHTS;
-  return profileWeights[toolName] ?? DEFAULT_TOOL_WEIGHTS[toolName] ?? 5;
+  return (
+    profileWeights[toolName] ??
+    DEFAULT_TOOL_WEIGHTS[toolName] ??
+    SCORING_CONSTANTS.WEIGHTS.DEFAULT
+  );
 }
 
 /**
@@ -247,9 +280,11 @@ export function parseWeightString(weightStr?: string): Map<string, number> {
   const weights = new Map<string, number>();
   if (!weightStr) return weights;
 
-  const pairs = weightStr.split(',');
+  const pairs = weightStr.split(SCORING_CONSTANTS.DELIMITERS.LIST);
   for (const pair of pairs) {
-    const [toolShortName, weightValueStr] = pair.split(':');
+    const [toolShortName, weightValueStr] = pair.split(
+      SCORING_CONSTANTS.DELIMITERS.PAIR
+    );
     if (toolShortName && weightValueStr) {
       const toolName = normalizeToolName(toolShortName.trim());
       const weight = parseInt(weightValueStr.trim(), 10);
@@ -273,7 +308,7 @@ export function parseWeightString(weightStr?: string): Map<string, number> {
  */
 export function calculateOverallScore(
   toolOutputs: Map<string, ToolScoringOutput>,
-  config?: any,
+  config?: ScoringConfig,
   cliWeights?: Map<string, number>
 ): ScoringResult {
   if (toolOutputs.size === 0) {
@@ -282,7 +317,7 @@ export function calculateOverallScore(
 
   // Determine profile from config or use default
   const profile =
-    (config?.scoring?.profile as ScoringProfile) || ScoringProfile.Default;
+    (config?.profile as ScoringProfile) || ScoringProfile.Default;
 
   const weights = new Map<string, number>();
   for (const [toolName] of toolOutputs.entries()) {
@@ -303,7 +338,7 @@ export function calculateOverallScore(
   const calculationWeights: Record<string, number> = {};
 
   for (const [toolName, output] of toolOutputs.entries()) {
-    const weight = weights.get(toolName) ?? 5;
+    const weight = weights.get(toolName) ?? SCORING_CONSTANTS.WEIGHTS.DEFAULT;
     weightedSum += output.score * weight;
     totalWeight += weight;
     toolsUsed.push(toolName);
@@ -316,11 +351,11 @@ export function calculateOverallScore(
 
   const formulaParts = Array.from(toolOutputs.entries()).map(
     ([name, output]) => {
-      const weight = weights.get(name) ?? 5;
+      const weight = weights.get(name) ?? SCORING_CONSTANTS.WEIGHTS.DEFAULT;
       return `(${output.score} × ${weight})`;
     }
   );
-  const formulaStr = `[${formulaParts.join(' + ')}] / ${totalWeight} = ${overall}`;
+  const formulaStr = `[${formulaParts.join(SCORING_CONSTANTS.DELIMITERS.FORMULA_JOIN)}] / ${totalWeight} = ${overall}`;
 
   return {
     overall,
@@ -352,7 +387,7 @@ export function getRatingWithContext(
   modelTier: ModelContextTier = 'standard'
 ): ReadinessRating {
   const threshold = getRecommendedThreshold(fileCount, modelTier);
-  const normalized = score - threshold + 70;
+  const normalized = score - threshold + SCORING_CONSTANTS.THRESHOLDS.NORMALIZATION_OFFSET;
   return getRating(normalized);
 }
 

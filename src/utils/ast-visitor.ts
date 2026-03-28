@@ -21,7 +21,7 @@ export function extractFileImports(ast: TSESTree.Program): FileImport[] {
         if (spec.type === 'ImportSpecifier') {
           const imported = spec.imported;
           const importName =
-            imported.type === 'Identifier' ? imported.name : imported.value;
+            imported.type === 'Identifier' ? imported.name : (imported as any).value;
           specifiers.push(importName);
         } else if (spec.type === 'ImportDefaultSpecifier') {
           specifiers.push('default');
@@ -75,11 +75,11 @@ export function extractExportsWithDependencies(
           if (spec.type === 'ExportSpecifier') {
             const name =
               spec.exported.type === 'Identifier'
-                ? spec.exported.name
-                : (spec.exported as any).value;
+                ? (spec.exported as any).name
+                : (spec.exported as any).value as string;
             exports.push({
               name,
-              type: 'const', // Simplified, could be any type from source
+              type: 'const' as ExportWithImports['type'], // Simplified, could be any type from source
               source,
               imports: [],
               dependencies: [],
@@ -94,33 +94,33 @@ export function extractExportsWithDependencies(
       const typeReferences = extractTypeReferences(node.declaration);
       exports.push({
         name: 'default',
-        type: 'default',
+        type: 'default' as ExportWithImports['type'],
         imports: usedImports,
         dependencies: [],
-        typeReferences,
+        typeReferences: [],
         loc: node.loc,
-      });
+      } as any);
     } else if (node.type === 'ExportAllDeclaration') {
       // Handle export * from './y'
-      const source = node.source.value as string;
+      const source = (node as any).source.value as string;
       let name = '*';
 
       if (node.exported) {
         name =
-          node.exported.type === 'Identifier'
-            ? node.exported.name
-            : (node.exported as any).value;
+          (node.exported as any).type === 'Identifier'
+            ? (node.exported as any).name
+            : (node.exported as any).value as string;
       }
 
       exports.push({
         name,
-        type: 'all',
+        type: 'all' as ExportWithImports['type'],
         source,
         imports: [],
         dependencies: [],
         typeReferences: [],
         loc: node.loc,
-      });
+      } as any);
     }
   }
 
@@ -180,16 +180,17 @@ export function findUsedImports(
 
     // Recursively visit child nodes
     for (const key in n) {
+      if (key === 'parent') continue;
       const value = (n as any)[key];
       if (value && typeof value === 'object') {
         if (Array.isArray(value)) {
           value.forEach((child) => {
             if (child && typeof child === 'object' && 'type' in child) {
-              visit(child);
+              visit(child as any);
             }
           });
         } else if ('type' in value) {
-          visit(value);
+          visit(value as any);
         }
       }
     }
@@ -241,6 +242,7 @@ export function extractTypeReferences(node: TSESTree.Node): string[] {
 
     // Recursively visit children
     for (const key of Object.keys(n)) {
+      if (key === 'parent') continue;
       const value = n[key];
       if (Array.isArray(value)) {
         value.forEach(visit);

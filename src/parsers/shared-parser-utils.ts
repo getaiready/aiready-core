@@ -2,6 +2,17 @@ import * as Parser from 'web-tree-sitter';
 import { ExportInfo } from '../types/language';
 
 /**
+ * Helper to safely access tree-sitter node properties that may not be in TypeScript definitions
+ */
+function getNodeProperty<K extends string>(
+  node: Parser.Node | null,
+  prop: K
+): Parser.Node | null {
+  if (!node) return null;
+  return (node as unknown as Record<K, Parser.Node | null>)[prop] ?? null;
+}
+
+/**
  * Common regex patterns and keywords for metadata analysis across languages
  */
 export const ASYNC_KEYWORDS = [
@@ -50,13 +61,13 @@ export function analyzeGeneralMetadata(
   // 1. Documentation extraction (heuristic-based)
   try {
     let prev: Parser.Node | null =
-      (node as any).previousNamedSibling ||
-      (node as any).previousSibling ||
+      getNodeProperty(node, 'previousNamedSibling') ||
+      getNodeProperty(node, 'previousSibling') ||
       null;
 
     // Skip whitespace nodes
     while (prev && (!prev.type || !prev.text.trim())) {
-      prev = (prev as any).previousSibling || null;
+      prev = getNodeProperty(prev, 'previousSibling');
     }
 
     // Fallback: search parent children if siblings are missing (some grammars)
@@ -75,12 +86,12 @@ export function analyzeGeneralMetadata(
     // Skip attribute lists (common in C#, Java, TypeScript)
     while (prev && /attribute|decorator/i.test(prev.type)) {
       prev =
-        (prev as any).previousNamedSibling ||
-        (prev as any).previousSibling ||
+        getNodeProperty(prev, 'previousNamedSibling') ||
+        getNodeProperty(prev, 'previousSibling') ||
         null;
       // Skip whitespace after attributes
       while (prev && (!prev.type || !prev.text.trim())) {
-        prev = (prev as any).previousSibling || null;
+        prev = getNodeProperty(prev, 'previousSibling');
       }
     }
 
@@ -115,7 +126,7 @@ export function analyzeGeneralMetadata(
         };
         break;
       }
-      prev = (prev as any).previousSibling || null;
+      prev = getNodeProperty(prev, 'previousSibling');
     }
   } catch {
     // best-effort
@@ -173,11 +184,11 @@ export function extractParameterNames(node: Parser.Node): string[] {
 
   const candidates: (Parser.Node | null)[] = [
     // common field name
-    (node as any).childForFieldName
-      ? (node as any).childForFieldName('parameters')
+    getNodeProperty(node, 'childForFieldName')
+      ? getNodeProperty(node, 'childForFieldName')?.childForFieldName?.('parameters') ?? null
       : null,
-    (node as any).childForFieldName
-      ? (node as any).childForFieldName('parameter_list')
+    getNodeProperty(node, 'childForFieldName')
+      ? getNodeProperty(node, 'childForFieldName')?.childForFieldName?.('parameter_list') ?? null
       : null,
     node.children.find((c) => c.type === 'parameter_list') || null,
     node.children.find((c) => c.type === 'parameters') || null,
@@ -193,7 +204,7 @@ export function extractParameterNames(node: Parser.Node): string[] {
 
     // Try common identifier positions
     const id =
-      (child as any).childForFieldName?.('name') ||
+      getNodeProperty(child, 'childForFieldName')?.childForFieldName?.('name') ||
       child.children.find((c) =>
         [
           'identifier',

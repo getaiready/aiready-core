@@ -99,7 +99,7 @@ export class GoParser extends BaseLanguageParser {
           name.toLowerCase().includes('impure') || line.includes('fmt.Print');
         exports.push({
           name,
-          type: 'function',
+          type: 'function' as ExportInfo['type'],
           visibility: isPublic ? 'public' : 'private',
           isPure: !isImpure,
           hasSideEffects: isImpure,
@@ -116,7 +116,7 @@ export class GoParser extends BaseLanguageParser {
       if (typeMatch) {
         exports.push({
           name: typeMatch[1],
-          type: typeMatch[2] === 'struct' ? 'class' : 'interface',
+          type: (typeMatch[2] === 'struct' ? 'class' : 'interface') as ExportInfo['type'],
           visibility: 'public',
           isPure: true,
           hasSideEffects: false,
@@ -235,7 +235,7 @@ export class GoParser extends BaseLanguageParser {
             : 'interface';
           exports.push({
             name: nameNode.text,
-            type: type as any,
+            type: type as 'class' | 'interface',
             loc: {
               start: {
                 line: node.startPosition.row + 1,

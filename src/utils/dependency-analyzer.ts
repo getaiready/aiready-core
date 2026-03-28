@@ -37,7 +37,7 @@ export async function parseFileExports(
       return {
         exports: result.exports.map((e) => ({
           name: e.name,
-          type: e.type as any,
+          type: e.type as ExportWithImports['type'],
           imports: e.imports || [],
           dependencies: e.dependencies || [],
           typeReferences: e.typeReferences || [],

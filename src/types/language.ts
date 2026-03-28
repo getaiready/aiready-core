@@ -57,7 +57,8 @@ export interface ExportInfo {
     | 'type'
     | 'interface'
     | 'default'
-    | 'variable';
+    | 'variable'
+    | 'all';
   loc?: SourceRange;
   /** Imports used within this export */
   imports?: string[];

@@ -1,8 +1,4 @@
 /**
- * AST Parsing and Export Extraction Types
- */
-
-/**
  * Location information in source code
  */
 export interface SourceLocation {
@@ -18,16 +14,11 @@ export interface SourceRange {
   end: SourceLocation;
 }
 
+import { ExportInfo } from './language';
+
 export interface ExportWithImports {
   name: string;
-  type:
-    | 'function'
-    | 'class'
-    | 'const'
-    | 'type'
-    | 'interface'
-    | 'default'
-    | 'all';
+  type: ExportInfo['type'];
   source?: string; // Module being re-exported from
   imports: string[]; // Imports used within this export's scope
   dependencies: string[]; // Other exports from same file this depends on

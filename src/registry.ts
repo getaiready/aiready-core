@@ -89,11 +89,11 @@ export class ToolRegistry {
   // --- Static Compatibility Layer ---
 
   private static getGlobalRegistry(): ToolRegistry {
-    const g = globalThis as any;
+    const g = globalThis as Record<string, unknown>;
     if (!g.__AIRE_TOOL_REGISTRY_INSTANCE__) {
       g.__AIRE_TOOL_REGISTRY_INSTANCE__ = new ToolRegistry('global');
     }
-    return g.__AIRE_TOOL_REGISTRY_INSTANCE__;
+    return g.__AIRE_TOOL_REGISTRY_INSTANCE__ as ToolRegistry;
   }
 
   /**

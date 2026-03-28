@@ -270,7 +270,12 @@ export function calculateTestabilityIndex(params: {
     },
     aiChangeSafetyRating,
     recommendations,
-    fileMetrics: fileMetrics as any,
+    fileMetrics: fileMetrics as Array<{
+      filePath: string;
+      score: number;
+      purityScore: number;
+      isEntryPoint: boolean;
+    }>,
     libraryScore: Math.max(0, fileMetrics ? libraryPurityScore : purityScore),
   };
 }

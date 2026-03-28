@@ -170,7 +170,10 @@ export function generateValueChain(params: {
 }): TechnicalValueChain {
   const { issueType, count, severity } = params;
 
-  const impacts: Record<string, any> = {
+  const impacts: Record<
+    string,
+    { ai: string; dev: string; risk: 'low' | 'moderate' | 'high' | 'critical' }
+  > = {
     'duplicate-pattern': {
       ai: 'Ambiguous context leads to code generation variants. AI picks wrong implementation 40% of the time.',
       dev: 'Developers must manually resolve conflicts between suggested variants.',
@@ -191,7 +194,7 @@ export function generateValueChain(params: {
   const impact = impacts[issueType] || {
     ai: 'Reduced suggestion quality.',
     dev: 'Slowed development velocity.',
-    risk: 'moderate',
+    risk: 'moderate' as const,
   };
 
   const productivityLoss =
@@ -212,7 +215,7 @@ export function generateValueChain(params: {
     businessOutcome: {
       directCost: count * 12,
       opportunityCost: productivityLoss * 15000,
-      riskLevel: impact.risk as any,
+      riskLevel: impact.risk,
     },
   };
 }

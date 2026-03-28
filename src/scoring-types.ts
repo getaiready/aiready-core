@@ -90,4 +90,10 @@ export interface ScoringConfig {
 
   /** Target file path to persist the calculated score */
   saveTo?: string;
+
+  /** Scoring profile to use for weighting */
+  profile?: string;
+
+  /** Tool-specific configurations (e.g., weights) */
+  tools?: Record<string, { scoreWeight?: number }>;
 }
