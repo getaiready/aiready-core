@@ -99,7 +99,7 @@ export function extractExportsWithDependencies(
         type: 'default' as ExportWithImports['type'],
         imports: usedImports,
         dependencies: [],
-        typeReferences: [],
+        typeReferences,
         loc: node.loc,
       });
     } else if (node.type === 'ExportAllDeclaration') {

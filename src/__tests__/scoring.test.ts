@@ -229,6 +229,7 @@ describe('Core Scoring Infrastructure', () => {
       expect(normalizeToolName('patterns')).toBe('pattern-detect');
       expect(normalizeToolName('context')).toBe('context-analyzer');
       expect(normalizeToolName('consistency')).toBe('naming-consistency');
+      expect(normalizeToolName('namingConsistency')).toBe('naming-consistency');
     });
 
     it('should return full names unchanged', () => {

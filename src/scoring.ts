@@ -79,6 +79,7 @@ export const TOOL_NAME_MAP: Record<string, string> = {
   context: ToolName.ContextAnalyzer,
   'context-analyzer': ToolName.ContextAnalyzer,
   consistency: ToolName.NamingConsistency,
+  namingconsistency: ToolName.NamingConsistency,
   'naming-consistency': ToolName.NamingConsistency,
   'ai-signal': ToolName.AiSignalClarity,
   'ai-signal-clarity': ToolName.AiSignalClarity,
