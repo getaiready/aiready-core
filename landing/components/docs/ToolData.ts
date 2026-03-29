@@ -109,9 +109,9 @@ CRITICAL (2 files)
   # Or with pnpm
   pnpm run visualize -- . --open`,
     output: `🔍 Visualization generated
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Output: packages/visualizer/visualization.html
-  Open it in your browser to explore discovery charts and token waste breakdowns`,
+    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    Output: visualization.html
+    Open it in your browser to explore discovery charts and token waste breakdowns`,
   },
 ];
 
