@@ -1,4 +1,12 @@
 import chalk from 'chalk';
+import { Command } from 'commander';
+
+interface CommandOptions {
+  output?: string;
+  include?: string[];
+  exclude?: string[];
+  json?: boolean;
+}
 
 /**
  * Standard progress callback for AIReady spoke tools.
@@ -56,4 +64,47 @@ export async function runStandardCliAction(
     );
     process.exit(1);
   }
+}
+
+/**
+ * Factory to create standardized Commander commands for AIReady spokes.
+ * This avoids duplicating the same boilerplate (setup, options, error handling)
+ * across 10+ different analysis tools, addressing context fragmentation and duplication.
+ *
+ * @param name - The name of the command (e.g., 'scan', 'context')
+ * @param description - Command description for help text
+ * @param runAction - The actual analysis logic to execute
+ * @returns A configured Commander Command object
+ */
+export function createStandardCommand(
+  name: string,
+  description: string,
+  runAction: (options: CommandOptions) => Promise<any>
+): Command {
+  const command = new Command(name);
+
+  command
+    .description(description)
+    .option('-o, --output <path>', 'Output file path')
+    .option('-i, --include <patterns...>', 'Include specific file patterns')
+    .option('-e, --exclude <patterns...>', 'Exclude specific file patterns')
+    .option('--json', 'Output strictly as JSON')
+    .action(async (options: CommandOptions) => {
+      try {
+        const result = await runAction(options);
+
+        if (options.json) {
+          console.log(JSON.stringify(result, null, 2));
+        } else {
+          // Final result display logic would go here if not handled by runAction
+        }
+      } catch (error: any) {
+        console.error(
+          chalk.red(`\n❌ [${name}] critical error: ${error.message}`)
+        );
+        process.exit(1);
+      }
+    });
+
+  return command;
 }

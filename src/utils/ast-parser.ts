@@ -5,7 +5,7 @@ import {
   TokenBudget,
 } from '../types/ast';
 
-import { calculateImportSimilarity } from './similarity-utils';
+import { calculateImportSimilarity } from './similarity';
 import { parseFileExports } from './dependency-analyzer';
 
 export {
