@@ -15,7 +15,7 @@ export interface HealthCheckResult {
   error?: string;
 }
 
-const DEFAULT_TIMEOUT = 10000;
+const DEFAULT_TIMEOUT = 30000;
 
 export async function checkHealth(
   url: string,
@@ -60,6 +60,7 @@ export interface MonitorEnv {
   AWS_REGION?: string;
   AWS_ACCESS_KEY_ID?: string;
   AWS_SECRET_ACCESS_KEY?: string;
+  TIMEOUT?: string;
 }
 
 export async function reportFailure(
@@ -128,7 +129,10 @@ const handler: WorkerHandler = {
       return;
     }
 
-    const result = await checkHealth(url);
+    const result = await checkHealth(
+      url,
+      env.TIMEOUT ? parseInt(env.TIMEOUT, 10) : undefined
+    );
     console.log(
       `${result.status === 'healthy' ? '✅' : '❌'} [${projectName}] ${result.url}: ${result.status}`
     );
@@ -143,7 +147,10 @@ const handler: WorkerHandler = {
     if (!url)
       return new Response('URL_TO_CHECK not configured', { status: 500 });
 
-    const result = await checkHealth(url);
+    const result = await checkHealth(
+      url,
+      env.TIMEOUT ? parseInt(env.TIMEOUT, 10) : undefined
+    );
     return new Response(JSON.stringify(result, null, 2), {
       headers: { 'Content-Type': 'application/json' },
     });
