@@ -140,10 +140,11 @@ export function calculateTestabilityIndex(params: {
   const purityScore = Math.round(
     (totalFunctions > 0 ? pureFunctions / totalFunctions : 0.7) * 100
   );
+  // Functional-first codebases without classes get full marks for DI (N/A = not applicable)
   const dependencyInjectionScore = Math.round(
     Math.min(
       100,
-      (totalClasses > 0 ? injectionPatterns / totalClasses : 0.8) * 100
+      (totalClasses > 0 ? injectionPatterns / totalClasses : 1.0) * 100
     )
   );
   const interfaceFocusScore = Math.max(
