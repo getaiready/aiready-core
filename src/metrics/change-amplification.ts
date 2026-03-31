@@ -42,7 +42,26 @@ export function calculateChangeAmplification(params: {
   }
 
   const hotspots = files
-    .map((f) => ({ ...f, amplificationFactor: f.fanOut + f.fanIn * 0.5 }))
+    .map((f) => {
+      // Barrels, loggers, and types naturally have high fan-in
+      // We reduce the fan-in weight for these to avoid flagging them as hotspots
+      const lowerFile = f.file.toLowerCase();
+      const isSharedInfra =
+        lowerFile.endsWith('logger.ts') ||
+        lowerFile.endsWith('logger.js') ||
+        lowerFile.endsWith('constants.ts') ||
+        lowerFile.endsWith('constants.js') ||
+        lowerFile.endsWith('types.ts') ||
+        lowerFile.endsWith('types.js') ||
+        lowerFile.endsWith('index.ts') ||
+        lowerFile.endsWith('index.js');
+
+      const fanInWeight = isSharedInfra ? 0.1 : 0.5;
+      return {
+        ...f,
+        amplificationFactor: f.fanOut + f.fanIn * fanInWeight,
+      };
+    })
     .sort((a, b) => b.amplificationFactor - a.amplificationFactor);
 
   const maxAmplification = hotspots[0].amplificationFactor;
