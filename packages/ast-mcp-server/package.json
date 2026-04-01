@@ -1,0 +1,36 @@
+{
+  "name": "@aiready/ast-mcp-server",
+  "version": "0.1.0",
+  "description": "AST-aware codebase exploration MCP server for AIReady",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "lint": "eslint src",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.1",
+    "@vscode/ripgrep": "^1.17.1",
+    "glob": "^13.0.6",
+    "ts-morph": "^25.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.13",
+    "tsup": "^8.3.5",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.1"
+  },
+  "peerDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
