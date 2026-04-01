@@ -48,7 +48,7 @@ export type LeadSubmission = z.infer<typeof LeadSubmissionSchema>;
 export const ManagedAccountSchema = z.object({
   id: z.string(), // Internal UUID
   accountId: z.string(), // AWS Account ID
-  userId: z.string(), // Owner (caopengau@gmail.com)
+  userId: z.string(), // Owner (team@getaiready.dev)
   stripeSubscriptionId: z.string(),
 
   // AI Token Management
