@@ -2,6 +2,61 @@ import { Severity } from '@aiready/core';
 import { ContextRule } from '../types';
 
 export const LOGIC_RULES: ContextRule[] = [
+  // Enum Semantic Difference - Different enum names indicate different semantic meanings
+  {
+    name: 'enum-semantic-difference',
+    detect: (file, code) => {
+      // Match enum declarations with their names
+      const enumRegex =
+        /(?:export\s+)?(?:const\s+)?enum\s+([A-Z][a-zA-Z0-9]*)/g;
+      const enums: string[] = [];
+      let match;
+
+      while ((match = enumRegex.exec(code)) !== null) {
+        enums.push(match[1]);
+      }
+
+      // If this code block contains an enum, flag it for special handling
+      // This will reduce severity to Info, indicating it's acceptable duplication
+      return enums.length > 0;
+    },
+    severity: Severity.Info,
+    reason:
+      'Enums with different names represent different semantic domain concepts, even if they share similar values',
+    suggestion:
+      'Different enums (e.g., EscalationPriority vs HealthSeverity) serve different purposes and should not be merged',
+  },
+
+  // Enum Value Similarity - Common enum values like LOW, MEDIUM, HIGH are standard
+  {
+    name: 'enum-value-similarity',
+    detect: (file, code) => {
+      // Check if code contains common enum value patterns
+      const hasCommonEnumValues =
+        (code.includes("LOW = 'low'") ||
+          code.includes('LOW = 0') ||
+          code.includes("LOW = 'LOW'")) &&
+        (code.includes("HIGH = 'high'") ||
+          code.includes('HIGH = 2') ||
+          code.includes("HIGH = 'HIGH'")) &&
+        (code.includes("MEDIUM = 'medium'") ||
+          code.includes('MEDIUM = 1') ||
+          code.includes("MEDIUM = 'MEDIUM'"));
+
+      // Check if this is an enum definition (not just using enum values)
+      const isEnumDefinition =
+        /(?:export\s+)?(?:const\s+)?enum\s+/.test(code) ||
+        (code.includes('enum ') && code.includes('{') && code.includes('}'));
+
+      return hasCommonEnumValues && isEnumDefinition;
+    },
+    severity: Severity.Info,
+    reason:
+      'Common enum values (LOW, MEDIUM, HIGH, CRITICAL) are standard patterns used across different domain enums',
+    suggestion:
+      'Enum value similarity is expected for severity/priority enums and should not be flagged as duplication',
+  },
+
   // Re-export / Barrel files - Intentional API surface consolidation
   {
     name: 're-export-files',
@@ -62,6 +117,35 @@ export const LOGIC_RULES: ContextRule[] = [
       'Type/interface definitions are intentionally duplicated for module independence',
     suggestion:
       'Extract to shared types package only if causing maintenance burden',
+  },
+
+  // Cross-Package Type Definitions - Different packages may have similar types
+  {
+    name: 'cross-package-types',
+    detect: (file, code) => {
+      // Detect if this is a type definition in a different package
+      const hasTypeDefinition =
+        code.includes('interface ') ||
+        code.includes('type ') ||
+        code.includes('enum ');
+
+      // Check if file is in a packages/ or apps/ directory structure
+      const isPackageOrApp =
+        file.includes('/packages/') ||
+        file.includes('/apps/') ||
+        file.includes('/core/');
+
+      // Extract package name from path
+      const packageMatch = file.match(/\/(packages|apps|core)\/([^/]+)\//);
+      const hasPackageStructure = packageMatch !== null;
+
+      return hasTypeDefinition && isPackageOrApp && hasPackageStructure;
+    },
+    severity: Severity.Info,
+    reason:
+      'Types in different packages/modules are often intentionally similar for module independence',
+    suggestion:
+      'Cross-package type duplication is acceptable for decoupled module architecture',
   },
 
   // Utility Functions - Small helpers in dedicated utility files
@@ -252,5 +336,37 @@ export const LOGIC_RULES: ContextRule[] = [
       'Validation functions are inherently similar and often intentionally duplicated for domain clarity',
     suggestion:
       'Consider extracting to shared validators only if validation logic becomes complex',
+  },
+
+  // Singleton Getter Pattern - Standard singleton initialization pattern
+  {
+    name: 'singleton-getter',
+    detect: (file, code) => {
+      // Detect singleton getter functions like getSemanticLoopDetector(), getCircuitBreaker()
+      const hasSingletonGetter =
+        /(?:export\s+)?(?:async\s+)?function\s+get[A-Z][a-zA-Z0-9]*\s*\(/.test(
+          code
+        ) ||
+        /(?:export\s+)?const\s+get[A-Z][a-zA-Z0-9]*\s*=\s*(?:async\s+)?\(\)\s*=>/.test(
+          code
+        );
+
+      // Check for singleton initialization pattern
+      const hasSingletonPattern =
+        (code.includes('if (!') &&
+          code.includes('instance') &&
+          code.includes(' = ')) ||
+        (code.includes('if (!_') && code.includes(' = new ')) ||
+        (code.includes('if (') &&
+          code.includes(' === null') &&
+          code.includes(' = new '));
+
+      return hasSingletonGetter && hasSingletonPattern;
+    },
+    severity: Severity.Info,
+    reason:
+      'Singleton getter functions follow standard initialization pattern and are intentionally similar',
+    suggestion:
+      'Singleton getters are boilerplate and acceptable duplication for lazy initialization',
   },
 ];
