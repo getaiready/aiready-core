@@ -20,7 +20,7 @@ export function inferPatternType(keyword: string, name: string): string {
   if (n.includes('validate') || n.includes('schema')) return 'validator';
   if (n.includes('util') || n.includes('helper')) return 'utility';
   if (keyword === 'class') return 'class-method';
-  if (n.match(/^[A-Z]/)) return 'component';
+  if (name.match(/^[A-Z]/)) return 'component';
   if (keyword === 'function' || keyword === 'def') return 'function';
   return 'unknown';
 }
