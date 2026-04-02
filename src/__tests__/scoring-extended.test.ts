@@ -55,15 +55,15 @@ describe('Scoring Engine Extended Tests', () => {
       expect(getRating(75)).toBe('Fair');
       expect(getRating(65)).toBe('Fair');
       expect(getRating(55)).toBe('Needs Work');
-      expect(getRating(30)).toBe('Poor');
+      expect(getRating(30)).toBe('Critical');
     });
 
-    it('should return correct slugs for ratings', () => {
-      expect(getRatingSlug('Excellent')).toBe('excellent');
-      expect(getRatingSlug('Good')).toBe('good');
-      expect(getRatingSlug('Fair')).toBe('fair');
-      expect(getRatingSlug('Needs Work')).toBe('needs-work');
-      expect(getRatingSlug('Poor')).toBe('poor');
+    it('should return correct slugs for scores', () => {
+      expect(getRatingSlug(95)).toBe('excellent');
+      expect(getRatingSlug(85)).toBe('good');
+      expect(getRatingSlug(75)).toBe('fair');
+      expect(getRatingSlug(55)).toBe('needs-work');
+      expect(getRatingSlug(30)).toBe('critical');
     });
   });
 });
