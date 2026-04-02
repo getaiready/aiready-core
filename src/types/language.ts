@@ -82,6 +82,8 @@ export interface ExportInfo {
   hasSideEffects?: boolean;
   /** Whether the export has explicit type annotations (TS only) */
   isTyped?: boolean;
+  /** Source file for re-exports (e.g. export { foo } from './bar') */
+  source?: string;
   /** Inferred domain/area this export belongs to (e.g., "auth", "database") */
   inferredDomain?: string;
   /** Associated documentation */
