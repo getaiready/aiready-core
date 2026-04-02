@@ -209,7 +209,9 @@ describe('scheduled handler', () => {
 
   it('checks health and reports on unhealthy', async () => {
     vi.spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(new Response('Down', { status: 500 })) // health check
+      .mockResolvedValueOnce(new Response('Down', { status: 500 })) // health check attempt 1
+      .mockResolvedValueOnce(new Response('Down', { status: 500 })) // health check attempt 2
+      .mockResolvedValueOnce(new Response('Down', { status: 500 })) // health check attempt 3
       .mockResolvedValueOnce(new Response('OK', { status: 200 })); // SNS publish
 
     vi.spyOn(console, 'log').mockImplementation(() => {});
@@ -227,10 +229,10 @@ describe('scheduled handler', () => {
       {}
     );
 
-    // Verify SNS publish was called
+    // Verify SNS publish was called (3 health checks + 1 SNS publish)
     const fetchCalls = vi.mocked(globalThis.fetch).mock.calls;
-    expect(fetchCalls.length).toBe(2);
-    expect(fetchCalls[1][0]).toBe('https://sns.ap-southeast-2.amazonaws.com/');
+    expect(fetchCalls.length).toBe(4);
+    expect(fetchCalls[3][0]).toBe('https://sns.ap-southeast-2.amazonaws.com/');
   });
 
   it('logs error and returns when URL_TO_CHECK is missing', async () => {

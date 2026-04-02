@@ -15,42 +15,64 @@ export interface HealthCheckResult {
   error?: string;
 }
 
-const DEFAULT_TIMEOUT = 30000;
+const DEFAULT_TIMEOUT = 25000;
+const DEFAULT_RETRIES = 3;
+const DEFAULT_RETRY_DELAY = 2000;
+
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export async function checkHealth(
   url: string,
-  timeout: number = DEFAULT_TIMEOUT
+  timeout: number = DEFAULT_TIMEOUT,
+  retries: number = DEFAULT_RETRIES
 ): Promise<HealthCheckResult> {
-  const startTime = Date.now();
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+  let lastResult: HealthCheckResult | undefined;
 
-    const response = await fetch(url, {
-      method: 'GET',
-      redirect: 'follow',
-      signal: controller.signal,
-    });
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const startTime = Date.now();
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-    clearTimeout(timeoutId);
-    const isHealthy = response.status >= 200 && response.status < 400;
+      const response = await fetch(url, {
+        method: 'GET',
+        redirect: 'follow',
+        signal: controller.signal,
+      });
 
-    return {
-      url,
-      status: isHealthy ? 'healthy' : 'unhealthy',
-      statusCode: response.status,
-      responseTime: Date.now() - startTime,
-      timestamp: new Date().toISOString(),
-    };
-  } catch (error) {
-    return {
-      url,
-      status: 'error',
-      responseTime: Date.now() - startTime,
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : String(error),
-    };
+      clearTimeout(timeoutId);
+      const isHealthy = response.status >= 200 && response.status < 400;
+      const result: HealthCheckResult = {
+        url,
+        status: isHealthy ? 'healthy' : 'unhealthy',
+        statusCode: response.status,
+        responseTime: Date.now() - startTime,
+        timestamp: new Date().toISOString(),
+      };
+
+      if (isHealthy) return result;
+      lastResult = result;
+    } catch (error) {
+      lastResult = {
+        url,
+        status: 'error',
+        responseTime: Date.now() - startTime,
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+
+    if (attempt < retries) {
+      console.log(
+        `[HealthCheck] Attempt ${attempt} failed for ${url}. Retrying in ${DEFAULT_RETRY_DELAY}ms...`
+      );
+      await sleep(DEFAULT_RETRY_DELAY);
+    }
   }
+
+  return lastResult!;
 }
 
 export interface MonitorEnv {
@@ -61,6 +83,7 @@ export interface MonitorEnv {
   AWS_ACCESS_KEY_ID?: string;
   AWS_SECRET_ACCESS_KEY?: string;
   TIMEOUT?: string;
+  RETRIES?: string;
 }
 
 export async function reportFailure(
@@ -131,7 +154,8 @@ const handler: WorkerHandler = {
 
     const result = await checkHealth(
       url,
-      env.TIMEOUT ? parseInt(env.TIMEOUT, 10) : undefined
+      env.TIMEOUT ? parseInt(env.TIMEOUT, 10) : undefined,
+      env.RETRIES ? parseInt(env.RETRIES, 10) : undefined
     );
     console.log(
       `${result.status === 'healthy' ? '✅' : '❌'} [${projectName}] ${result.url}: ${result.status}`

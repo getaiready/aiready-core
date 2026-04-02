@@ -4,15 +4,15 @@ import { z } from 'zod';
  * Common tool options
  */
 export interface ToolOptions {
-  /** Root directory of the project */
-  rootDir: string;
-  /** Files to include in this tool's analysis */
-  include?: string[];
-  /** Files to exclude from this tool's analysis */
-  exclude?: string[];
-  /** Tool-specific configuration values */
-  config?: any;
-  /** Any other dynamic options */
+  /** Maximum number of results to return */
+  maxResults?: number;
+  /** Severity filter */
+  severity?: 'info' | 'warning' | 'error' | 'critical';
+  /** Output format */
+  outputFormat?: 'json' | 'text' | 'html';
+  /** Additional configuration */
+  config?: Record<string, unknown>;
+  /** Custom key-value pairs */
   [key: string]: any;
 }
 
