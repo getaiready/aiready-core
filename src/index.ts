@@ -48,6 +48,9 @@ export * from './metrics/structural-metrics';
 export * from './metrics/ai-signal-clarity';
 export * from './metrics/agent-grounding';
 export * from './metrics/testability-index';
+
+// Dependency Injection container
+export * from './utils/di-container';
 export * from './metrics/doc-drift';
 export * from './metrics/dependency-health';
 export * from './metrics/change-amplification';
