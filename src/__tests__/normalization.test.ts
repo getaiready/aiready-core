@@ -111,8 +111,9 @@ describe('normalization', () => {
     it('should use provided metadata', () => {
       const metadata = { toolName: 't', version: '1', config: {} };
       const result = normalizeSpokeOutput({ metadata }, 'fallback');
-      expect(result.metadata.toolName).toBe('t');
-      expect(result.metadata.version).toBe('1');
+      expect(result.metadata).toBeDefined();
+      expect(result.metadata?.toolName).toBe('t');
+      expect(result.metadata?.version).toBe('1');
     });
   });
 });
