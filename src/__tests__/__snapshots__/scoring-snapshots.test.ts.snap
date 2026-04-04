@@ -1,0 +1,413 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Scoring Engine Snapshots > Agentic Profile weighting 1`] = `
+{
+  "breakdown": [
+    {
+      "factors": [
+        {
+          "description": "Test factor",
+          "impact": 5,
+          "name": "Factor A",
+        },
+      ],
+      "rawMetrics": {
+        "someMetric": 123,
+      },
+      "recommendations": [
+        {
+          "action": "Improve X",
+          "estimatedImpact": 10,
+          "priority": "medium",
+        },
+      ],
+      "score": 100,
+      "toolName": "ai-signal-clarity",
+    },
+    {
+      "factors": [
+        {
+          "description": "Test factor",
+          "impact": -5,
+          "name": "Factor A",
+        },
+      ],
+      "rawMetrics": {
+        "someMetric": 123,
+      },
+      "recommendations": [
+        {
+          "action": "Improve X",
+          "estimatedImpact": 10,
+          "priority": "medium",
+        },
+      ],
+      "score": 50,
+      "toolName": "agent-grounding",
+    },
+  ],
+  "calculation": {
+    "formula": "[(100 × 25) + (50 × 25)] / 50 = 75",
+    "normalized": "[(100 × 25) + (50 × 25)] / 50 = 75",
+    "weights": {
+      "agent-grounding": 25,
+      "ai-signal-clarity": 25,
+    },
+  },
+  "overall": 75,
+  "rating": "Good",
+  "timestamp": "2026-03-18T12:00:00.000Z",
+  "toolsUsed": [
+    "ai-signal-clarity",
+    "agent-grounding",
+  ],
+}
+`;
+
+exports[`Scoring Engine Snapshots > Critical Failure (All 0s) 1`] = `
+{
+  "breakdown": [
+    {
+      "factors": [
+        {
+          "description": "Test factor",
+          "impact": -5,
+          "name": "Factor A",
+        },
+      ],
+      "rawMetrics": {
+        "someMetric": 123,
+      },
+      "recommendations": [
+        {
+          "action": "Improve X",
+          "estimatedImpact": 10,
+          "priority": "medium",
+        },
+      ],
+      "score": 0,
+      "toolName": "pattern-detect",
+    },
+    {
+      "factors": [
+        {
+          "description": "Test factor",
+          "impact": -5,
+          "name": "Factor A",
+        },
+      ],
+      "rawMetrics": {
+        "someMetric": 123,
+      },
+      "recommendations": [
+        {
+          "action": "Improve X",
+          "estimatedImpact": 10,
+          "priority": "medium",
+        },
+      ],
+      "score": 0,
+      "toolName": "context-analyzer",
+    },
+  ],
+  "calculation": {
+    "formula": "[(0 × 22) + (0 × 19)] / 41 = 0",
+    "normalized": "[(0 × 22) + (0 × 19)] / 41 = 0",
+    "weights": {
+      "context-analyzer": 19,
+      "pattern-detect": 22,
+    },
+  },
+  "overall": 0,
+  "rating": "Critical",
+  "timestamp": "2026-03-18T12:00:00.000Z",
+  "toolsUsed": [
+    "pattern-detect",
+    "context-analyzer",
+  ],
+}
+`;
+
+exports[`Scoring Engine Snapshots > Manual CLI Weight Overrides 1`] = `
+{
+  "breakdown": [
+    {
+      "factors": [
+        {
+          "description": "Test factor",
+          "impact": 5,
+          "name": "Factor A",
+        },
+      ],
+      "rawMetrics": {
+        "someMetric": 123,
+      },
+      "recommendations": [
+        {
+          "action": "Improve X",
+          "estimatedImpact": 10,
+          "priority": "medium",
+        },
+      ],
+      "score": 100,
+      "toolName": "pattern-detect",
+    },
+    {
+      "factors": [
+        {
+          "description": "Test factor",
+          "impact": -5,
+          "name": "Factor A",
+        },
+      ],
+      "rawMetrics": {
+        "someMetric": 123,
+      },
+      "recommendations": [
+        {
+          "action": "Improve X",
+          "estimatedImpact": 10,
+          "priority": "medium",
+        },
+      ],
+      "score": 0,
+      "toolName": "context-analyzer",
+    },
+  ],
+  "calculation": {
+    "formula": "[(100 × 1) + (0 × 9)] / 10 = 10",
+    "normalized": "[(100 × 1) + (0 × 9)] / 10 = 10",
+    "weights": {
+      "context-analyzer": 9,
+      "pattern-detect": 1,
+    },
+  },
+  "overall": 10,
+  "rating": "Critical",
+  "timestamp": "2026-03-18T12:00:00.000Z",
+  "toolsUsed": [
+    "pattern-detect",
+    "context-analyzer",
+  ],
+}
+`;
+
+exports[`Scoring Engine Snapshots > Perfect Project (All 100s) 1`] = `
+{
+  "breakdown": [
+    {
+      "factors": [
+        {
+          "description": "Test factor",
+          "impact": 5,
+          "name": "Factor A",
+        },
+      ],
+      "rawMetrics": {
+        "someMetric": 123,
+      },
+      "recommendations": [
+        {
+          "action": "Improve X",
+          "estimatedImpact": 10,
+          "priority": "medium",
+        },
+      ],
+      "score": 100,
+      "toolName": "pattern-detect",
+    },
+    {
+      "factors": [
+        {
+          "description": "Test factor",
+          "impact": 5,
+          "name": "Factor A",
+        },
+      ],
+      "rawMetrics": {
+        "someMetric": 123,
+      },
+      "recommendations": [
+        {
+          "action": "Improve X",
+          "estimatedImpact": 10,
+          "priority": "medium",
+        },
+      ],
+      "score": 100,
+      "toolName": "context-analyzer",
+    },
+    {
+      "factors": [
+        {
+          "description": "Test factor",
+          "impact": 5,
+          "name": "Factor A",
+        },
+      ],
+      "rawMetrics": {
+        "someMetric": 123,
+      },
+      "recommendations": [
+        {
+          "action": "Improve X",
+          "estimatedImpact": 10,
+          "priority": "medium",
+        },
+      ],
+      "score": 100,
+      "toolName": "naming-consistency",
+    },
+    {
+      "factors": [
+        {
+          "description": "Test factor",
+          "impact": 5,
+          "name": "Factor A",
+        },
+      ],
+      "rawMetrics": {
+        "someMetric": 123,
+      },
+      "recommendations": [
+        {
+          "action": "Improve X",
+          "estimatedImpact": 10,
+          "priority": "medium",
+        },
+      ],
+      "score": 100,
+      "toolName": "ai-signal-clarity",
+    },
+  ],
+  "calculation": {
+    "formula": "[(100 × 22) + (100 × 19) + (100 × 14) + (100 × 11)] / 66 = 100",
+    "normalized": "[(100 × 22) + (100 × 19) + (100 × 14) + (100 × 11)] / 66 = 100",
+    "weights": {
+      "ai-signal-clarity": 11,
+      "context-analyzer": 19,
+      "naming-consistency": 14,
+      "pattern-detect": 22,
+    },
+  },
+  "overall": 100,
+  "rating": "Excellent",
+  "timestamp": "2026-03-18T12:00:00.000Z",
+  "toolsUsed": [
+    "pattern-detect",
+    "context-analyzer",
+    "naming-consistency",
+    "ai-signal-clarity",
+  ],
+}
+`;
+
+exports[`Scoring Engine Snapshots > Typical Project (Mixed Performance) 1`] = `
+{
+  "breakdown": [
+    {
+      "factors": [
+        {
+          "description": "Test factor",
+          "impact": 5,
+          "name": "Factor A",
+        },
+      ],
+      "rawMetrics": {
+        "someMetric": 123,
+      },
+      "recommendations": [
+        {
+          "action": "Improve X",
+          "estimatedImpact": 10,
+          "priority": "medium",
+        },
+      ],
+      "score": 85,
+      "toolName": "pattern-detect",
+    },
+    {
+      "factors": [
+        {
+          "description": "Test factor",
+          "impact": 5,
+          "name": "Factor A",
+        },
+      ],
+      "rawMetrics": {
+        "someMetric": 123,
+      },
+      "recommendations": [
+        {
+          "action": "Improve X",
+          "estimatedImpact": 10,
+          "priority": "medium",
+        },
+      ],
+      "score": 70,
+      "toolName": "context-analyzer",
+    },
+    {
+      "factors": [
+        {
+          "description": "Test factor",
+          "impact": -5,
+          "name": "Factor A",
+        },
+      ],
+      "rawMetrics": {
+        "someMetric": 123,
+      },
+      "recommendations": [
+        {
+          "action": "Improve X",
+          "estimatedImpact": 10,
+          "priority": "medium",
+        },
+      ],
+      "score": 45,
+      "toolName": "naming-consistency",
+    },
+    {
+      "factors": [
+        {
+          "description": "Test factor",
+          "impact": 5,
+          "name": "Factor A",
+        },
+      ],
+      "rawMetrics": {
+        "someMetric": 123,
+      },
+      "recommendations": [
+        {
+          "action": "Improve X",
+          "estimatedImpact": 10,
+          "priority": "medium",
+        },
+      ],
+      "score": 92,
+      "toolName": "ai-signal-clarity",
+    },
+  ],
+  "calculation": {
+    "formula": "[(85 × 22) + (70 × 19) + (45 × 14) + (92 × 11)] / 66 = 73",
+    "normalized": "[(85 × 22) + (70 × 19) + (45 × 14) + (92 × 11)] / 66 = 73",
+    "weights": {
+      "ai-signal-clarity": 11,
+      "context-analyzer": 19,
+      "naming-consistency": 14,
+      "pattern-detect": 22,
+    },
+  },
+  "overall": 73,
+  "rating": "Fair",
+  "timestamp": "2026-03-18T12:00:00.000Z",
+  "toolsUsed": [
+    "pattern-detect",
+    "context-analyzer",
+    "naming-consistency",
+    "ai-signal-clarity",
+  ],
+}
+`;
