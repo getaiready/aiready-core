@@ -15,6 +15,8 @@ import { randomUUID } from 'crypto';
 import { validateApiKey } from '@/lib/db';
 import { withApiHandler } from '@/lib/api/handler';
 
+import { getGitHubRepoInfo, MAX_REPO_SIZE_KB } from '@/lib/github';
+
 // GET /api/repos - List repositories
 export async function GET(request: NextRequest) {
   return withApiHandler(async (req) => {
@@ -72,7 +74,7 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) return { status: 401, error: 'Unauthorized' };
 
     const body = await req.json();
-    const { name, url, description, defaultBranch = 'main', teamId } = body;
+    const { name, url, description, teamId } = body;
 
     if (!name || !url)
       return { status: 400, error: 'Name and URL are required' };
@@ -80,6 +82,32 @@ export async function POST(request: NextRequest) {
     const urlPattern = /^(https?:\/\/|git@)[\w.@:/-]+$/;
     if (!urlPattern.test(url))
       return { status: 400, error: 'Invalid repository URL' };
+
+    // Fetch repository info from GitHub to check size and existence
+    let githubInfo;
+    try {
+      githubInfo = await getGitHubRepoInfo(
+        url,
+        (session.user as any).accessToken
+      );
+    } catch (error) {
+      console.error('[RepoAPI] Failed to fetch GitHub repo info:', error);
+      return {
+        status: 400,
+        error:
+          'Failed to access repository on GitHub. Please check URL and permissions.',
+      };
+    }
+
+    if (githubInfo.size > MAX_REPO_SIZE_KB) {
+      const sizeMB = Math.round(githubInfo.size / 1024);
+      return {
+        status: 400,
+        error: `Repository is too large (${sizeMB}MB). Maximum allowed is ${MAX_REPO_SIZE_KB / 1024}MB.`,
+      };
+    }
+
+    const defaultBranch = githubInfo.default_branch || 'main';
 
     let existingRepos;
     if (teamId) existingRepos = await listTeamRepositories(teamId);

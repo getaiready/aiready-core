@@ -76,6 +76,8 @@ export async function POST(
             accessToken,
             type: 'swarm',
           }),
+          MessageGroupId: remediation.repoId,
+          MessageDeduplicationId: `${remediationId}-review-${decision}-${Date.now()}`,
         })
       );
 
@@ -110,6 +112,8 @@ export async function POST(
           expertFeedback: comment,
           previousDiff: remediation.suggestedDiff,
         }),
+        MessageGroupId: remediation.repoId,
+        MessageDeduplicationId: `${remediationId}-review-changes-${Date.now()}`,
       })
     );
 

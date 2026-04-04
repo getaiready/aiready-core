@@ -58,6 +58,8 @@ export async function POST(req: NextRequest) {
           accessToken: (session.user as any).accessToken, // Ensure accessToken is passed if available
           type: isSwarm ? 'swarm' : 'standard',
         }),
+        MessageGroupId: remediation.repoId,
+        MessageDeduplicationId: `${remediationId}-trigger-${Date.now()}`,
       })
     );
 

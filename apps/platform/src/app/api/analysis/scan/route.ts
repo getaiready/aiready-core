@@ -58,6 +58,8 @@ export async function POST(request: NextRequest) {
           repoUrl: repo.url,
           accessToken: session.user.accessToken,
         }),
+        MessageGroupId: repoId,
+        MessageDeduplicationId: `${repoId}-${Date.now()}`,
       })
     );
 

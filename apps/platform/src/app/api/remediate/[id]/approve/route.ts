@@ -63,6 +63,8 @@ export async function POST(
           accessToken: (session.user as any).accessToken,
           type: 'swarm',
         }),
+        MessageGroupId: remediation.repoId,
+        MessageDeduplicationId: `${id}-approve-${Date.now()}`,
       })
     );
 

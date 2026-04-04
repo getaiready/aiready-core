@@ -20,7 +20,7 @@ export const planHierarchy: Record<Plan, number> = {
  * MVP Mode: Only Free tier is active
  * Set to false when ready to launch paid tiers
  */
-export const MVP_FREE_ONLY = true;
+export const MVP_FREE_ONLY = false;
 
 /**
  * Coming soon message for premium features

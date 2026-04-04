@@ -169,12 +169,13 @@ export default $config({
     const bus = new sst.aws.Bus('PlatformBus');
 
     // Dead Letter Queues for reliability
-    const scanDLQ = new sst.aws.Queue('ScanDLQ');
+    const scanDLQ = new sst.aws.Queue('ScanDLQ', { fifo: true });
     const analysisDLQ = new sst.aws.Queue('AnalysisDLQ');
-    const remediationDLQ = new sst.aws.Queue('RemediationDLQ');
+    const remediationDLQ = new sst.aws.Queue('RemediationDLQ', { fifo: true });
 
     // Queue for background analysis requests
     const scanQueue = new sst.aws.Queue('ScanQueue', {
+      fifo: true,
       visibilityTimeout: '15 minutes',
       dlq: scanDLQ.arn,
       // Enable Long Polling to reduce request volume
@@ -191,6 +192,7 @@ export default $config({
 
     // Queue for background remediation requests
     const remediationQueue = new sst.aws.Queue('RemediationQueue', {
+      fifo: true,
       visibilityTimeout: '15 minutes',
       dlq: remediationDLQ.arn,
       wait: '20 seconds',
@@ -250,18 +252,14 @@ export default $config({
       siteConfig.domain = {
         name: 'platform.getaiready.dev',
         dns: sst.cloudflare.dns({
-          zone:
-            process.env.CLOUDFLARE_ZONE_ID ||
-            '50eb7dcadc84c58ab34583742db0b671',
+          zone: process.env.CLOUDFLARE_ZONE_ID,
         }),
       };
     } else if ($app.stage === 'dev') {
       siteConfig.domain = {
         name: 'dev.platform.getaiready.dev',
         dns: sst.cloudflare.dns({
-          zone:
-            process.env.CLOUDFLARE_ZONE_ID ||
-            '50eb7dcadc84c58ab34583742db0b671',
+          zone: process.env.CLOUDFLARE_ZONE_ID,
         }),
       };
     }
