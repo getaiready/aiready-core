@@ -157,5 +157,50 @@ describe('Config Loader', () => {
       const merged = mergeConfigWithDefaults(userConfig as any, defaults);
       expect((merged.toolConfigs as any)['patterns'].minSimilarity).toBe(0.8);
     });
+
+    it('should merge scoring config from aiready.json', () => {
+      const defaults = {
+        scoring: {
+          profile: 'default',
+          showBreakdown: false,
+        },
+      };
+      const userConfig = {
+        scoring: {
+          profile: 'agentic',
+          showBreakdown: true,
+        },
+      };
+
+      const merged = mergeConfigWithDefaults(
+        userConfig as any,
+        defaults
+      ) as any;
+
+      expect(merged.scoring.profile).toBe('agentic');
+      expect(merged.scoring.showBreakdown).toBe(true);
+    });
+
+    it('should merge scan.tools from aiready.json', () => {
+      const defaults = {
+        tools: ['patterns', 'context'],
+      };
+      const userConfig = {
+        scan: {
+          tools: ['pattern-detect', 'context-analyzer', 'contract-enforcement'],
+        },
+      };
+
+      const merged = mergeConfigWithDefaults(
+        userConfig as any,
+        defaults
+      ) as any;
+
+      expect(merged.tools).toEqual([
+        'pattern-detect',
+        'context-analyzer',
+        'contract-enforcement',
+      ]);
+    });
   });
 });

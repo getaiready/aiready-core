@@ -128,6 +128,7 @@ export function mergeConfigWithDefaults<T extends Record<string, any>>(
   if (userConfig.scan) {
     if (userConfig.scan.include) mergedConfig.include = userConfig.scan.include;
     if (userConfig.scan.exclude) mergedConfig.exclude = userConfig.scan.exclude;
+    if (userConfig.scan.tools) mergedConfig.tools = userConfig.scan.tools;
   }
 
   // Merge gatekeeper options
@@ -154,6 +155,14 @@ export function mergeConfigWithDefaults<T extends Record<string, any>>(
     mergedConfig.output = {
       ...(mergedConfig.output as Record<string, unknown>),
       ...userConfig.output,
+    };
+  }
+
+  // Merge scoring preferences
+  if (userConfig.scoring) {
+    mergedConfig.scoring = {
+      ...(mergedConfig.scoring as Record<string, unknown>),
+      ...userConfig.scoring,
     };
   }
 
