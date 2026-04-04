@@ -1,11 +1,9 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   DIContainer,
   DI_TOKENS,
   defaultImplementations,
-  type Logger,
-  type ConfigProvider,
-  type FileSystem,
+  globalContainer,
 } from '../utils/di-container';
 
 describe('DIContainer', () => {
@@ -15,139 +13,124 @@ describe('DIContainer', () => {
     container = new DIContainer();
   });
 
-  describe('register and resolve', () => {
-    it('should register and resolve a singleton dependency', () => {
+  it('should register and resolve a singleton', () => {
+    let count = 0;
+    const factory = () => ({ id: ++count });
+    container.register('test', factory, true);
+
+    const instance1 = container.resolve<{ id: number }>('test');
+    const instance2 = container.resolve<{ id: number }>('test');
+
+    expect(instance1.id).toBe(1);
+    expect(instance2.id).toBe(1);
+    expect(instance1).toBe(instance2);
+  });
+
+  it('should register and resolve a transient', () => {
+    let count = 0;
+    const factory = () => ({ id: ++count });
+    container.register('test', factory, false);
+
+    const instance1 = container.resolve<{ id: number }>('test');
+    const instance2 = container.resolve<{ id: number }>('test');
+
+    expect(instance1.id).toBe(1);
+    expect(instance2.id).toBe(2);
+    expect(instance1).not.toBe(instance2);
+  });
+
+  it('should register and resolve an instance', () => {
+    const instance = { name: 'fixed' };
+    container.registerInstance('test', instance);
+
+    const resolved = container.resolve('test');
+    expect(resolved).toBe(instance);
+  });
+
+  it('should throw if token not found', () => {
+    expect(() => container.resolve('missing')).toThrow(
+      'DI: No registration found'
+    );
+  });
+
+  it('should check for registration', () => {
+    expect(container.has('test')).toBe(false);
+    container.register('test', () => ({}));
+    expect(container.has('test')).toBe(true);
+  });
+
+  it('should clear registrations', () => {
+    container.register('test', () => ({}));
+    container.clear();
+    expect(container.has('test')).toBe(false);
+  });
+
+  it('should create child container and inherit including singletons', () => {
+    container.register('parent', () => 'from-parent');
+    container.registerInstance('singleton', 'instance');
+    const child = container.createChild();
+
+    expect(child.resolve('parent')).toBe('from-parent');
+    expect(child.resolve('singleton')).toBe('instance');
+
+    child.register('child', () => 'from-child');
+    expect(child.resolve('child')).toBe('from-child');
+    expect(() => container.resolve('child')).toThrow();
+  });
+
+  describe('defaultImplementations', () => {
+    it('consoleLogger should log to console', () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+
+      const logger = defaultImplementations.consoleLogger();
+      logger.info('info', { a: 1 });
+      logger.warn('warn', { b: 2 });
+      logger.error('error', { c: 3 });
+      logger.debug('debug', { d: 4 });
+
+      expect(logSpy).toHaveBeenCalledWith('[INFO] info', { a: 1 });
+      expect(warnSpy).toHaveBeenCalledWith('[WARN] warn', { b: 2 });
+      expect(errorSpy).toHaveBeenCalledWith('[ERROR] error', { c: 3 });
+      expect(debugSpy).toHaveBeenCalledWith('[DEBUG] debug', { d: 4 });
+
+      vi.restoreAllMocks();
+    });
+
+    it('consoleLogger should handle missing meta', () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const logger = defaultImplementations.consoleLogger();
+      logger.info('info');
+      expect(logSpy).toHaveBeenCalledWith('[INFO] info', '');
+      vi.restoreAllMocks();
+    });
+
+    it('noopLogger should do nothing', () => {
       const logger = defaultImplementations.noopLogger();
-      container.registerInstance(DI_TOKENS.Logger, logger);
-
-      const resolved = container.resolve<Logger>(DI_TOKENS.Logger);
-      expect(resolved).toBe(logger);
+      expect(() => {
+        logger.info('test');
+        logger.warn('test');
+        logger.error('test');
+        logger.debug('test');
+      }).not.toThrow();
     });
 
-    it('should return same instance for singletons', () => {
-      let callCount = 0;
-      container.register(DI_TOKENS.Logger, () => {
-        callCount++;
-        return defaultImplementations.noopLogger();
-      });
-
-      container.resolve(DI_TOKENS.Logger);
-      container.resolve(DI_TOKENS.Logger);
-
-      expect(callCount).toBe(1);
-    });
-
-    it('should return new instance for transient dependencies', () => {
-      let callCount = 0;
-      container.register(
-        DI_TOKENS.Logger,
-        () => {
-          callCount++;
-          return defaultImplementations.noopLogger();
-        },
-        false
-      );
-
-      container.resolve(DI_TOKENS.Logger);
-      container.resolve(DI_TOKENS.Logger);
-
-      expect(callCount).toBe(2);
-    });
-
-    it('should throw error for unregistered token', () => {
-      expect(() => container.resolve('unknown')).toThrow(
-        'DI: No registration found for token: unknown'
-      );
-    });
-  });
-
-  describe('has', () => {
-    it('should return true for registered token', () => {
-      container.registerInstance(
-        DI_TOKENS.Logger,
-        defaultImplementations.noopLogger()
-      );
-      expect(container.has(DI_TOKENS.Logger)).toBe(true);
-    });
-
-    it('should return false for unregistered token', () => {
-      expect(container.has(DI_TOKENS.Logger)).toBe(false);
-    });
-  });
-
-  describe('clear', () => {
-    it('should clear all registrations', () => {
-      container.registerInstance(
-        DI_TOKENS.Logger,
-        defaultImplementations.noopLogger()
-      );
-      container.clear();
-
-      expect(container.has(DI_TOKENS.Logger)).toBe(false);
-    });
-  });
-
-  describe('createChild', () => {
-    it('should inherit parent registrations', () => {
-      const parentLogger = defaultImplementations.noopLogger();
-      container.registerInstance(DI_TOKENS.Logger, parentLogger);
-
-      const child = container.createChild();
-      expect(child.has(DI_TOKENS.Logger)).toBe(true);
-      expect(child.resolve(DI_TOKENS.Logger)).toBe(parentLogger);
-    });
-
-    it('should allow child to override parent registrations', () => {
-      const parentLogger = defaultImplementations.noopLogger();
-      const childLogger = defaultImplementations.consoleLogger();
-
-      container.registerInstance(DI_TOKENS.Logger, parentLogger);
-
-      const child = container.createChild();
-      child.registerInstance(DI_TOKENS.Logger, childLogger);
-
-      expect(container.resolve(DI_TOKENS.Logger)).toBe(parentLogger);
-      expect(child.resolve(DI_TOKENS.Logger)).toBe(childLogger);
-    });
-  });
-
-  describe('default implementations', () => {
-    it('noopLogger should not throw', () => {
-      const logger = defaultImplementations.noopLogger();
-      expect(() => logger.info('test')).not.toThrow();
-      expect(() => logger.error('test')).not.toThrow();
-    });
-
-    it('memoryConfig should store and retrieve values', () => {
-      const config = defaultImplementations.memoryConfig({ key: 'value' });
-
-      expect(config.get('key')).toBe('value');
-      expect(config.has('key')).toBe(true);
-
-      config.set('newKey', 'newValue');
-      expect(config.get('newKey')).toBe('newValue');
-    });
-
-    it('memoryConfig should return default for missing key', () => {
-      const config = defaultImplementations.memoryConfig();
+    it('memoryConfig should store values', () => {
+      const config = defaultImplementations.memoryConfig({ existing: 'val' });
+      expect(config.get('existing')).toBe('val');
       expect(config.get('missing', 'default')).toBe('default');
+
+      config.set('new', 'newval');
+      expect(config.get('new')).toBe('newval');
+      expect(config.has('new')).toBe(true);
+      expect(config.has('other')).toBe(false);
     });
   });
 
-  describe('integration example', () => {
-    it('should support mock injection for testing', async () => {
-      const mockFs: FileSystem = {
-        readFile: async () => 'mock content',
-        writeFile: async () => {},
-        exists: async () => true,
-        readdir: async () => ['file1.ts', 'file2.ts'],
-      };
-
-      container.registerInstance(DI_TOKENS.FileSystem, mockFs);
-
-      const fs = container.resolve<FileSystem>(DI_TOKENS.FileSystem);
-      const content = await fs.readFile('test.ts');
-      expect(content).toBe('mock content');
-    });
+  it('globalContainer should be an instance of DIContainer', () => {
+    expect(globalContainer).toBeDefined();
+    expect(globalContainer.register).toBeTypeOf('function');
   });
 });

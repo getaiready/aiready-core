@@ -1,179 +1,177 @@
-import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  afterAll,
-  beforeEach,
-  afterEach,
-} from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import * as fsPromises from 'fs/promises';
+import fs from 'fs';
+import { glob } from 'glob';
 import {
   scanFiles,
   scanEntries,
   isSourceFile,
   getFileExtension,
 } from '../utils/file-scanner';
-import { join, relative } from 'path';
-import { writeFileSync, mkdirSync, rmSync } from 'fs';
-import { tmpdir } from 'os';
 
-describe('File Scanner Advanced', () => {
-  let tmpDir: string;
+vi.mock('fs/promises');
+vi.mock('fs');
+vi.mock('glob');
 
-  beforeAll(() => {
-    tmpDir = join(tmpdir(), `aiready-scanner-advanced-${Date.now()}`);
-    mkdirSync(tmpDir, { recursive: true });
-
-    // Root structure
-    mkdirSync(join(tmpDir, 'src'));
-    mkdirSync(join(tmpDir, 'ignored-by-git'));
-
-    writeFileSync(join(tmpDir, 'src/main.ts'), 'code');
-    writeFileSync(join(tmpDir, 'ignored-by-git/file.ts'), 'code');
-
-    // .gitignore at root
-    writeFileSync(
-      join(tmpDir, '.gitignore'),
-      'ignored-by-git/\nnode_modules/\n*.log'
-    );
-
-    // Nested .gitignore
-    mkdirSync(join(tmpDir, 'src/nested'));
-    writeFileSync(join(tmpDir, 'src/nested/internal.ts'), 'code');
-    writeFileSync(join(tmpDir, 'src/nested/secret.log'), 'logs');
-    writeFileSync(join(tmpDir, 'src/nested/.gitignore'), 'secret.log');
+describe('file-scanner', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(glob).mockResolvedValue([] as any);
+    vi.mocked(fs.existsSync).mockReturnValue(false);
   });
 
-  afterAll(() => {
-    rmSync(tmpDir, { recursive: true, force: true });
-  });
+  describe('scanFiles', () => {
+    it('should scan files using default include and exclude', async () => {
+      vi.mocked(glob).mockResolvedValue([
+        '/root/src/index.ts',
+        '/root/src/utils.ts',
+      ] as any);
+      vi.mocked(fs.existsSync).mockReturnValue(false); // No .aireadyignore
 
-  it('should respect root .gitignore', async () => {
-    const files = await scanFiles({ rootDir: tmpDir });
-    const relFiles = files.map((f) =>
-      join(f)
-        .replace(tmpDir, '')
-        .replace(/^[/\\]/, '')
-    );
+      const files = await scanFiles({ rootDir: '/root' });
 
-    expect(relFiles).toContain('src/main.ts');
-    expect(relFiles).not.toContain('ignored-by-git/file.ts');
-  });
-
-  it('should respect nested .gitignore', async () => {
-    const files = await scanFiles({ rootDir: tmpDir });
-    const relFiles = files.map((f) =>
-      join(f)
-        .replace(tmpDir, '')
-        .replace(/^[/\\]/, '')
-    );
-
-    expect(relFiles).toContain('src/nested/internal.ts');
-    expect(relFiles).not.toContain('src/nested/secret.log');
-  });
-
-  it('should scan entries (files and dirs)', async () => {
-    const { files, dirs } = await scanEntries({ rootDir: tmpDir });
-
-    expect(files.length).toBeGreaterThan(0);
-    expect(dirs.some((d) => d.endsWith('src'))).toBe(true);
-    expect(dirs.some((d) => d.endsWith('ignored-by-git'))).toBe(false);
-  });
-
-  describe('Advanced Ignore Features', () => {
-    let advancedTmpDir: string;
-
-    beforeEach(() => {
-      advancedTmpDir = join(tmpdir(), `aiready-scanner-extra-${Date.now()}`);
-      mkdirSync(advancedTmpDir, { recursive: true });
-    });
-
-    afterEach(() => {
-      rmSync(advancedTmpDir, { recursive: true, force: true });
-    });
-
-    it('should respect .aireadyignore', async () => {
-      mkdirSync(join(advancedTmpDir, 'src'), { recursive: true });
-      writeFileSync(join(advancedTmpDir, 'src/important.ts'), 'code');
-      writeFileSync(join(advancedTmpDir, 'src/secret.ts'), 'code');
-      writeFileSync(
-        join(advancedTmpDir, '.aireadyignore'),
-        'src/secret.ts\n# comment\n'
+      expect(files).toEqual(['/root/src/index.ts', '/root/src/utils.ts']);
+      expect(glob).toHaveBeenCalledWith(
+        expect.arrayContaining(['**/*.{ts,tsx,js,jsx,py,java,go,rs,cs}']),
+        expect.objectContaining({ cwd: '/root' })
       );
-
-      const files = await scanFiles({ rootDir: advancedTmpDir });
-      const relFiles = files.map((f) => relative(advancedTmpDir, f));
-
-      expect(relFiles).toContain('src/important.ts');
-      expect(relFiles).not.toContain('src/secret.ts');
     });
 
-    it('should include tests when includeTests is true', async () => {
-      mkdirSync(join(advancedTmpDir, 'src/__tests__'), { recursive: true });
-      writeFileSync(join(advancedTmpDir, 'src/__tests__/app.test.ts'), 'test');
-      writeFileSync(join(advancedTmpDir, 'src/app.ts'), 'code');
-
-      // Default (includeTests = false)
-      const filesDefault = await scanFiles({ rootDir: advancedTmpDir });
-      expect(
-        filesDefault.map((f) => relative(advancedTmpDir, f))
-      ).not.toContain('src/__tests__/app.test.ts');
-
-      // Explicitly true
-      const filesWithTests = await scanFiles({
-        rootDir: advancedTmpDir,
-        includeTests: true,
+    it('should respect .aireadyignore if present', async () => {
+      vi.mocked(fs.existsSync).mockImplementation((path) =>
+        path.toString().endsWith('.aireadyignore')
+      );
+      vi.mocked(fsPromises.readFile).mockResolvedValue(
+        'ignored.ts\n# Comment\n!negation\n' as any
+      );
+      vi.mocked(glob).mockImplementation((pattern, options: any) => {
+        if (pattern === '**/.gitignore') return Promise.resolve([]);
+        return Promise.resolve(['/root/src/index.ts']);
       });
-      expect(filesWithTests.map((f) => relative(advancedTmpDir, f))).toContain(
-        'src/__tests__/app.test.ts'
+
+      const files = await scanFiles({ rootDir: '/root' });
+
+      expect(vi.mocked(glob).mock.calls[0][1].ignore).toContain('ignored.ts');
+      expect(vi.mocked(glob).mock.calls[0][1].ignore).not.toContain(
+        '# Comment'
+      );
+      expect(vi.mocked(glob).mock.calls[0][1].ignore).not.toContain(
+        '!negation'
       );
     });
 
-    it('should handle missing .aireadyignore gracefully', async () => {
-      writeFileSync(join(advancedTmpDir, 'app.ts'), 'code');
-      const files = await scanFiles({ rootDir: advancedTmpDir });
-      expect(files).toHaveLength(1);
+    it('should handle nested .gitignore files', async () => {
+      vi.mocked(fs.existsSync).mockReturnValue(false);
+      vi.mocked(glob).mockImplementation((pattern, options: any) => {
+        if (pattern === '**/.gitignore')
+          return Promise.resolve(['/root/subdir/.gitignore']);
+        return Promise.resolve([
+          '/root/src/index.ts',
+          '/root/subdir/ignored.ts',
+        ]);
+      });
+      vi.mocked(fsPromises.readFile).mockResolvedValue('ignored.ts\n' as any);
+
+      const files = await scanFiles({ rootDir: '/root' });
+
+      // The 'ignore' package logic will filter the files
+      expect(files).toEqual(['/root/src/index.ts']);
     });
 
-    it('should handle multiple nested .gitignore files with relative prefixes', async () => {
-      mkdirSync(join(advancedTmpDir, 'pkg-a/src'), { recursive: true });
-      mkdirSync(join(advancedTmpDir, 'pkg-b/src'), { recursive: true });
-
-      writeFileSync(join(advancedTmpDir, 'pkg-a/.gitignore'), 'secret.ts');
-      writeFileSync(join(advancedTmpDir, 'pkg-a/src/secret.ts'), 'code');
-      writeFileSync(join(advancedTmpDir, 'pkg-a/src/public.ts'), 'code');
-
-      writeFileSync(
-        join(advancedTmpDir, 'pkg-b/.gitignore'),
-        '/absolute-style.ts'
-      );
-      writeFileSync(
-        join(advancedTmpDir, 'pkg-b/src/absolute-style.ts'),
-        'code'
-      );
-      writeFileSync(join(advancedTmpDir, 'pkg-b/src/other.ts'), 'code');
-
-      const files = await scanFiles({ rootDir: advancedTmpDir });
-      const relFiles = files.map((f) =>
-        relative(advancedTmpDir, f).replace(/\\/g, '/')
+    it('should fall back to raw glob if gitignore application fails', async () => {
+      vi.mocked(fs.existsSync).mockReturnValue(false);
+      vi.mocked(glob).mockImplementation((pattern) => {
+        if (pattern === '**/.gitignore')
+          return Promise.resolve(['/root/.gitignore']);
+        return Promise.resolve(['/root/src/index.ts']);
+      });
+      vi.mocked(fsPromises.readFile).mockRejectedValue(
+        new Error('Read failed')
       );
 
-      expect(relFiles).toContain('pkg-a/src/public.ts');
-      expect(relFiles).not.toContain('pkg-a/src/secret.ts');
-      expect(relFiles).toContain('pkg-b/src/other.ts');
+      const files = await scanFiles({ rootDir: '/root' });
+      expect(files).toEqual(['/root/src/index.ts']);
     });
   });
 
-  it('should identify source files correctly', () => {
-    expect(isSourceFile('test.ts')).toBe(true);
-    expect(isSourceFile('test.py')).toBe(true);
-    expect(isSourceFile('test.txt')).toBe(false);
-    expect(isSourceFile('test.min.js')).toBe(true);
+  describe('scanEntries', () => {
+    it('should scan files and directories', async () => {
+      vi.mocked(glob).mockImplementation((pattern: any) => {
+        if (pattern === '**/')
+          return Promise.resolve(['/root/src/', '/root/dist/']);
+        if (pattern === '**/.gitignore') return Promise.resolve([]);
+        return Promise.resolve(['/root/src/index.ts']);
+      });
+      vi.mocked(fs.existsSync).mockReturnValue(false);
+
+      const result = await scanEntries({ rootDir: '/root' });
+      expect(result.files).toEqual(['/root/src/index.ts']);
+      expect(result.dirs).toContain('/root/src/');
+    });
+
+    it('should correctly handle directories when rootDir is empty', async () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      // glob is already mocked to return [] by default
+      const result = await scanEntries({ rootDir: '' });
+      expect(result.files).toBeDefined();
+      expect(result.dirs).toBeDefined();
+    });
+
+    it('should handle nested gitignore files correctly', async () => {
+      vi.mocked(glob).mockImplementation((pattern: any) => {
+        if (pattern === '**/.gitignore')
+          return Promise.resolve([
+            '/root/.gitignore',
+            '/root/subdir/.gitignore',
+          ]);
+        if (pattern === '**/')
+          return Promise.resolve([
+            '/root/subdir/',
+            '/root/other/',
+            '/root/node_modules/',
+          ]);
+        return Promise.resolve([
+          '/root/root.log',
+          '/root/subdir/test.tmp',
+          '/root/other/file.ts',
+        ]);
+      });
+
+      vi.mocked(fsPromises.readFile).mockImplementation(async (path: any) => {
+        if (path.toString().endsWith('subdir/.gitignore')) return '*.tmp';
+        if (path.toString().endsWith('.gitignore'))
+          return '*.log\n/node_modules/';
+        return '';
+      });
+
+      const result = await scanEntries({
+        rootDir: '/root',
+      });
+
+      expect(result.dirs).toContain('/root/subdir/');
+      expect(result.dirs).toContain('/root/other/');
+      expect(result.dirs).not.toContain('/root/node_modules/');
+    });
   });
 
-  it('should get file extension', () => {
-    expect(getFileExtension('test.ts')).toBe('ts');
-    expect(getFileExtension('no-ext')).toBe('no-ext');
-    expect(getFileExtension('.gitignore')).toBe('gitignore');
+  describe('isSourceFile', () => {
+    it('should identify source files correctly', () => {
+      expect(isSourceFile('index.ts')).toBe(true);
+      expect(isSourceFile('script.py')).toBe(true);
+      expect(isSourceFile('main.go')).toBe(true);
+      expect(isSourceFile('main.rs')).toBe(true);
+      expect(isSourceFile('types.d.ts')).toBe(false);
+      expect(isSourceFile('test.wasm')).toBe(false);
+      expect(isSourceFile('test.unknown')).toBe(false);
+      expect(isSourceFile('readme.md')).toBe(false);
+    });
+  });
+
+  describe('getFileExtension', () => {
+    it('should extract extensions', () => {
+      expect(getFileExtension('file.ts')).toBe('ts');
+      expect(getFileExtension('archive.tar.gz')).toBe('gz');
+      expect(getFileExtension('noextension')).toBe('noextension');
+    });
   });
 });

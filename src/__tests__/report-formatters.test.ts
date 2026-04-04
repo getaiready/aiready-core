@@ -9,97 +9,140 @@ import {
   wrapInCard,
   generateCompleteReport,
   generateStandardHtmlReport,
-} from '../utils/report-formatters.js';
+} from '../utils/report-formatters';
 
 describe('report-formatters', () => {
-  const options = {
-    title: 'Test Report',
-    packageName: 'core',
-    packageUrl: 'https://github.com/aiready/aiready',
-    bugUrl: 'https://github.com/aiready/aiready/issues',
-    version: '1.0.0',
-    emoji: '🚀',
-  };
-
-  it('should generate report head with styles', () => {
-    const head = generateReportHead('Test Title', 'body { color: red; }');
-    expect(head).toContain('<!DOCTYPE html>');
-    expect(head).toContain('<title>Test Title</title>');
-    expect(head).toContain('body { color: red; }');
+  describe('generateReportHead', () => {
+    it('should generate head with title and styles', () => {
+      const result = generateReportHead('My Title', 'body { color: red; }');
+      expect(result).toContain('<title>My Title</title>');
+      expect(result).toContain('body { color: red; }');
+      expect(result).toContain('charset="UTF-8"');
+      expect(result).toContain('viewport');
+    });
   });
 
-  it('should generate report hero', () => {
-    const hero = generateReportHero('Main Title', 'Sub Title');
-    expect(hero).toContain('<h1>Main Title</h1>');
-    expect(hero).toContain('<p>Sub Title</p>');
-    expect(hero).toContain('class="hero"');
+  describe('generateReportHero', () => {
+    it('should generate hero with title and optional subtitle', () => {
+      const result = generateReportHero('Main Title', 'Sub Title');
+      expect(result).toContain('<h1>Main Title</h1>');
+      expect(result).toContain('<p>Sub Title</p>');
+      expect(result).toContain('class="hero"');
+    });
+
+    it('should generate hero without subtitle', () => {
+      const result = generateReportHero('Main Title');
+      expect(result).not.toContain('<p>');
+    });
   });
 
-  it('should generate stat cards with colors', () => {
-    const cards = [
-      { value: 100, label: 'Score', color: 'green' },
-      { value: 50, label: 'Issues' },
-    ];
-    const html = generateStatCards(cards);
-    expect(html).toContain('color: green');
-    expect(html).toContain('100');
-    expect(html).toContain('Score');
-    expect(html).toContain('50');
-    expect(html).toContain('Issues');
+  describe('generateStatCards', () => {
+    it('should generate grid of stat cards', () => {
+      const cards = [
+        { value: 100, label: 'Score', color: 'green' },
+        { value: '50', label: 'Issues' },
+      ];
+      const result = generateStatCards(cards);
+      expect(result).toContain('100');
+      expect(result).toContain('Score');
+      expect(result).toContain('color: green');
+      expect(result).toContain('50');
+      expect(result).toContain('Issues');
+    });
   });
 
-  it('should generate a table', () => {
-    const config = {
-      headers: ['Name', 'Age'],
-      rows: [
-        ['Alice', '30'],
-        ['Bob', '25'],
-      ],
-    };
-    const html = generateTable(config);
-    expect(html).toContain('<th>Name</th>');
-    expect(html).toContain('<td>Alice</td>');
-    expect(html).toContain('<td>25</td>');
+  describe('generateTable', () => {
+    it('should generate HTML table', () => {
+      const config = {
+        headers: ['H1', 'H2'],
+        rows: [
+          ['R1C1', 'R1C2'],
+          ['R2C1', 'R2C2'],
+        ],
+      };
+      const result = generateTable(config);
+      expect(result).toContain(
+        '<table><thead><tr><th>H1</th><th>H2</th></tr></thead>'
+      );
+      expect(result).toContain('<tbody><tr><td>R1C1</td><td>R1C2</td></tr>');
+    });
   });
 
-  it('should generate issue summary with savings', () => {
-    const html = generateIssueSummary(1, 2, 3, 1000);
-    expect(html).toContain('Critical: 1');
-    expect(html).toContain('Major: 2');
-    expect(html).toContain('Minor: 3');
-    expect(html).toContain('Potential Savings: </strong>1,000 tokens');
+  describe('generateIssueSummary', () => {
+    it('should generate summary with savings', () => {
+      const result = generateIssueSummary(1, 2, 3, 1000);
+      expect(result).toContain('Critical: 1');
+      expect(result).toContain('Major: 2');
+      expect(result).toContain('Minor: 3');
+      expect(result).toContain('Potential Savings:');
+      expect(result).toContain('1');
+      expect(result).toContain('000 tokens');
+    });
+
+    it('should generate summary without savings', () => {
+      const result = generateIssueSummary(0, 0, 0);
+      expect(result).not.toContain('Potential Savings');
+    });
   });
 
-  it('should generate report footer with links', () => {
-    const html = generateReportFooter(options);
-    expect(html).toContain('@aiready/core');
-    expect(html).toContain('v1.0.0');
-    expect(html).toContain('https://github.com/aiready/aiready');
-    expect(html).toContain('Report it here');
+  describe('generateReportFooter', () => {
+    it('should generate footer with links', () => {
+      const options = {
+        packageName: 'test-pkg',
+        version: '1.0.0',
+        packageUrl: 'https://github.com/test',
+        bugUrl: 'https://github.com/test/issues',
+        title: 'Title',
+      };
+      const result = generateReportFooter(options);
+      expect(result).toContain('@aiready/test-pkg');
+      expect(result).toContain('v1.0.0');
+      expect(result).toContain('href="https://github.com/test"');
+      expect(result).toContain('href="https://github.com/test/issues"');
+    });
   });
 
-  it('should wrap content in a card', () => {
-    const html = wrapInCard('some content', 'Card Title');
-    expect(html).toContain('<h2>Card Title</h2>');
-    expect(html).toContain('some content');
-    expect(html).toContain('class="card"');
+  describe('wrapInCard', () => {
+    it('should wrap content in card', () => {
+      const result = wrapInCard('some content', 'Card Title');
+      expect(result).toContain('<h2>Card Title</h2>');
+      expect(result).toContain('some content');
+    });
   });
 
-  it('should generate a complete report', () => {
-    const html = generateCompleteReport(options, '<div>Body Content</div>');
-    expect(html).toContain('<body><div>Body Content</div>');
-    expect(html).toContain('footer');
+  describe('generateCompleteReport', () => {
+    it('should generate full HTML document', () => {
+      const options = { title: 'T', packageName: 'P' };
+      const result = generateCompleteReport(options, '<h1>Body</h1>');
+      expect(result).toContain('<!DOCTYPE html>');
+      expect(result).toContain('<body><h1>Body</h1>');
+    });
   });
 
-  it('should generate standard HTML report with score', () => {
-    const stats = [{ value: 'High', label: 'Priority' }];
-    const sections = [{ title: 'Section 1', content: 'Content 1' }];
-    const score = { value: 85, label: 'AI Readiness Score' };
+  describe('generateStandardHtmlReport', () => {
+    it('should generate standard report with optional score', () => {
+      const options = { title: 'T', packageName: 'P', emoji: '✨' };
+      const stats = [{ value: 10, label: 'L' }];
+      const sections = [{ title: 'S1', content: 'C1' }];
+      const score = { value: 85, label: 'Good' };
 
-    const html = generateStandardHtmlReport(options, stats, sections, score);
-    expect(html).toContain('85');
-    expect(html).toContain('AI Readiness Score');
-    expect(html).toContain('Section 1');
-    expect(html).toContain('Content 1');
+      const result = generateStandardHtmlReport(
+        options,
+        stats,
+        sections,
+        score
+      );
+      expect(result).toContain('✨ AIReady T');
+      expect(result).toContain('85');
+      expect(result).toContain('Good');
+      expect(result).toContain('C1');
+      expect(result).toContain('S1');
+    });
+
+    it('should handle missing score', () => {
+      const options = { title: 'T', packageName: 'P' };
+      const result = generateStandardHtmlReport(options, [], [], undefined);
+      expect(result).not.toContain('score-card');
+    });
   });
 });

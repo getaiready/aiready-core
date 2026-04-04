@@ -1,30 +1,33 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { execSync } from 'child_process';
 import {
   getFileCommitTimestamps,
   getLineRangeLastModifiedCached,
   getRepoMetadata,
 } from '../utils/history-git';
-import { execSync } from 'child_process';
 
-vi.mock('child_process', () => ({
-  execSync: vi.fn(),
-}));
+vi.mock('child_process');
 
 describe('history-git', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
   describe('getFileCommitTimestamps', () => {
     it('should parse git blame output correctly', () => {
       const mockOutput =
-        'f3a4b5c6 (Author 1234567890 -0700 1) Line 1\nd3e4f5g6 (Author 1234567891 -0700 2) Line 2\n';
-      (execSync as any).mockReturnValue(mockOutput);
+        'abcd1234 (Author 1234567890 -0700 1) line 1\n' +
+        'efgh5678 (Author 1234567891 -0700 2) line 2\n';
+      vi.mocked(execSync).mockReturnValue(mockOutput as any);
 
       const result = getFileCommitTimestamps('test.ts');
       expect(result[1]).toBe(1234567890);
       expect(result[2]).toBe(1234567891);
     });
 
-    it('should return empty object on error', () => {
-      (execSync as any).mockImplementation(() => {
-        throw new Error('Git not found');
+    it('should return empty object on execSync error', () => {
+      vi.mocked(execSync).mockImplementation(() => {
+        throw new Error('Git failed');
       });
       const result = getFileCommitTimestamps('test.ts');
       expect(result).toEqual({});
@@ -32,40 +35,57 @@ describe('history-git', () => {
   });
 
   describe('getLineRangeLastModifiedCached', () => {
-    it('should return the latest timestamp in range', () => {
-      const stamps = { 1: 100, 2: 200, 3: 150 };
-      expect(getLineRangeLastModifiedCached(stamps, 1, 3)).toBe(200);
-      expect(getLineRangeLastModifiedCached(stamps, 1, 1)).toBe(100);
+    it('should find the latest timestamp in range', () => {
+      const timestamps = {
+        1: 1000,
+        2: 3000,
+        3: 2000,
+        4: 4000,
+      };
+      expect(getLineRangeLastModifiedCached(timestamps, 1, 3)).toBe(3000);
+      expect(getLineRangeLastModifiedCached(timestamps, 4, 4)).toBe(4000);
+      expect(getLineRangeLastModifiedCached(timestamps, 10, 15)).toBe(0);
     });
   });
 
   describe('getRepoMetadata', () => {
-    it('should fetch repository details', () => {
-      (execSync as any).mockImplementation((cmd: string) => {
-        if (cmd.includes('remote.origin.url'))
+    it('should extract metadata from git commands', () => {
+      vi.mocked(execSync).mockImplementation((cmd: any) => {
+        if (cmd.startsWith('git config --get remote.origin.url'))
           return 'https://github.com/test/repo.git';
-        if (cmd.includes('rev-parse --abbrev-ref')) return 'main';
-        if (cmd.includes('rev-parse HEAD')) return 'abc123commit';
-        if (cmd.includes('log -1')) return 'engineer@example.com';
+        if (cmd.startsWith('git rev-parse --abbrev-ref HEAD')) return 'main';
+        if (cmd.startsWith('git rev-parse HEAD')) return 'latest-commit-hash';
+        if (cmd.startsWith('git log -1 --format=%ae'))
+          return 'author@example.com';
         return '';
       });
 
-      const metadata = getRepoMetadata('.');
+      const metadata = getRepoMetadata('/root');
       expect(metadata.url).toBe('https://github.com/test/repo.git');
       expect(metadata.branch).toBe('main');
-      expect(metadata.commit).toBe('abc123commit');
-      expect(metadata.author).toBe('engineer@example.com');
+      expect(metadata.commit).toBe('latest-commit-hash');
+      expect(metadata.author).toBe('author@example.com');
     });
 
-    it('should handle missing git properties gracefully', () => {
-      (execSync as any).mockImplementation((cmd: string) => {
-        if (cmd.includes('remote.origin.url')) throw new Error('No remote');
-        return 'fallback';
+    it('should handle partial git failures gracefully', () => {
+      vi.mocked(execSync).mockImplementation((cmd: any) => {
+        if (cmd.startsWith('git rev-parse HEAD')) return 'latest-commit-hash';
+        throw new Error('Command failed');
       });
 
-      const metadata = getRepoMetadata('.');
+      const metadata = getRepoMetadata('/root');
+      expect(metadata.commit).toBe('latest-commit-hash');
       expect(metadata.url).toBeUndefined();
-      expect(metadata.branch).toBe('fallback');
+      expect(metadata.branch).toBeUndefined();
+      expect(metadata.author).toBeUndefined();
+    });
+
+    it('should handle complete failure if not a git repo', () => {
+      vi.mocked(execSync).mockImplementation(() => {
+        throw new Error('Not a git repo');
+      });
+      const metadata = getRepoMetadata('/root');
+      expect(metadata).toEqual({});
     });
   });
 });

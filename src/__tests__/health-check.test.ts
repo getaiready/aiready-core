@@ -1,8 +1,13 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 
 describe('checkHealth', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it('returns healthy for 2xx response', async () => {
@@ -37,8 +42,14 @@ describe('checkHealth', () => {
     );
 
     const { checkHealth } = await import('../monitoring/health-check');
-    const result = await checkHealth('https://example.com');
+    const checkPromise = checkHealth('https://example.com');
 
+    // Handle retries
+    for (let i = 0; i < 2; i++) {
+      await vi.advanceTimersByTimeAsync(2000);
+    }
+
+    const result = await checkPromise;
     expect(result.status).toBe('unhealthy');
     expect(result.statusCode).toBe(500);
   });
@@ -49,8 +60,14 @@ describe('checkHealth', () => {
     );
 
     const { checkHealth } = await import('../monitoring/health-check');
-    const result = await checkHealth('https://example.com');
+    const checkPromise = checkHealth('https://example.com');
 
+    // Handle retries
+    for (let i = 0; i < 2; i++) {
+      await vi.advanceTimersByTimeAsync(2000);
+    }
+
+    const result = await checkPromise;
     expect(result.status).toBe('unhealthy');
     expect(result.statusCode).toBe(404);
   });
@@ -61,8 +78,14 @@ describe('checkHealth', () => {
     );
 
     const { checkHealth } = await import('../monitoring/health-check');
-    const result = await checkHealth('https://example.com');
+    const checkPromise = checkHealth('https://example.com');
 
+    // Handle retries
+    for (let i = 0; i < 2; i++) {
+      await vi.advanceTimersByTimeAsync(2000);
+    }
+
+    const result = await checkPromise;
     expect(result.status).toBe('error');
     expect(result.error).toBe('Network connection refused');
   });
@@ -73,8 +96,14 @@ describe('checkHealth', () => {
     );
 
     const { checkHealth } = await import('../monitoring/health-check');
-    const result = await checkHealth('https://example.com', 5000);
+    const checkPromise = checkHealth('https://example.com', 5000);
 
+    // Handle retries
+    for (let i = 0; i < 2; i++) {
+      await vi.advanceTimersByTimeAsync(2000);
+    }
+
+    const result = await checkPromise;
     expect(result.status).toBe('error');
     expect(result.error).toBe('The operation was aborted.');
   });
@@ -83,8 +112,14 @@ describe('checkHealth', () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue('string error');
 
     const { checkHealth } = await import('../monitoring/health-check');
-    const result = await checkHealth('https://example.com');
+    const checkPromise = checkHealth('https://example.com');
 
+    // Handle retries
+    for (let i = 0; i < 2; i++) {
+      await vi.advanceTimersByTimeAsync(2000);
+    }
+
+    const result = await checkPromise;
     expect(result.status).toBe('error');
     expect(result.error).toBe('string error');
   });

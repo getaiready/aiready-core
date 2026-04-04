@@ -49,5 +49,63 @@ describe('scoring-helpers', () => {
 
       expect(output.recommendations[0].priority).toBe('high');
     });
+
+    it('should correctly format all dimension descriptions', () => {
+      const report = {
+        toolName: ToolName.TestabilityIndex,
+        score: 85,
+        rawData: {
+          score: 85,
+          testFiles: 5,
+          sourceFiles: 10,
+          pureFunctions: 8,
+          totalFunctions: 10,
+          injectionPatterns: 2,
+          totalClasses: 4,
+          deepDirectories: 1,
+          totalDirectories: 5,
+          untypedExports: 3,
+          totalExports: 6,
+        },
+        dimensions: {
+          testCoverageRatio: 90,
+          purityScore: 80,
+          dependencyInjectionScore: 70,
+          structureClarityScore: 60,
+          apiClarityScore: 50,
+          graphStabilityScore: 40,
+        },
+        dimensionNames: {
+          testCoverageRatio: 'Test Coverage',
+          purityScore: 'Function Purity',
+          dependencyInjectionScore: 'DI Score',
+          structureClarityScore: 'Structure Clarity',
+          apiClarityScore: 'API Clarity',
+          graphStabilityScore: 'Graph Stability',
+        },
+        recommendations: [],
+      };
+
+      const output = buildStandardToolScore(report);
+
+      expect(
+        output.factors.find((f) => f.name === 'Test Coverage')?.description
+      ).toBe('5 test files / 10 source files');
+      expect(
+        output.factors.find((f) => f.name === 'Function Purity')?.description
+      ).toBe('8/10 functions are pure');
+      expect(
+        output.factors.find((f) => f.name === 'DI Score')?.description
+      ).toBe('2/4 classes use DI');
+      expect(
+        output.factors.find((f) => f.name === 'Structure Clarity')?.description
+      ).toBe('1 of 5 dirs exceed recommended depth');
+      expect(
+        output.factors.find((f) => f.name === 'API Clarity')?.description
+      ).toBe('3 of 6 exports lack type annotations');
+      expect(
+        output.factors.find((f) => f.name === 'Graph Stability')?.description
+      ).toBe('85/100');
+    });
   });
 });
