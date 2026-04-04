@@ -106,7 +106,7 @@ test-visualizer: ## Build and test the visualizer
 
 test-vscode-extension: ## Compile the VS Code extension to ensure no breaking changes
 	@$(call log_step,Verifying aiready (VS Code extension)...)
-	@cd apps/vscode-extension && $(PNPM) install && $(PNPM) exec tsc --noEmit && $(PNPM) run compile || { $(call log_error,VS Code extension verification failed); exit 1; }
+	@cd apps/vscode-extension && $(PNPM) exec tsc --noEmit && $(PNPM) run compile || { $(call log_error,VS Code extension verification failed); exit 1; }
 	@$(call log_success,VS Code extension verified)
 
 test-downstream: ## Run all downstream verification tests (platform, visualizer, vscode-extension)

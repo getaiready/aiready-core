@@ -76,9 +76,8 @@ npm-login: ## Login to npm registry
 version-patch: ## Bump spoke patch version (0.1.0 -> 0.1.1). Usage: make version-patch SPOKE=pattern-detect
 	$(call require_spoke)
 	@$(call log_step,Bumping @aiready/$(SPOKE) patch version...)
-# dangerous suppress errors because version does gets bumped
-	@spk_dir="$(call SPOKE_DIR,$(SPOKE))"; \
-	cd "$$spk_dir" && pnpm version patch --no-git-tag-version 2>/dev/null || true; \
+	@spk_dir="$(ROOT_DIR)/$(call SPOKE_DIR,$(SPOKE))"; \
+	cd "$$spk_dir" && pnpm version patch --no-git-tag-version; \
 	$(call log_success,Version bumped to $$(cd "$$spk_dir" && node -p "require('./package.json').version"))
 
 version-patch-vscode: ## Bump VS Code extension patch version
@@ -94,17 +93,15 @@ version-patch-all: ## Bump all spokes patch version
 version-minor: ## Bump spoke minor version (0.1.0 -> 0.2.0). Usage: make version-minor SPOKE=pattern-detect
 	$(call require_spoke)
 	@$(call log_step,Bumping @aiready/$(SPOKE) minor version...)
-# dangerous suppress errors because version does gets bumped
-	@spk_dir="$(call SPOKE_DIR,$(SPOKE))"; \
-	cd "$$spk_dir" && pnpm version minor --no-git-tag-version 2>/dev/null || true; \
+	@spk_dir="$(ROOT_DIR)/$(call SPOKE_DIR,$(SPOKE))"; \
+	cd "$$spk_dir" && pnpm version minor --no-git-tag-version; \
 	$(call log_success,Version bumped to $$(cd "$$spk_dir" && node -p "require('./package.json').version"))
 
 version-major: ## Bump spoke major version (0.1.0 -> 1.0.0). Usage: make version-major SPOKE=pattern-detect
 	$(call require_spoke)
 	@$(call log_step,Bumping @aiready/$(SPOKE) major version...)
-# dangerous suppress errors because version does gets bumped
-	@spk_dir="$(call SPOKE_DIR,$(SPOKE))"; \
-	cd "$$spk_dir" && pnpm version major --no-git-tag-version 2>/dev/null || true; \
+	@spk_dir="$(ROOT_DIR)/$(call SPOKE_DIR,$(SPOKE))"; \
+	cd "$$spk_dir" && pnpm version major --no-git-tag-version; \
 	$(call log_success,Version bumped to $$(cd "$$spk_dir" && node -p "require('./package.json').version"))
 
 # Generic npm publish (requires SPOKE parameter)
