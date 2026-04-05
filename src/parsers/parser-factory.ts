@@ -3,7 +3,8 @@ import {
   LanguageParser,
   LANGUAGE_EXTENSIONS,
 } from '../types/language';
-export { Language, LanguageParser, LANGUAGE_EXTENSIONS };
+export { Language, LANGUAGE_EXTENSIONS };
+export type { LanguageParser };
 
 /**
  * Factory for creating and managing language parsers.

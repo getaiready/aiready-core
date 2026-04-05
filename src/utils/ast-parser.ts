@@ -8,11 +8,5 @@ import {
 import { calculateImportSimilarity } from './similarity';
 import { parseFileExports } from './dependency-analyzer';
 
-export {
-  ExportWithImports,
-  FileImport,
-  ASTNode,
-  TokenBudget,
-  calculateImportSimilarity,
-  parseFileExports,
-};
+export type { ExportWithImports, FileImport, ASTNode, TokenBudget };
+export { calculateImportSimilarity, parseFileExports };

@@ -219,4 +219,4 @@ export interface ParseStatistics {
   warnings: number;
 }
 
-export { SourceLocation, SourceRange };
+export type { SourceLocation, SourceRange };

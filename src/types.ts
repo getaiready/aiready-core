@@ -66,8 +66,6 @@ export {
   ModelTierSchema,
   FRIENDLY_TOOL_NAMES,
   // Common types
-  ToolOptions,
-  ScanOptions,
   LocationSchema,
   // Issue
   IssueSchema,
@@ -81,19 +79,14 @@ export {
   // Config
   AIReadyConfigSchema,
   // Visualization and Business
-  GraphNode,
-  GraphEdge,
-  GraphData,
-  TokenBudget,
-  Lead,
   LeadSchema,
-  LeadSubmission,
   LeadSubmissionSchema,
-  LeadSource,
   LeadSourceSchema,
 };
 
 export type {
+  ToolOptions,
+  ScanOptions,
   Location,
   Issue,
   Metrics,
@@ -102,6 +95,13 @@ export type {
   SpokeOutput,
   UnifiedReport,
   IssueOverlay,
+  GraphNode,
+  GraphEdge,
+  GraphData,
+  TokenBudget,
+  Lead,
+  LeadSubmission,
+  LeadSource,
 };
 
 /**

@@ -14,22 +14,27 @@ export {
 } from './enums';
 
 // Common types
-export { ToolOptions, ScanOptions, LocationSchema, Location } from './common';
+export { LocationSchema } from './common';
+export type { ToolOptions, ScanOptions, Location } from './common';
 // Issue schema
-export { IssueSchema, Issue, IssueOverlay } from './schemas/issue';
+export { IssueSchema } from './schemas/issue';
+export type { Issue, IssueOverlay } from './schemas/issue';
 
 // Metrics schema
-export { MetricsSchema, Metrics } from './schemas/metrics';
+export { MetricsSchema } from './schemas/metrics';
+export type { Metrics } from './schemas/metrics';
 
 // Report schemas
 export {
   AnalysisResultSchema,
-  AnalysisResult,
   SpokeSummarySchema,
-  SpokeSummary,
   SpokeOutputSchema,
-  SpokeOutput,
   UnifiedReportSchema,
+} from './schemas/report';
+export type {
+  AnalysisResult,
+  SpokeSummary,
+  SpokeOutput,
   UnifiedReport,
 } from './schemas/report';
 
@@ -37,20 +42,14 @@ export {
 export { AIReadyConfigSchema } from './schemas/config';
 
 // Code block type
-export { CodeBlock } from './code-block';
+export type { CodeBlock } from './code-block';
 
 // Visualization types
 export * from './visualization';
 
 // Business types
-export {
-  Lead,
-  LeadSchema,
-  LeadSubmission,
-  LeadSubmissionSchema,
-  LeadSource,
-  LeadSourceSchema,
-} from './business';
+export { LeadSchema, LeadSubmissionSchema, LeadSourceSchema } from './business';
+export type { Lead, LeadSubmission, LeadSource } from './business';
 
 // AST types
-export { TokenBudget } from './ast';
+export type { TokenBudget } from './ast';
