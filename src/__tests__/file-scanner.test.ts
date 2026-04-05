@@ -7,6 +7,7 @@ import {
   scanEntries,
   isSourceFile,
   getFileExtension,
+  VAGUE_FILE_NAMES,
 } from '../utils/file-scanner';
 
 vi.mock('fs/promises');
@@ -76,6 +77,15 @@ describe('file-scanner', () => {
 
       // The 'ignore' package logic will filter the files
       expect(files).toEqual(['/root/src/index.ts']);
+    });
+
+    it('should catch errors when reading .aireadyignore', async () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fsPromises.readFile).mockRejectedValue(new Error('fail'));
+      vi.mocked(glob).mockResolvedValue(['/root/f.ts'] as any);
+
+      const files = await scanFiles({ rootDir: '/root' });
+      expect(files).toEqual(['/root/f.ts']);
     });
 
     it('should fall back to raw glob if gitignore application fails', async () => {

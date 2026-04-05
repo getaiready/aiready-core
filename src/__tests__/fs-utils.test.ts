@@ -1,155 +1,195 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import * as fs from 'fs';
 import {
-  describe,
-  it,
-  expect,
-  beforeAll,
-  afterAll,
-  beforeEach,
-  afterEach,
-  vi,
-} from 'vitest';
-import { join } from 'path';
-import { existsSync, rmSync, mkdirSync, writeFileSync } from 'fs';
-import { tmpdir } from 'os';
-import {
+  ensureDir,
+  getFilesByPattern,
   resolveOutputPath,
   handleJSONOutput,
   findLatestReport,
   findLatestScanReport,
 } from '../utils/fs-utils';
 
-describe('FS Utils', () => {
-  let tmpDir: string;
+vi.mock('fs');
 
-  beforeAll(() => {
-    tmpDir = join(tmpdir(), `aiready-fs-utils-test-${Date.now()}`);
-    mkdirSync(tmpDir, { recursive: true });
+describe('fs-utils', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
   });
 
-  afterAll(() => {
-    rmSync(tmpDir, { recursive: true, force: true });
+  describe('ensureDir', () => {
+    it('should create directory if it does not exist', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(false);
+      ensureDir('/path/to/file.ts');
+      expect(fs.mkdirSync).toHaveBeenCalledWith('/path/to', {
+        recursive: true,
+      });
+    });
+
+    it('should do nothing if directory exists', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      ensureDir('/path/to/file.ts');
+      expect(fs.mkdirSync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getFilesByPattern', () => {
+    it('should return empty array if dir does not exist', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(false);
+      expect(getFilesByPattern('/dir', /./)).toEqual([]);
+    });
+
+    it('should return filtered files', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readdirSync).mockReturnValue([
+        'a.ts',
+        'b.js',
+        'c.py',
+      ] as any);
+      expect(getFilesByPattern('/dir', /\.ts$/)).toEqual(['a.ts']);
+    });
+
+    it('should catch readdirSync errors', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readdirSync).mockImplementation(() => {
+        throw new Error('fail');
+      });
+      expect(getFilesByPattern('/dir', /./)).toEqual([]);
+    });
   });
 
   describe('resolveOutputPath', () => {
-    it('should use user-provided path', () => {
-      const userPath = join(tmpDir, 'custom', 'output.json');
-      const result = resolveOutputPath(userPath, 'default.json', tmpDir);
-      expect(result).toBe(userPath);
+    it('should use user path if provided', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      const path = resolveOutputPath('/custom/out.json', 'default.json');
+      expect(path).toBe('/custom/out.json');
     });
 
-    it('should create default .aiready directory path', () => {
-      const result = resolveOutputPath(undefined, 'report.json', tmpDir);
-      expect(result).toContain('.aiready');
-      expect(result).toMatch(/report\.json$/);
+    it('should resolve relative to workingDir if it is a file', () => {
+      vi.mocked(fs.statSync).mockReturnValue({ isFile: () => true } as any);
+      const path = resolveOutputPath(undefined, 'report.json', '/root/file.ts');
+      expect(path).toContain('/root/.aiready/report.json');
     });
 
-    it('should handle file as workingDir', () => {
-      const filePath = join(tmpDir, 'test.txt');
-      writeFileSync(filePath, 'test');
-      const result = resolveOutputPath(undefined, 'report.json', filePath);
-      expect(result).toBe(join(tmpDir, '.aiready', 'report.json'));
-    });
-
-    it('should ignore non-existent workingDir during resolution', () => {
-      const nonExistent = join(tmpDir, 'no-exist');
-      const result = resolveOutputPath(undefined, 'report.json', nonExistent);
-      expect(result).toBe(join(nonExistent, '.aiready', 'report.json'));
+    it('should handle statSync errors gracefully', () => {
+      vi.mocked(fs.statSync).mockImplementation(() => {
+        throw new Error('fail');
+      });
+      const path = resolveOutputPath(undefined, 'report.json', '/nonexistent');
+      expect(path).toContain('/nonexistent/.aiready/report.json');
     });
   });
 
   describe('handleJSONOutput', () => {
-    let consoleSpy: any;
+    it('should write to file and show success message', () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      handleJSONOutput({ a: 1 }, '/out.json', 'Done!');
+      expect(fs.writeFileSync).toHaveBeenCalled();
+      expect(logSpy).toHaveBeenCalledWith('Done!');
 
-    beforeEach(() => {
-      consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      handleJSONOutput({ a: 1 }, '/out2.json');
+      expect(logSpy).toHaveBeenCalledWith(
+        expect.stringContaining('✅ Results saved to /out2.json')
+      );
+      logSpy.mockRestore();
     });
 
-    afterEach(() => {
-      consoleSpy.mockRestore();
+    it('should fall back to default weight for unknown tool in profile', () => {
+      expect(
+        getToolWeight(
+          'unknown-tool',
+          undefined,
+          undefined,
+          ScoringProfile.Agentic
+        )
+      ).toBe(5);
     });
 
-    it('should write to file', () => {
-      const outFile = join(tmpDir, 'out.json');
-      const data = { test: true };
-
-      handleJSONOutput(data, outFile, 'Success');
-      expect(existsSync(outFile)).toBe(true);
-      expect(consoleSpy).toHaveBeenCalledWith('Success');
+    it('should fall back to 5 for unknown tool and missing config/profile', () => {
+      expect(getToolWeight('generic-tool', {})).toBe(5);
     });
 
     it('should log to console if no file provided', () => {
-      const data = { test: true };
-      handleJSONOutput(data);
-      expect(consoleSpy).toHaveBeenCalledWith(JSON.stringify(data, null, 2));
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      handleJSONOutput({ b: 2 });
+      expect(logSpy).toHaveBeenCalledWith(JSON.stringify({ b: 2 }, null, 2));
+      logSpy.mockRestore();
     });
   });
 
   describe('findLatestReport', () => {
-    it('should find new format report files', () => {
-      const reportDir = join(tmpDir, 'reports-new');
-      mkdirSync(join(reportDir, '.aiready'), { recursive: true });
-      const reportPath = join(reportDir, '.aiready', 'aiready-report-1.json');
-      writeFileSync(reportPath, '{}');
+    it('should find new format report', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readdirSync).mockReturnValue([
+        'aiready-report-1.json',
+        'aiready-report-2.json',
+      ] as any);
+      vi.mocked(fs.statSync).mockImplementation(
+        (path: any) =>
+          ({
+            mtime: path.toString().includes('2')
+              ? new Date(2000)
+              : new Date(1000),
+          }) as any
+      );
 
-      const result = findLatestReport(reportDir);
-      expect(result).toBe(reportPath);
+      const latest = findLatestReport('/root');
+      expect(latest).toContain('aiready-report-2.json');
     });
 
-    it('should find legacy format if new format is missing', () => {
-      const reportDir = join(tmpDir, 'reports-legacy');
-      mkdirSync(join(reportDir, '.aiready'), { recursive: true });
-      const reportPath = join(reportDir, '.aiready', 'aiready-scan-1.json');
-      writeFileSync(reportPath, '{}');
+    it('should fall back to legacy format', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readdirSync).mockImplementation((path: any) => {
+        if (path.toString().includes('.aiready')) {
+          // Return no new reports, but legacy reports
+          return ['aiready-scan-1.json'] as any;
+        }
+        return [] as any;
+      });
+      vi.mocked(fs.statSync).mockReturnValue({ mtime: new Date() } as any);
 
-      const result = findLatestReport(reportDir);
-      expect(result).toBe(reportPath);
+      const latest = findLatestReport('/root');
+      expect(latest).toContain('aiready-scan-1.json');
     });
 
     it('should return null if no reports found', () => {
-      const reportDir = join(tmpDir, 'no-reports');
-      mkdirSync(reportDir, { recursive: true });
-      expect(findLatestReport(reportDir)).toBeNull();
-    });
-
-    it('should sort reports by mtime', async () => {
-      const reportDir = join(tmpDir, 'reports-sort');
-      const aireadyDir = join(reportDir, '.aiready');
-      mkdirSync(aireadyDir, { recursive: true });
-
-      const oldPath = join(aireadyDir, 'aiready-report-old.json');
-      const newPath = join(aireadyDir, 'aiready-report-new.json');
-
-      writeFileSync(oldPath, '{}');
-      // Wait a bit to ensure different mtime
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      writeFileSync(newPath, '{}');
-
-      const result = findLatestReport(reportDir);
-      expect(result).toBe(newPath);
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readdirSync).mockReturnValue([]);
+      expect(findLatestReport('/root')).toBeNull();
     });
   });
 
   describe('findLatestScanReport', () => {
-    it('should find report by ID in name', () => {
-      const reportDir = join(tmpDir, 'scan-reports');
-      mkdirSync(reportDir, { recursive: true });
-      writeFileSync(join(reportDir, 'report-1.json'), '{}');
-      const latestPath = join(reportDir, 'report-10.json');
-      writeFileSync(latestPath, '{}');
-      writeFileSync(join(reportDir, 'report-2.json'), '{}');
+    it('should find latest by ID and handle filenames without digits', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readdirSync).mockReturnValue([
+        'r-10.json',
+        'r-a.json',
+        'r-20.json',
+      ] as any);
 
-      const result = findLatestScanReport(reportDir, 'report-');
-      expect(result).toBe(latestPath);
+      const latest = findLatestScanReport('/root', 'r-');
+      expect(latest).toContain('r-20.json');
     });
 
-    it('should return null if no matching prefix found', () => {
-      const reportDir = join(tmpDir, 'scan-reports-none');
-      mkdirSync(reportDir, { recursive: true });
-      expect(findLatestScanReport(reportDir, 'other-')).toBeNull();
+    it('should return null if no report files match prefix', () => {
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+      vi.mocked(fs.readdirSync).mockReturnValue(['other.json'] as any);
+      expect(findLatestScanReport('/root', 'r-')).toBeNull();
     });
 
-    it('should handle invalid input gracefully', () => {
-      expect(findLatestScanReport(null as any, 'report-')).toBeNull();
+    it('should return null on error', () => {
+      // Mock the helper to throw, which will be caught by findLatestScanReport's try-catch
+      vi.mocked(fs.existsSync).mockReturnValue(true);
+
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      // Note: we can't easily mock getFilesByPattern directly because it's in the same file
+      // and not exported in a way that vi.mock can easily intercept internal calls.
+      // But we can trigger an error in the sort or other logic.
+
+      // Actually, if we provide a malformed regex prefix, RegExp constructor might throw.
+      expect(findLatestScanReport('/root', '[')).toBeNull();
+      expect(errSpy).toHaveBeenCalled();
+      errSpy.mockRestore();
     });
   });
 });

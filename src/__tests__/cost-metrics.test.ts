@@ -42,9 +42,9 @@ describe('cost-metrics', () => {
   describe('calculateDetailedTokenROI', () => {
     it('should calculate ROI metrics', () => {
       const params = {
-        totalTokens: 100000,
-        avgContextBudget: 10000,
-        potentialSavings: 5000,
+        totalTokens: 10000,
+        avgContextBudget: 50000,
+        potentialSavings: 2000,
         fragmentationScore: 0.1,
         developerCount: 5,
       };
@@ -56,7 +56,7 @@ describe('cost-metrics', () => {
     it('should handle zero developer count without division by zero', () => {
       const result = calculateDetailedTokenROI({
         totalTokens: 100,
-        avgContextBudget: 10,
+        avgContextBudget: 1000,
         potentialSavings: 5,
         fragmentationScore: 0.1,
         developerCount: 0,
@@ -83,7 +83,7 @@ describe('cost-metrics', () => {
         totalContextTokens: 1000,
         wastedTokens: { duplication: 0, fragmentation: 0, chattiness: 0 },
       });
-      const model = getModelPreset('gpt-4o'); // Tier is frontier
+      const model = getModelPreset('gpt-5.3'); // Tier is frontier
       const result = estimateCostFromBudget(budget, model);
       expect(result.confidence).toBe(0.7);
     });
