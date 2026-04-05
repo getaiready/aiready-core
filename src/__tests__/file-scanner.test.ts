@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as fsPromises from 'fs/promises';
 import fs from 'fs';
 import { glob } from 'glob';
@@ -7,7 +7,6 @@ import {
   scanEntries,
   isSourceFile,
   getFileExtension,
-  VAGUE_FILE_NAMES,
 } from '../utils/file-scanner';
 
 vi.mock('fs/promises');
@@ -45,12 +44,12 @@ describe('file-scanner', () => {
       vi.mocked(fsPromises.readFile).mockResolvedValue(
         'ignored.ts\n# Comment\n!negation\n' as any
       );
-      vi.mocked(glob).mockImplementation((pattern, options: any) => {
+      vi.mocked(glob).mockImplementation((pattern, _options: any) => {
         if (pattern === '**/.gitignore') return Promise.resolve([]);
         return Promise.resolve(['/root/src/index.ts']);
       });
 
-      const files = await scanFiles({ rootDir: '/root' });
+      const _files = await scanFiles({ rootDir: '/root' });
 
       expect(vi.mocked(glob).mock.calls[0][1].ignore).toContain('ignored.ts');
       expect(vi.mocked(glob).mock.calls[0][1].ignore).not.toContain(
@@ -63,7 +62,7 @@ describe('file-scanner', () => {
 
     it('should handle nested .gitignore files', async () => {
       vi.mocked(fs.existsSync).mockReturnValue(false);
-      vi.mocked(glob).mockImplementation((pattern, options: any) => {
+      vi.mocked(glob).mockImplementation((pattern, _options: any) => {
         if (pattern === '**/.gitignore')
           return Promise.resolve(['/root/subdir/.gitignore']);
         return Promise.resolve([

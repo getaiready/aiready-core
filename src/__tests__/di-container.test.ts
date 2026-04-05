@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   DIContainer,
-  DI_TOKENS,
   defaultImplementations,
   globalContainer,
 } from '../utils/di-container';
