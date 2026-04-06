@@ -40,4 +40,6 @@ export interface ScanOptions extends ToolOptions {
   format?: 'json' | 'console' | 'html';
   /** Whether to run in parallel */
   parallel?: boolean;
+  /** Whether to scan only changed files (git-aware) */
+  changedFilesOnly?: boolean;
 }

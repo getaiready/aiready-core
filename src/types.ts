@@ -298,6 +298,7 @@ export const GLOBAL_INFRA_OPTIONS = [
   'exclude',
   'tools',
   'scoring',
+  'changedFilesOnly',
 ];
 export const GLOBAL_SCAN_OPTIONS = [
   'rootDir',
@@ -308,8 +309,9 @@ export const GLOBAL_SCAN_OPTIONS = [
   'output',
   'format',
   'parallel',
-  'showBreakdown',
+  'changedFilesOnly',
 ];
+
 export const COMMON_FINE_TUNING_OPTIONS = [
   'maxDepth',
   'minSimilarity',

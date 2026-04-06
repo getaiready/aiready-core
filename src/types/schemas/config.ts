@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SeveritySchema } from '../enums';
 
 /**
  * Global AIReady Configuration Schema.
@@ -38,7 +39,19 @@ export const AIReadyConfigSchema = z
       })
       .optional(),
     /** Tool-specific configuration overrides (Strictly ToolName -> Config) */
-    tools: z.record(z.string(), z.any()).optional(),
+    tools: z
+      .record(
+        z.string(),
+        z
+          .object({
+            /** Whether to enable this tool */
+            enabled: z.boolean().optional(),
+            /** Severity overrides for specific categories */
+            severityOverrides: z.record(z.string(), SeveritySchema).optional(),
+          })
+          .catchall(z.any())
+      )
+      .optional(),
     /** Scoring profile and weights */
     scoring: z
       .object({

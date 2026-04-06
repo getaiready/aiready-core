@@ -1,9 +1,10 @@
 import { glob } from 'glob';
 import { readFile } from 'fs/promises';
 import { existsSync } from 'fs';
-import { join, relative, dirname } from 'path';
+import { join, relative, dirname, resolve } from 'path';
 import ignorePkg from 'ignore';
 import { ScanOptions } from '../types';
+import { getChangedFiles } from './history-git';
 
 /**
  * Default file exclusion patterns for AIReady scans.
@@ -100,7 +101,7 @@ export const VAGUE_FILE_NAMES = new Set([
  */
 export async function scanFiles(options: ScanOptions): Promise<string[]> {
   const {
-    rootDir,
+    rootDir = '.',
     include = ['**/*.{ts,tsx,js,jsx,py,java,go,rs,cs}'], // Multi-language support
     exclude,
   } = options;
@@ -108,7 +109,7 @@ export async function scanFiles(options: ScanOptions): Promise<string[]> {
   // Always merge user excludes with defaults to ensure critical paths like
   // cdk.out, node_modules, build dirs are excluded
   // Load .aireadyignore from repository root if present and merge
-  const ignoreFilePath = join(rootDir || '.', '.aireadyignore');
+  const ignoreFilePath = join(rootDir, '.aireadyignore');
   let ignoreFromFile: string[] = [];
   if (existsSync(ignoreFilePath)) {
     try {
@@ -157,17 +158,14 @@ export async function scanFiles(options: ScanOptions): Promise<string[]> {
     absolute: true,
   });
 
+  let filtered = files;
   if (gitignoreFiles.length > 0) {
     try {
-      // Sort ignore files by depth (shallowest first) to ensure correct precedence if needed,
-      // though 'ignore' package handles multiple patterns.
-      // We'll create a single ignore instance and add patterns with their relative prefixes.
       const ig = ignorePkg();
-
       for (const gitignorePath of gitignoreFiles) {
         const gitTxt = await readFile(gitignorePath, 'utf-8');
         const gitignoreDir = dirname(gitignorePath);
-        const relativePrefix = relative(rootDir || '.', gitignoreDir).replace(
+        const relativePrefix = relative(rootDir, gitignoreDir).replace(
           /\\/g,
           '/'
         );
@@ -181,7 +179,6 @@ export async function scanFiles(options: ScanOptions): Promise<string[]> {
         if (relativePrefix === '.' || relativePrefix === '') {
           ig.add(patterns);
         } else {
-          // Add patterns with directory prefix for nested gitignores
           ig.add(
             patterns.map((p) =>
               p.startsWith('/')
@@ -192,19 +189,24 @@ export async function scanFiles(options: ScanOptions): Promise<string[]> {
         }
       }
 
-      const filtered = files.filter((f) => {
-        let rel = relative(rootDir || '.', f).replace(/\\/g, '/');
+      filtered = files.filter((f) => {
+        let rel = relative(rootDir, f).replace(/\\/g, '/');
         if (rel === '') rel = f;
         return !ig.ignores(rel);
       });
-
-      return filtered;
     } catch {
-      return files;
+      // Fallback to non-git-ignored files on error
     }
   }
 
-  return files;
+  if (options.changedFilesOnly) {
+    const changedFiles = getChangedFiles(rootDir).map((f) =>
+      resolve(rootDir, f)
+    );
+    return filtered.filter((f) => changedFiles.includes(f));
+  }
+
+  return filtered;
 }
 
 /**
@@ -219,9 +221,9 @@ export async function scanEntries(
   options: ScanOptions
 ): Promise<{ files: string[]; dirs: string[] }> {
   const files = await scanFiles(options);
-  const { rootDir, exclude, includeTests } = options;
+  const { rootDir = '.', exclude, includeTests } = options;
 
-  const ignoreFilePath = join(rootDir || '.', '.aireadyignore');
+  const ignoreFilePath = join(rootDir, '.aireadyignore');
   let ignoreFromFile: string[] = [];
   if (existsSync(ignoreFilePath)) {
     try {
@@ -270,7 +272,7 @@ export async function scanEntries(
     for (const gitignorePath of gitignoreFiles) {
       const gitTxt = await readFile(gitignorePath, 'utf-8');
       const gitignoreDir = dirname(gitignorePath);
-      const relativePrefix = relative(rootDir || '.', gitignoreDir).replace(
+      const relativePrefix = relative(rootDir, gitignoreDir).replace(
         /\\/g,
         '/'
       );
@@ -294,7 +296,7 @@ export async function scanEntries(
     }
 
     const filteredDirs = dirs.filter((d) => {
-      let rel = relative(rootDir || '.', d).replace(/\\/g, '/');
+      let rel = relative(rootDir, d).replace(/\\/g, '/');
       if (rel === '') return true;
       // Append trailing slash for directory ignore patterns to match correctly
       if (!rel.endsWith('/')) rel += '/';
@@ -312,11 +314,6 @@ export async function scanEntries(
  * @param filePath - Absolute path to the file to read
  * @returns The file contents as a string
  */
-/**
- * Read the contents of a file as a UTF-8 string.
- * @param filePath - Absolute path to the file to read
- * @returns The file contents as a string
- */
 export async function readFileContent(filePath: string): Promise<string> {
   return readFile(filePath, 'utf-8');
 }
@@ -326,21 +323,10 @@ export async function readFileContent(filePath: string): Promise<string> {
  * @param filePath - The file path to extract extension from
  * @returns The file extension without the dot (e.g., 'ts', 'js', 'py')
  */
-/**
- * Extract the file extension from a file path.
- * @param filePath - The file path to extract extension from
- * @returns The file extension without the dot (e.g., 'ts', 'js', 'py')
- */
 export function getFileExtension(filePath: string): string {
   return filePath.split('.').pop() || '';
 }
 
-/**
- * Check if a file is a source code file based on its extension.
- * Supports TypeScript, JavaScript, Python, Java, Go, Rust, and C#.
- * @param filePath - The file path to check
- * @returns True if the file has a source code extension
- */
 /**
  * Check if a file is a source code file based on its extension.
  * Supports TypeScript, JavaScript, Python, Java, Go, Rust, and C#.

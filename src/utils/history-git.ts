@@ -114,3 +114,41 @@ export function getRepoMetadata(directory: string): {
   }
   return metadata;
 }
+
+/**
+ * Get a list of files that have been changed in the current repository.
+ * Includes staged and unstaged changes, and untracked files.
+ *
+ * @param directory - The repository root directory.
+ * @returns Array of relative file paths.
+ */
+export function getChangedFiles(directory: string): string[] {
+  const changedFiles = new Set<string>();
+  try {
+    // 1. Get changed tracked files (staged and unstaged)
+    const trackedOutput = execSync('git diff HEAD --name-only', {
+      cwd: directory,
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+    if (trackedOutput) {
+      trackedOutput.split('\n').forEach((f) => changedFiles.add(f));
+    }
+
+    // 2. Get untracked files
+    const untrackedOutput = execSync(
+      'git ls-files --others --exclude-standard',
+      {
+        cwd: directory,
+        encoding: 'utf-8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      }
+    ).trim();
+    if (untrackedOutput) {
+      untrackedOutput.split('\n').forEach((f) => changedFiles.add(f));
+    }
+  } catch {
+    // Not a git repo or git error
+  }
+  return Array.from(changedFiles);
+}

@@ -10,6 +10,7 @@ import { LocationSchema } from '../common';
 export const IssueSchema = z.object({
   type: IssueTypeSchema,
   severity: SeveritySchema,
+  category: z.string().optional(),
   message: z.string(),
   location: LocationSchema,
   suggestion: z.string().optional(),
