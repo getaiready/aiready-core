@@ -48,8 +48,13 @@ export type { CodeBlock } from './code-block';
 export * from './visualization';
 
 // Business types
-export { LeadSchema, LeadSubmissionSchema, LeadSourceSchema } from './business';
-export type { Lead, LeadSubmission, LeadSource } from './business';
+export {
+  LeadSchema,
+  LeadSubmissionSchema,
+  LeadSourceSchema,
+  LeadSource,
+} from './business';
+export type { Lead, LeadSubmission } from './business';
 
 // AST types
 export type { TokenBudget } from './ast';
