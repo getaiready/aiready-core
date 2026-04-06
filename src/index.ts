@@ -22,6 +22,7 @@ export * from './utils/similarity';
 export * from './utils/cli-factory';
 export * from './utils/reporting';
 export * from './utils/code-extractor';
+export * from './utils/path-utils';
 
 // Business value metrics (v0.10+)
 export * from './business-metrics';

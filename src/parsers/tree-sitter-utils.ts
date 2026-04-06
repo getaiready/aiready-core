@@ -2,11 +2,11 @@ import * as Parser from 'web-tree-sitter';
 import * as path from 'path';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
+import { getDirname as getDirnameSafe } from '../utils/path-utils';
 
 const getDirname = (): string => {
   try {
-    if (typeof __dirname !== 'undefined') return __dirname;
-    return path.dirname(fileURLToPath(import.meta.url));
+    return getDirnameSafe(import.meta.url);
   } catch {
     return process.cwd();
   }
