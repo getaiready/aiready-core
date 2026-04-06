@@ -23,6 +23,7 @@ export const SpokeSummarySchema = z
     totalIssues: z.number().optional(),
     criticalIssues: z.number().optional(),
     majorIssues: z.number().optional(),
+    minorIssues: z.number().optional(),
     score: z.number().optional(),
   })
   .catchall(z.any());
@@ -58,6 +59,7 @@ export const UnifiedReportSchema = z
       totalIssues: z.number(),
       criticalIssues: z.number(),
       majorIssues: z.number(),
+      minorIssues: z.number(),
       businessImpact: z
         .object({
           estimatedMonthlyWaste: z.number().optional(),
