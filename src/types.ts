@@ -82,6 +82,7 @@ export {
   LeadSchema,
   LeadSubmissionSchema,
   LeadSourceSchema,
+  LeadSource,
 };
 
 export type {
@@ -101,7 +102,6 @@ export type {
   TokenBudget,
   Lead,
   LeadSubmission,
-  LeadSource,
 };
 
 /**
