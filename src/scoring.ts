@@ -102,6 +102,10 @@ export const TOOL_NAME_MAP: Record<string, string> = {
 
 /**
  * Model context tiers for context-aware threshold calibration.
+ * - `compact`: For models with 4k-16k token windows.
+ * - `standard`: For models with 16k-64k token windows.
+ * - `extended`: For models with 64k-200k token windows.
+ * - `frontier`: For state-of-the-art models with 200k+ token windows.
  */
 export type ModelContextTier =
   | 'compact' // 4k-16k  tokens
@@ -172,6 +176,7 @@ export const SCORING_PROFILES: Record<
 /**
  * Context budget thresholds per tier.
  *
+ * Defines target ("ideal") and failure ("critical") token counts for each model tier.
  * "Ideal" represents target state. "Critical" represents failure state.
  */
 export const CONTEXT_TIER_THRESHOLDS: Record<
