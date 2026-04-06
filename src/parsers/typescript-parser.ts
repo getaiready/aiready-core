@@ -429,6 +429,8 @@ export class TypeScriptParser implements LanguageParser {
           bodyContent.includes('"name":"console"') ||
           bodyContent.includes('"name":"process"') ||
           bodyContent.includes('"name":"fs"') ||
+          bodyContent.includes('"name":"global"') ||
+          bodyContent.includes('"name":"window"') ||
           bodyContent.includes('"name":"fetch"') ||
           bodyContent.includes('"name":"axios"')
         ) {

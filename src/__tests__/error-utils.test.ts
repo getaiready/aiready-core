@@ -5,6 +5,7 @@ import {
   createErrorResponse,
   withErrorHandling,
 } from '../utils/error-utils';
+import { handleCLIError } from '../utils/cli-utils';
 
 describe('error-utils', () => {
   it('getErrorMessage extracts messages for various inputs', () => {
@@ -44,8 +45,6 @@ describe('error-utils', () => {
     expect(failString).toEqual({ success: false, error: 'simple' });
   });
 });
-import { describe, it, expect } from 'vitest';
-import { handleCLIError } from '../utils/cli-utils';
 
 describe('Error Utils', () => {
   it('handleCLIError should be defined', () => {

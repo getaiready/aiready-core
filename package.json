@@ -67,7 +67,7 @@
     "tree-sitter-java": "^0.23.5",
     "tree-sitter-python": "^0.25.0",
     "tree-sitter-wasms": "^0.1.13",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "web-tree-sitter": "^0.26.8",
     "zod": "^4.3.6"
   }
