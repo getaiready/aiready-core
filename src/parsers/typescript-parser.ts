@@ -37,6 +37,8 @@ export class TypeScriptParser implements LanguageParser {
         comment: true,
         jsx: filePath.endsWith('x'),
         ecmaVersion: 'latest',
+        // Support for latest TypeScript features like Decorators and Explicit Resource Management
+        // are enabled by default in latest typescript-estree when ecmaVersion is 'latest'.
       });
     } catch (error: unknown) {
       const err = error as Error & { lineNumber?: number; column?: number };
@@ -57,6 +59,8 @@ export class TypeScriptParser implements LanguageParser {
         comment: true,
         jsx: filePath.endsWith('x'),
         ecmaVersion: 'latest',
+        // Support for latest TypeScript features like Decorators and Explicit Resource Management
+        // are enabled by default in latest typescript-estree when ecmaVersion is 'latest'.
       });
 
       const imports = this.extractImports(ast);
@@ -435,7 +439,9 @@ export class TypeScriptParser implements LanguageParser {
           bodyContent.includes('"name":"global"') ||
           bodyContent.includes('"name":"window"') ||
           bodyContent.includes('"name":"fetch"') ||
-          bodyContent.includes('"name":"axios"')
+          bodyContent.includes('"name":"axios"') ||
+          bodyContent.includes('"type":"UsingDeclaration"') || // Explicit Resource Management
+          bodyContent.includes('"type":"AwaitExpression"') // Await can imply side effects in unknown contexts
         ) {
           return false;
         }
