@@ -39,7 +39,8 @@ export type {
 } from './schemas/report';
 
 // Config schema
-export { AIReadyConfigSchema } from './schemas/config';
+export { AIReadyConfigSchema, AutoExcludeSchema } from './schemas/config';
+export type { AIReadyConfig, AutoExcludeConfig } from './schemas/config';
 
 // Code block type
 export type { CodeBlock } from './code-block';

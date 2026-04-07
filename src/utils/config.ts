@@ -1,7 +1,10 @@
 import { readFileSync, existsSync } from 'fs';
 import { join, resolve, dirname } from 'path';
 import { pathToFileURL } from 'url';
-import { AIReadyConfigSchema } from '../types/schemas/config';
+import {
+  AIReadyConfigSchema,
+  AutoExcludeSchema,
+} from '../types/schemas/config';
 import type { AIReadyConfig } from '../types';
 
 const CONFIG_FILES = [
@@ -13,15 +16,234 @@ const CONFIG_FILES = [
   '.aireadyrc.js',
 ];
 
+export const DEFAULT_AUTO_EXCLUDE_PATTERNS = {
+  tests: [
+    '**/*.test.ts',
+    '**/*.test.tsx',
+    '**/*.test.js',
+    '**/*.test.jsx',
+    '**/*.spec.ts',
+    '**/*.spec.tsx',
+    '**/*.spec.js',
+    '**/*.spec.jsx',
+    '**/__tests__/**',
+    '**/tests/**',
+  ],
+  mocks: [
+    '**/__mocks__/**',
+    '**/*.mock.ts',
+    '**/*.mock.tsx',
+    '**/*.mock.js',
+    '**/*.mock.jsx',
+  ],
+  barrels: ['**/index.ts', '**/index.js'],
+  generated: [
+    '**/.next/**',
+    '**/.sst/**',
+    '**/.cache/**',
+    '**/dist/**',
+    '**/build/**',
+  ],
+};
+
+export interface ValidationWarning {
+  line?: number;
+  rule: string;
+  message: string;
+  suggestion?: string;
+}
+
+const loadedConfigs = new Set<string>();
+
+function deepMerge<T extends Record<string, any>>(base: T, override: T): T {
+  const result = { ...base } as any;
+
+  for (const key of Object.keys(override)) {
+    const baseVal = base[key];
+    const overrideVal = override[key];
+
+    if (
+      baseVal &&
+      overrideVal &&
+      typeof baseVal === 'object' &&
+      typeof overrideVal === 'object' &&
+      !Array.isArray(baseVal) &&
+      !Array.isArray(overrideVal)
+    ) {
+      result[key] = deepMerge(baseVal, overrideVal);
+    } else if (overrideVal !== undefined) {
+      result[key] = overrideVal;
+    }
+  }
+
+  return result as T;
+}
+
+function checkPatternWarnings(
+  config: AIReadyConfig,
+  configPath: string
+): ValidationWarning[] {
+  const warnings: ValidationWarning[] = [];
+  const excludeArray = Array.isArray(config.exclude)
+    ? config.exclude
+    : config.exclude
+      ? Object.values(config.exclude).flat()
+      : [];
+
+  const seen = new Set<string>();
+
+  for (const pattern of excludeArray) {
+    if (seen.has(pattern)) {
+      warnings.push({
+        rule: 'duplicate-exclude',
+        message: `Duplicate pattern '${pattern}' in exclude array`,
+      });
+    }
+    seen.add(pattern);
+
+    if (pattern.match(/^\*\*\/[^/]+\.[^/]+$/)) {
+      warnings.push({
+        rule: 'single-file-glob',
+        message: `Single-file glob '${pattern}' - use without ** prefix`,
+        suggestion: pattern.replace(/^\*\*\//, ''),
+      });
+    }
+
+    const normalized = pattern.replace(/^\*\*\//, '').replace(/^\*\//, '');
+    for (const other of seen) {
+      if (other === pattern) continue;
+      const otherNormalized = other.replace(/^\*\*\//, '').replace(/^\*\//, '');
+      if (normalized === otherNormalized) {
+        warnings.push({
+          rule: 'overlapping-pattern',
+          message: `Patterns '${pattern}' and '${other}' likely match the same files`,
+        });
+      }
+    }
+  }
+
+  if (config.extends) {
+    warnings.push({
+      rule: 'config-inheritance',
+      message: `Config extends '${config.extends}' - ensure base config exists`,
+    });
+  }
+
+  return warnings;
+}
+
+function resolveConfigPath(
+  extendsPath: string,
+  baseConfigPath: string
+): string {
+  const baseDir = dirname(baseConfigPath);
+  return resolve(baseDir, extendsPath);
+}
+
+async function loadConfigWithInheritance(
+  configPath: string,
+  alreadyLoaded: Set<string> = new Set()
+): Promise<{ config: AIReadyConfig; warnings: ValidationWarning[] }> {
+  const resolvedPath = resolve(configPath);
+
+  if (alreadyLoaded.has(resolvedPath)) {
+    throw new Error(
+      `Circular config inheritance detected: ${Array.from(alreadyLoaded).join(' -> ')} -> ${resolvedPath}`
+    );
+  }
+
+  alreadyLoaded.add(resolvedPath);
+
+  const content = readFileSync(resolvedPath, 'utf-8');
+  let rawConfig = JSON.parse(content);
+
+  const warnings: ValidationWarning[] = [];
+
+  if (rawConfig.extends) {
+    const baseConfigPath = resolveConfigPath(rawConfig.extends, resolvedPath);
+
+    if (!existsSync(baseConfigPath)) {
+      throw new Error(
+        `Base config not found: ${rawConfig.extends} (resolved to ${baseConfigPath})`
+      );
+    }
+
+    const baseResult = await loadConfigWithInheritance(
+      baseConfigPath,
+      alreadyLoaded
+    );
+    rawConfig = deepMerge(baseResult.config, rawConfig);
+    warnings.push(...baseResult.warnings);
+  }
+
+  warnings.push(...checkPatternWarnings(rawConfig, resolvedPath));
+
+  const config = AIReadyConfigSchema.parse(rawConfig);
+
+  return { config, warnings };
+}
+
+function applyAutoExclusions(
+  config: AIReadyConfig,
+  projectRoot: string
+): AIReadyConfig {
+  const autoExclude = config.autoExclude ?? {
+    tests: true,
+    mocks: true,
+    barrels: false,
+    generated: true,
+  };
+
+  if (
+    !autoExclude.tests &&
+    !autoExclude.mocks &&
+    !autoExclude.barrels &&
+    !autoExclude.generated
+  ) {
+    return config;
+  }
+
+  const patterns: string[] = [];
+
+  if (autoExclude.tests) {
+    patterns.push(...DEFAULT_AUTO_EXCLUDE_PATTERNS.tests);
+  }
+  if (autoExclude.mocks) {
+    patterns.push(...DEFAULT_AUTO_EXCLUDE_PATTERNS.mocks);
+  }
+  if (autoExclude.barrels) {
+    patterns.push(...DEFAULT_AUTO_EXCLUDE_PATTERNS.barrels);
+  }
+  if (autoExclude.generated) {
+    patterns.push(...DEFAULT_AUTO_EXCLUDE_PATTERNS.generated);
+  }
+
+  const existingExclude = config.exclude ?? [];
+  const existingArray = Array.isArray(existingExclude)
+    ? existingExclude
+    : (existingExclude?.global ?? []);
+
+  return {
+    ...config,
+    exclude: [...existingArray, ...patterns],
+  };
+}
+
 /**
  * Search upwards for AIReady configuration files and load the first one found.
  * @param rootDir Starting directory for the search
+ * @param options Options for config loading
  * @returns Parsed configuration object or null if not found
  */
 export async function loadConfig(
-  rootDir: string
-): Promise<AIReadyConfig | null> {
-  // Search upwards from the provided directory to find the nearest config
+  rootDir: string,
+  options?: {
+    validate?: boolean;
+    applyAutoExclude?: boolean;
+  }
+): Promise<{ config: AIReadyConfig | null; warnings: ValidationWarning[] }> {
+  const warnings: ValidationWarning[] = [];
+
   let currentDir = resolve(rootDir);
 
   while (true) {
@@ -39,50 +261,22 @@ export async function loadConfig(
             ', '
           )}. Using ${foundConfigs[0]}.`
         );
-      } else {
-        // console.log(`ℹ️ Loading configuration from ${join(currentDir, foundConfigs[0])}`);
       }
 
       const configFile = foundConfigs[0];
       const configPath = join(currentDir, configFile);
 
       try {
-        let config: AIReadyConfig;
+        const result = await loadConfigWithInheritance(configPath);
+        warnings.push(...result.warnings);
 
-        if (configFile.endsWith('.js')) {
-          // For JS files, use dynamic ES import
-          const fileUrl = pathToFileURL(configPath).href;
-          const module = await import(`${fileUrl}?t=${Date.now()}`);
-          config = module.default || module;
-        } else {
-          // For JSON files, parse them
-          const content = readFileSync(configPath, 'utf-8');
-          config = JSON.parse(content);
+        let config = result.config;
+
+        if (options?.applyAutoExclude !== false) {
+          config = applyAutoExclusions(config, currentDir);
         }
 
-        // Detect legacy keys to warn users
-        const legacyKeys = ['toolConfigs'];
-        const rootLevelTools = [
-          'pattern-detect',
-          'context-analyzer',
-          'naming-consistency',
-          'ai-signal-clarity',
-        ];
-        const allKeys = Object.keys(config);
-        const foundLegacy = allKeys.filter(
-          (k) => legacyKeys.includes(k) || rootLevelTools.includes(k)
-        );
-
-        if (foundLegacy.length > 0) {
-          console.warn(
-            `⚠️ Legacy configuration keys found: ${foundLegacy.join(
-              ', '
-            )}. These are deprecated and should be moved under the "tools" key.`
-          );
-        }
-
-        // Strict schema validation
-        return AIReadyConfigSchema.parse(config);
+        return { config, warnings };
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
@@ -90,7 +284,6 @@ export async function loadConfig(
           `Failed to load config from ${configPath}: ${errorMessage}`
         );
         try {
-          // Attach original error as cause when supported
           (configError as unknown as Record<string, unknown>).cause =
             error instanceof Error ? error : undefined;
         } catch {
@@ -102,12 +295,27 @@ export async function loadConfig(
 
     const parent = dirname(currentDir);
     if (parent === currentDir) {
-      break; // Reached filesystem root
+      break;
     }
     currentDir = parent;
   }
 
-  return null;
+  return { config: null, warnings };
+}
+
+export function validateConfig(configPath: string): ValidationWarning[] {
+  try {
+    const content = readFileSync(configPath, 'utf-8');
+    const config = JSON.parse(content);
+    return checkPatternWarnings(config, configPath);
+  } catch (error) {
+    return [
+      {
+        rule: 'parse-error',
+        message: `Failed to parse config: ${error instanceof Error ? error.message : String(error)}`,
+      },
+    ];
+  }
 }
 
 /**
@@ -124,19 +332,16 @@ export function mergeConfigWithDefaults<T extends Record<string, any>>(
 
   const mergedConfig = { ...defaults } as any;
 
-  // Merge scan options
   if (userConfig.scan) {
     if (userConfig.scan.include) mergedConfig.include = userConfig.scan.include;
     if (userConfig.scan.exclude) mergedConfig.exclude = userConfig.scan.exclude;
     if (userConfig.scan.tools) mergedConfig.tools = userConfig.scan.tools;
   }
 
-  // Merge gatekeeper options
   if (userConfig.threshold !== undefined)
     mergedConfig.threshold = userConfig.threshold;
   if (userConfig.failOn !== undefined) mergedConfig.failOn = userConfig.failOn;
 
-  // Merge tool-specific options (strictly 'tools' map as per schema)
   if (userConfig.tools) {
     if (!mergedConfig.toolConfigs) mergedConfig.toolConfigs = {};
     for (const [toolName, toolConfig] of Object.entries(userConfig.tools)) {
@@ -150,7 +355,6 @@ export function mergeConfigWithDefaults<T extends Record<string, any>>(
     }
   }
 
-  // Merge output preferences
   if (userConfig.output) {
     mergedConfig.output = {
       ...(mergedConfig.output as Record<string, unknown>),
@@ -158,7 +362,6 @@ export function mergeConfigWithDefaults<T extends Record<string, any>>(
     };
   }
 
-  // Merge scoring preferences
   if (userConfig.scoring) {
     mergedConfig.scoring = {
       ...(mergedConfig.scoring as Record<string, unknown>),

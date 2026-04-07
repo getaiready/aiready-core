@@ -2,13 +2,38 @@ import { z } from 'zod';
 import { SeveritySchema } from '../enums';
 
 /**
+ * Auto-exclusion configuration for common patterns.
+ */
+export const AutoExcludeSchema = z
+  .object({
+    /** Enable automatic detection of test files */
+    tests: z.boolean().optional(),
+    /** Enable automatic detection of mock files */
+    mocks: z.boolean().optional(),
+    /** Enable automatic detection of barrel/re-export files */
+    barrels: z.boolean().optional(),
+    /** Enable automatic detection of generated files */
+    generated: z.boolean().optional(),
+  })
+  .optional();
+
+/**
+ * Tiered exclusion configuration - allows global and tool-specific excludes.
+ */
+const TieredExcludeSchema = z.record(z.string(), z.array(z.string()));
+
+/**
  * Global AIReady Configuration Schema.
  * Strict definition for aiready.json and related config files.
  */
 export const AIReadyConfigSchema = z
   .object({
-    /** Files or directories to exclude from scan */
-    exclude: z.array(z.string()).optional(),
+    /** Extend from another config file (relative path) */
+    extends: z.string().optional(),
+    /** Files or directories to exclude from scan (flat array or tiered) */
+    exclude: z.union([z.array(z.string()), TieredExcludeSchema]).optional(),
+    /** Auto-exclusion settings for common patterns */
+    autoExclude: AutoExcludeSchema,
     /** Fail CI/CD if score below threshold (0-100) */
     threshold: z.number().optional(),
     /** Fail on issues: critical, major, any */
@@ -75,3 +100,6 @@ export const AIReadyConfigSchema = z
       .optional(),
   })
   .catchall(z.any());
+
+export type AIReadyConfig = z.infer<typeof AIReadyConfigSchema>;
+export type AutoExcludeConfig = z.infer<typeof AutoExcludeSchema>;
