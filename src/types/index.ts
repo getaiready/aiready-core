@@ -40,7 +40,11 @@ export type {
 
 // Config schema
 export { AIReadyConfigSchema, AutoExcludeSchema } from './schemas/config';
-export type { AIReadyConfig, AutoExcludeConfig } from './schemas/config';
+export type {
+  AIReadyConfig,
+  AutoExcludeConfig,
+  ValidationWarning,
+} from './schemas/config';
 
 // Code block type
 export type { CodeBlock } from './code-block';
