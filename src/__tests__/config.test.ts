@@ -27,7 +27,7 @@ describe('Config Loader', () => {
 
   describe('loadConfig', () => {
     it('should load config from a directory', async () => {
-      const config = await loadConfig(tmpDir);
+      const config = (await loadConfig(tmpDir)) as any;
       expect(config).not.toBeNull();
       expect(config?.scan?.include).toContain('src/**/*.ts');
     });
@@ -36,7 +36,7 @@ describe('Config Loader', () => {
       const subDir = join(tmpDir, 'sub', 'deep');
       mkdirSync(subDir, { recursive: true });
 
-      const config = await loadConfig(subDir);
+      const config = (await loadConfig(subDir)) as any;
       expect(config).not.toBeNull();
       expect(config?.scan?.include).toContain('src/**/*.ts');
     });
