@@ -67,6 +67,21 @@ export function resolveOutputPath(
 }
 
 /**
+ * Safe JSON stringify that handles BigInt values.
+ *
+ * @param obj - Object to stringify.
+ * @param indent - Indentation spaces.
+ * @returns JSON string.
+ */
+export function safeJsonStringify(obj: any, indent: number = 2): string {
+  return JSON.stringify(
+    obj,
+    (_, v) => (typeof v === 'bigint' ? v.toString() : v),
+    indent
+  );
+}
+
+/**
  * Handle JSON output for CLI commands.
  * Writes to file if outputFile is provided, otherwise logs to console.
  *
@@ -83,10 +98,10 @@ export function handleJSONOutput(
   if (outputFile) {
     // Ensure directory exists
     ensureDir(outputFile);
-    writeFileSync(outputFile, JSON.stringify(data, null, 2));
+    writeFileSync(outputFile, safeJsonStringify(data, 2));
     console.log(successMessage || `✅ Results saved to ${outputFile}`);
   } else {
-    console.log(JSON.stringify(data, null, 2));
+    console.log(safeJsonStringify(data, 2));
   }
 }
 
