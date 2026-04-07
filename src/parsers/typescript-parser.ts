@@ -36,6 +36,7 @@ export class TypeScriptParser implements LanguageParser {
         tokens: true,
         comment: true,
         jsx: filePath.endsWith('x'),
+        ecmaVersion: 'latest',
       });
     } catch (error: unknown) {
       const err = error as Error & { lineNumber?: number; column?: number };
@@ -55,6 +56,7 @@ export class TypeScriptParser implements LanguageParser {
         tokens: true,
         comment: true,
         jsx: filePath.endsWith('x'),
+        ecmaVersion: 'latest',
       });
 
       const imports = this.extractImports(ast);
@@ -246,6 +248,7 @@ export class TypeScriptParser implements LanguageParser {
     if (initializer) {
       if (
         initializer.type === 'Literal' ||
+        (initializer.type as string) === 'BigIntLiteral' ||
         (initializer.type === 'TemplateLiteral' &&
           initializer.expressions.length === 0)
       ) {
