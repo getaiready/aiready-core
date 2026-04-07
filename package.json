@@ -53,6 +53,7 @@
     "CONTRIBUTING.md"
   ],
   "devDependencies": {
+    "@types/node": "^25.5.2",
     "eslint": "^10.2.0",
     "tsup": "^8.5.1"
   },
