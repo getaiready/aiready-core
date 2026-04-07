@@ -9,10 +9,5 @@ import { fileURLToPath } from 'url';
  * @returns The absolute directory path of the calling module.
  */
 export function getDirname(importMetaUrl: string): string {
-  // If we're in a CJS environment, return the global __dirname (if it exists)
-  // Otherwise, derive it from the passed importMetaUrl
-  if (typeof __dirname !== 'undefined') {
-    return __dirname;
-  }
   return dirname(fileURLToPath(importMetaUrl));
 }
