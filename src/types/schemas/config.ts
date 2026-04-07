@@ -103,3 +103,13 @@ export const AIReadyConfigSchema = z
 
 export type AIReadyConfig = z.infer<typeof AIReadyConfigSchema>;
 export type AutoExcludeConfig = z.infer<typeof AutoExcludeSchema>;
+
+/**
+ * Validation warning for config files.
+ */
+export interface ValidationWarning {
+  line?: number;
+  rule: string;
+  message: string;
+  suggestion?: string;
+}
