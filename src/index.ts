@@ -71,3 +71,6 @@ export * from './utils/error-utils';
 
 // Growth agents for Issue-Driven Sync
 export * from './growth';
+
+// Shared services
+export * from './services/github-service';
