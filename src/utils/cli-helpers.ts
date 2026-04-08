@@ -25,7 +25,7 @@ export async function loadMergedConfig<T extends Record<string, any>>(
   cliOptions: Partial<T>
 ): Promise<T & { rootDir: string }> {
   // Load config file if it exists
-  const config = await loadConfig(directory);
+  const { config } = await loadConfig(directory);
 
   // Merge config with defaults
   const mergedConfig = mergeConfigWithDefaults(config, defaults);
