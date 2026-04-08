@@ -1,5 +1,5 @@
 {
-  "name": "@aiready/core",
+  "name": "@serverlessclaw/core",
   "version": "0.24.24",
   "description": "Shared utilities for AIReady analysis tools",
   "main": "./dist/index.js",
