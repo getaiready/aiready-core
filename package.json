@@ -67,6 +67,7 @@
     "commander": "^14.0.3",
     "glob": "^13.0.6",
     "ignore": "^7.0.5",
+    "minimatch": "^10.2.5",
     "tree-sitter-java": "^0.23.5",
     "tree-sitter-python": "^0.25.0",
     "tree-sitter-wasms": "^0.1.13",
