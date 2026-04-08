@@ -147,7 +147,9 @@ export class GitHubIssueResolverAgent {
       console.error(
         `[GitHubIssueResolverAgent] Subtree sync failed: ${error.message}`
       );
-      throw new Error(`Subtree sync failed: ${error.message}`);
+      throw new (Error as any)(`Subtree sync failed: ${error.message}`, {
+        cause: error,
+      });
     }
   }
 
