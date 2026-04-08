@@ -68,3 +68,6 @@ export * from './utils/analysis-orchestrator';
 export * from './utils/spoke-cli-helpers';
 export * from './utils/test-utils';
 export * from './utils/error-utils';
+
+// Growth agents for Issue-Driven Sync
+export * from './growth';
