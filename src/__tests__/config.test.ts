@@ -27,7 +27,7 @@ describe('Config Loader', () => {
 
   describe('loadConfig', () => {
     it('should load config from a directory', async () => {
-      const config = (await loadConfig(tmpDir)) as any;
+      const { config } = (await loadConfig(tmpDir)) as any;
       expect(config).not.toBeNull();
       expect(config?.scan?.include).toContain('src/**/*.ts');
     });
@@ -36,7 +36,7 @@ describe('Config Loader', () => {
       const subDir = join(tmpDir, 'sub', 'deep');
       mkdirSync(subDir, { recursive: true });
 
-      const config = (await loadConfig(subDir)) as any;
+      const { config } = (await loadConfig(subDir)) as any;
       expect(config).not.toBeNull();
       expect(config?.scan?.include).toContain('src/**/*.ts');
     });
@@ -45,7 +45,7 @@ describe('Config Loader', () => {
       const emptyDir = join(tmpdir(), `aiready-empty-${Date.now()}`);
       mkdirSync(emptyDir, { recursive: true });
       try {
-        const config = await loadConfig(emptyDir);
+        const { config } = await loadConfig(emptyDir);
         expect(config).toBeNull();
       } finally {
         rmSync(emptyDir, { recursive: true, force: true });

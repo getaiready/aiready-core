@@ -159,6 +159,14 @@ async function loadConfigWithInheritance(
 
   const warnings: ValidationWarning[] = [];
 
+  const legacyKeys = ['toolConfigs', 'scanConfig', 'aiReady'];
+  const foundLegacy = legacyKeys.filter((key) => key in rawConfig);
+  if (foundLegacy.length > 0) {
+    console.warn(
+      `⚠️ Legacy configuration keys found: ${foundLegacy.join(', ')}. Please migrate to the new schema.`
+    );
+  }
+
   if (rawConfig.extends) {
     const baseConfigPath = resolveConfigPath(rawConfig.extends, resolvedPath);
 
