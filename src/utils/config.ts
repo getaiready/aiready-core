@@ -55,7 +55,10 @@ export interface ValidationWarning {
 
 const loadedConfigs = new Set<string>();
 
-function deepMerge<T extends Record<string, any>>(base: T, override: T): T {
+export function deepMerge<T extends Record<string, any>>(
+  base: T,
+  override: T
+): T {
   const result = { ...base } as any;
 
   for (const key of Object.keys(override)) {
