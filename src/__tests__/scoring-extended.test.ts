@@ -26,7 +26,7 @@ describe('Scoring Engine Extended Tests', () => {
         (sum, w) => sum + w,
         0
       );
-      // Based on formula in report: 164 (expanded with cognitive, entropy, cohesion, distance, metabolism)
+      // Based on formula in report: 164 (expanded with cognitive, entropy, cohesion, distance, hygiene)
       expect(total).toBe(164);
     });
   });

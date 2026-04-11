@@ -32,7 +32,7 @@ export enum ToolName {
   ConceptCohesion = 'concept-cohesion',
   SemanticDistance = 'semantic-distance',
   ContractEnforcement = 'contract-enforcement',
-  MetabolismAudit = 'metabolism-audit',
+  HygieneAudit = 'hygiene-audit',
 }
 
 /** Zod schema for ToolName enum */
@@ -56,7 +56,7 @@ export const FRIENDLY_TOOL_NAMES: Record<ToolName, string> = {
   [ToolName.ConceptCohesion]: 'Concept Cohesion',
   [ToolName.SemanticDistance]: 'Semantic Distance',
   [ToolName.ContractEnforcement]: 'Contract Enforcement',
-  [ToolName.MetabolismAudit]: 'Metabolism Audit',
+  [ToolName.HygieneAudit]: 'Codebase Hygiene',
 };
 
 /**
