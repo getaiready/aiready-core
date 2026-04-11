@@ -71,6 +71,7 @@ export const DEFAULT_TOOL_WEIGHTS: Record<string, number> = {
   [ToolName.PatternEntropy]: 8,
   [ToolName.ConceptCohesion]: 10,
   [ToolName.SemanticDistance]: 10,
+  [ToolName.MetabolismAudit]: 10,
 };
 
 /**
@@ -141,6 +142,7 @@ export const SCORING_PROFILES: Record<
     [ToolName.AgentGrounding]: 25,
     [ToolName.TestabilityIndex]: 15,
     [ToolName.ContractEnforcement]: 15,
+    [ToolName.MetabolismAudit]: 10,
     [ToolName.ContextAnalyzer]: 10,
     [ToolName.NamingConsistency]: 10,
   },
@@ -148,6 +150,7 @@ export const SCORING_PROFILES: Record<
     [ToolName.TestabilityIndex]: 40,
     [ToolName.NamingConsistency]: 20,
     [ToolName.ContextAnalyzer]: 20,
+    [ToolName.MetabolismAudit]: 15,
     [ToolName.PatternDetect]: 10,
     [ToolName.ChangeAmplification]: 10,
   },
