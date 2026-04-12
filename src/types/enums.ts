@@ -81,6 +81,7 @@ export enum IssueType {
   MissingTypes = 'missing-types',
   MagicLiteral = 'magic-literal',
   BooleanTrap = 'boolean-trap',
+  ParameterObject = 'parameter-object',
 
   // AI Readiness Dimensions
   AiSignalClarity = 'ai-signal-clarity',
