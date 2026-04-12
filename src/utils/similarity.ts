@@ -26,6 +26,28 @@ export function calculateStringSimilarity(a: string, b: string): number {
 }
 
 /**
+ * Calculate Jaccard similarity between two token arrays.
+ *
+ * @param tokens1 - First set of tokens.
+ * @param tokens2 - Second set of tokens.
+ * @returns Normalized similarity score (0-1).
+ */
+export function jaccardSimilarity(
+  tokens1: string[],
+  tokens2: string[]
+): number {
+  if (tokens1.length === 0 || tokens2.length === 0) return 0;
+
+  const set1 = new Set(tokens1);
+  const set2 = new Set(tokens2);
+
+  const intersection = new Set([...set1].filter((x) => set2.has(x)));
+  const union = new Set([...set1, ...set2]);
+
+  return intersection.size / union.size;
+}
+
+/**
  * Calculate heuristic confidence score for a duplicate or pattern detection.
  * Considers similarity, block size, and structural match.
  *

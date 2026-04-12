@@ -92,7 +92,9 @@ async function run() {
   } finally {
     try {
       fs.rmSync(workingDir, { recursive: true, force: true });
-    } catch {}
+    } catch {
+      // Ignore cleanup errors
+    }
   }
 }
 

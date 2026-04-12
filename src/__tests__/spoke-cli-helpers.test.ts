@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { executeSpokeCli } from '../utils/spoke-cli-helpers';
+import { dispatchSpokeCli } from '../utils/spoke-cli-helpers';
 
 describe('spoke-cli-helpers', () => {
   let consoleLogSpy: any;
@@ -26,7 +26,7 @@ describe('spoke-cli-helpers', () => {
       issues: [],
     });
 
-    const report: any = await executeSpokeCli(
+    const report: any = await dispatchSpokeCli(
       'TestSpoke',
       'Testing spoke',
       { rootDir: '.' },
@@ -49,7 +49,7 @@ describe('spoke-cli-helpers', () => {
       issues: [{}, {}],
     });
 
-    await executeSpokeCli('TestSpoke', 'Testing spoke', {}, analyzeFn);
+    await dispatchSpokeCli('TestSpoke', 'Testing spoke', {}, analyzeFn);
 
     expect(consoleLogSpy).toHaveBeenCalledWith(
       expect.stringContaining('Found 2 issues.')
@@ -60,7 +60,7 @@ describe('spoke-cli-helpers', () => {
     const analyzeFn = vi.fn().mockRejectedValue(new Error('Analysis failed'));
 
     await expect(
-      executeSpokeCli('TestSpoke', 'Testing spoke', {}, analyzeFn)
+      dispatchSpokeCli('TestSpoke', 'Testing spoke', {}, analyzeFn)
     ).rejects.toThrow('process.exit');
 
     expect(consoleErrorSpy).toHaveBeenCalledWith(

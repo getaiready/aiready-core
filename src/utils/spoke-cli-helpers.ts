@@ -3,8 +3,13 @@ import { ScanOptions } from '../types/common';
 
 /**
  * Shared logic for spoke-specific CLI entry points to reduce code duplication.
+ *
+ * @param name - The name of the spoke analysis (e.g., "Pattern Detect").
+ * @param description - Descriptive label for console output.
+ * @param options - Merged CLI and configuration options.
+ * @param analyzeFn - The core analysis function to be executed.
  */
-export async function executeSpokeCli(
+export async function dispatchSpokeCli(
   name: string,
   description: string,
   options: Partial<ScanOptions> & Record<string, any>,
