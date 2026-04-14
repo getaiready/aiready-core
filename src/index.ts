@@ -24,6 +24,7 @@ export * from './utils/reporting';
 export * from './utils/code-extractor';
 export * from './utils/path-utils';
 export * from './utils/fs-utils';
+export * from './utils/grep';
 
 // Business value metrics (v0.10+)
 export * from './business-metrics';
