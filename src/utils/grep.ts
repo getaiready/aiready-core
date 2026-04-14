@@ -2,7 +2,6 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import { rgPath } from '@vscode/ripgrep';
 import { existsSync } from 'fs';
-import { join } from 'path';
 
 const execFileAsync = promisify(execFile);
 
@@ -111,7 +110,6 @@ export async function grepSearch(options: GrepOptions): Promise<GrepResult> {
 
     const lines = stdout.split('\n').filter(Boolean);
     const matches: GrepMatch[] = [];
-    let currentMatch: GrepMatch | null = null;
     let totalMatchCount = 0;
 
     for (const line of lines) {
