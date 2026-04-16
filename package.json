@@ -55,7 +55,7 @@
   "devDependencies": {
     "@types/node": "^25.5.2",
     "eslint": "^10.2.0",
-    "sst": "4.7.4",
+    "sst": "4.7.5",
     "tsup": "^8.5.1"
   },
   "dependencies": {
