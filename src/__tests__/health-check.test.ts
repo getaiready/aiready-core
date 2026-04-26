@@ -105,7 +105,7 @@ describe('checkHealth', () => {
 
     const result = await checkPromise;
     expect(result.status).toBe('error');
-    expect(result.error).toBe('The operation was aborted.');
+    expect(result.error).toBe('Timeout after 5000ms');
   });
 
   it('handles non-Error thrown values', async () => {

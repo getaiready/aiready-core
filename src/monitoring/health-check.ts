@@ -15,9 +15,9 @@ export interface HealthCheckResult {
   error?: string;
 }
 
-const DEFAULT_TIMEOUT = 25000;
-const DEFAULT_RETRIES = 3;
-const DEFAULT_RETRY_DELAY = 2000;
+const DEFAULT_TIMEOUT = 10000; // 10s - more reasonable for a landing page
+const DEFAULT_RETRIES = 2; // 2 retries (total 3 attempts) to fit in 30s worker limit
+const DEFAULT_RETRY_DELAY = 1000; // 1s delay
 
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -30,7 +30,7 @@ export async function checkHealth(
 ): Promise<HealthCheckResult> {
   let lastResult: HealthCheckResult | undefined;
 
-  for (let attempt = 1; attempt <= retries; attempt++) {
+  for (let attempt = 1; attempt <= retries + 1; attempt++) {
     const startTime = Date.now();
     try {
       const controller = new AbortController();
@@ -38,6 +38,12 @@ export async function checkHealth(
 
       const response = await fetch(url, {
         method: 'GET',
+        headers: {
+          'User-Agent':
+            'AIReady-HealthCheck/1.0 (Cloudflare Worker; +https://getaiready.dev)',
+          Accept:
+            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        },
         redirect: 'follow',
         signal: controller.signal,
       });
@@ -55,18 +61,25 @@ export async function checkHealth(
       if (isHealthy) return result;
       lastResult = result;
     } catch (error) {
+      const isTimeout =
+        error instanceof Error &&
+        (error.name === 'AbortError' || error.message.includes('abort'));
       lastResult = {
         url,
         status: 'error',
         responseTime: Date.now() - startTime,
         timestamp: new Date().toISOString(),
-        error: error instanceof Error ? error.message : String(error),
+        error: isTimeout
+          ? `Timeout after ${timeout}ms`
+          : error instanceof Error
+            ? error.message
+            : String(error),
       };
     }
 
-    if (attempt < retries) {
+    if (attempt <= retries) {
       console.log(
-        `[HealthCheck] Attempt ${attempt} failed for ${url}. Retrying in ${DEFAULT_RETRY_DELAY}ms...`
+        `[HealthCheck] Attempt ${attempt} failed for ${url}. Error: ${lastResult.error}. Retrying in ${DEFAULT_RETRY_DELAY}ms...`
       );
       await sleep(DEFAULT_RETRY_DELAY);
     }
