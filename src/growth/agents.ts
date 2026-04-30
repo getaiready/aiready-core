@@ -1,6 +1,4 @@
 import { execSync } from 'child_process';
-import * as path from 'path';
-import * as fs from 'fs';
 
 export interface IssueContext {
   number: number;
@@ -155,7 +153,7 @@ export class GitHubIssueResolverAgent {
 
   private async applyContributionPattern(
     issue: IssueContext,
-    workingDir: string
+    _workingDir: string
   ): Promise<ResolveResult> {
     console.log(
       `[GitHubIssueResolverAgent] Pattern absorption requested: ${issue.title}`
@@ -168,7 +166,7 @@ export class GitHubIssueResolverAgent {
 
   private async applyAgenticPatch(
     issue: IssueContext,
-    workingDir: string
+    _workingDir: string
   ): Promise<ResolveResult> {
     console.log(`[GitHubIssueResolverAgent] Bug fix requested: ${issue.title}`);
     return {

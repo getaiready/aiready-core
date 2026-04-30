@@ -1,10 +1,6 @@
 import { readFileSync, existsSync } from 'fs';
 import { join, resolve, dirname } from 'path';
-import { pathToFileURL } from 'url';
-import {
-  AIReadyConfigSchema,
-  AutoExcludeSchema,
-} from '../types/schemas/config';
+import { AIReadyConfigSchema } from '../types/schemas/config';
 import type { AIReadyConfig } from '../types';
 
 const CONFIG_FILES = [
@@ -53,7 +49,7 @@ export interface ValidationWarning {
   suggestion?: string;
 }
 
-const loadedConfigs = new Set<string>();
+const _loadedConfigs = new Set<string>();
 
 export function deepMerge<T extends Record<string, any>>(
   base: T,
@@ -84,7 +80,7 @@ export function deepMerge<T extends Record<string, any>>(
 
 function checkPatternWarnings(
   config: AIReadyConfig,
-  configPath: string
+  _configPath: string
 ): ValidationWarning[] {
   const warnings: ValidationWarning[] = [];
   const excludeArray = Array.isArray(config.exclude)
@@ -196,7 +192,7 @@ async function loadConfigWithInheritance(
 
 function applyAutoExclusions(
   config: AIReadyConfig,
-  projectRoot: string
+  _projectRoot: string
 ): AIReadyConfig {
   const autoExclude = config.autoExclude ?? {
     tests: true,
