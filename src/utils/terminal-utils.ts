@@ -1,47 +1,54 @@
 import chalk from 'chalk';
+import { Severity } from '../types';
 
 /**
  * Get a formatted terminal divider string based on current terminal width.
  *
  * @param color - Chalk color function to use for the divider.
- * @param maxWidth - Maximum width for the divider (default: 60).
+ * @param width - Optional fixed width for the divider.
  * @returns String representation of the divider.
  */
 export function getTerminalDivider(
   color: any = chalk.cyan,
-  maxWidth: number = 60
+  width?: number
 ): string {
+  if (width !== undefined) {
+    return color('━'.repeat(width));
+  }
   const terminalWidth = process.stdout.columns || 80;
-  const dividerWidth = Math.min(maxWidth, terminalWidth - 2);
-  return color('━'.repeat(dividerWidth));
+  return color('━'.repeat(terminalWidth));
 }
 
 /**
- * Print a standard terminal header with dividers.
+ * Print a stylized terminal header with dividers.
  *
  * @param title - Header title text.
- * @param color - Chalk color function for the dividers.
+ * @param color - Chalk color function for the dividers (default: chalk.cyan.bold).
+ * @param width - Optional width for the divider (default: 80).
  */
 export function printTerminalHeader(
   title: string,
-  color: any = chalk.cyan
+  color: any = chalk.cyan.bold,
+  width: number = 80
 ): void {
-  const divider = getTerminalDivider(color);
-  console.log(divider);
-  console.log(chalk.bold.white(`  ${title.toUpperCase()}`));
-  console.log(divider + '\n');
+  const divider = '━'.repeat(width);
+  console.log(color(`\n${divider}`));
+  console.log(color(`  ${title.toUpperCase()}`));
+  console.log(color(`${divider}\n`));
 }
 
 /**
  * Generate a visual score bar for console output
  *
  * @param val - Score value between 0 and 100.
+ * @param width - Width of the bar in characters (default: 10).
  * @returns String representation of the bar (e.g., "█████░░░░░").
- * @lastUpdated 2026-03-18
  */
-export function getScoreBar(val: number): string {
+export function getScoreBar(val: number, width: number = 10): string {
   const clamped = Math.max(0, Math.min(100, val));
-  return '█'.repeat(Math.round(clamped / 10)).padEnd(10, '░');
+  const solid = Math.round((clamped / 100) * width);
+  const empty = width - solid;
+  return '█'.repeat(solid) + '░'.repeat(empty);
 }
 
 /**
@@ -49,7 +56,6 @@ export function getScoreBar(val: number): string {
  *
  * @param rating - The safety rating slug.
  * @returns Emoji icon representing the rating.
- * @lastUpdated 2026-03-18
  */
 export function getSafetyIcon(rating: string): string {
   switch (rating) {
@@ -66,4 +72,4 @@ export function getSafetyIcon(rating: string): string {
   }
 }
 
-export { getSeverityBadge } from './severity-utils';
+export { getSeverityBadge, getSeverityLabel } from './severity-utils';

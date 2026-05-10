@@ -19,5 +19,5 @@ export function handleCLIError(error: unknown, commandName: string): never {
 }
 
 export * from './severity-utils';
-export * from './terminal-ui';
+export * from './terminal-utils';
 export * from './progress-utils';
