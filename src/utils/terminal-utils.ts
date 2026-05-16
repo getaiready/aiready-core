@@ -1,6 +1,5 @@
 import chalk from 'chalk';
 
-
 /**
  * Get a formatted terminal divider string based on current terminal width.
  *
