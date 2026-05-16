@@ -67,6 +67,7 @@ export * from './utils/history-git';
 export * from './utils/github-utils';
 export * from './utils/analysis-orchestrator';
 export * from './utils/spoke-cli-helpers';
+export * from './utils/test-utils';
 export * from './utils/error-utils';
 
 // Growth agents for Issue-Driven Sync
