@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { Severity } from '../types';
+
 
 /**
  * Get a formatted terminal divider string based on current terminal width.
