@@ -11,6 +11,11 @@
       "require": "./dist/index.js",
       "import": "./dist/index.mjs"
     },
+    "./constants/aws": {
+      "types": "./src/constants/aws.ts",
+      "require": "./src/constants/aws.ts",
+      "import": "./src/constants/aws.ts"
+    },
     "./client": {
       "types": "./dist/client/index.d.ts",
       "require": "./dist/client/index.js",

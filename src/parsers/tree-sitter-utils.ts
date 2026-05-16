@@ -106,7 +106,7 @@ export function getWasmPath(language: string): string | null {
 
   // 1. Check local/bundled paths first
   const immediatePaths = [
-    path.join(process.cwd(), wasmFileName),
+    path.join(/*turbopackIgnore: true*/ process.cwd(), wasmFileName),
     path.join(__dirname, wasmFileName),
     path.join(__dirname, 'assets', wasmFileName),
   ];
